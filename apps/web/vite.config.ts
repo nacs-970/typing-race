@@ -71,7 +71,11 @@ export default defineConfig(({ command }) => {
         ? cfg.build.outDir
         : path.resolve(cfg.root, cfg.build.outDir);
     },
-    async closeBundle() {
+    async writeBundle() {
+      // writeBundle (not closeBundle) — Vite calls writeBundle AFTER asset
+      // files have been flushed to disk; closeBundle fires before. Reading
+      // outDir in closeBundle would race against Vite's writer and fail with
+      // ENOENT on a cold build.
       await writeBrotliSiblings(resolvedOutDir);
     },
   };

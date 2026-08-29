@@ -1,0 +1,16 @@
+node_modules
+apps/web/dist
+apps/server/dist
+bun.lockb
+.git
+.planning
+*.log
+.env
+.env.*
+.DS_Store
+README.md
+Dockerfile
+.dockerignore
+fly.toml
+spec.md
+.hermes

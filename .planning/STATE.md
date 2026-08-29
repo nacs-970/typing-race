@@ -22,8 +22,8 @@ See: .planning/PROJECT.md (updated 2026-08-30)
 
 Phase: 1 of 6 (Foundation)
 Plan: 0 of 3 in current phase
-Status: Ready to plan
-Last activity: 2026-08-30 — ROADMAP.md + STATE.md created; research complete
+Status: Plans complete — ready for execution
+Last activity: 2026-08-30 — 3 PLAN.md written + verified (commit 25f203a)
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -63,7 +63,7 @@ None yet.
 
 - Room-code collision math is LOW confidence in research (depends on chosen alphabet). Address in Phase 1 plan 02 (`apps/server/src/codes.ts`).
 - React Compiler config is MEDIUM confidence (new in 2026). Defer to Phase 6 plan 03 — profile first, opt-in only if DevTools shows cursor render bottleneck.
-- Styling choice (Tailwind v4 vs plain CSS vs CSS Modules) deferred to Phase 5 — pick during frontend polish planning.
+- Styling choice (Tailwind v4 vs plain CSS vs CSS Modules) deferred to Phase 5 — pick during frontend polish planning. Two design refs ready: Renkit (user's existing React19 + Vite + CSS Modules + data-theme pattern) and Claude.com brand spec. Default to Renkit-style unless user overrides.
 - Bun WebSocket lifecycle under browser tab kill (esp. mobile Safari) MEDIUM confidence — verify empirically in Phase 4 plan 04.
 
 ## Deferred Items

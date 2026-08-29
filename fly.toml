@@ -1,0 +1,46 @@
+# Fly.io launch config — generated 2026-08-30 (Phase 1 Plan 03, REQ-12)
+#
+# Single-process Bun runtime serving the React SPA + WS API + /health on
+# port 8080. Tuned for the Fly.io free tier (shared-cpu-1x, 256MB), WS-heavy
+# concurrency (`type = "connections"`), scale-to-zero, and SIGTERM-driven
+# graceful shutdown matching `apps/server/src/index.ts`.
+#
+# NOTE: this plan BUILDS the deploy infrastructure but does NOT execute
+# `fly deploy` — that lives in Phase 6. See scripts/deploy.sh for the
+# pre-flight-only wrapper.
+
+app = "typing-race"
+primary_region = "ord"
+kill_signal  = "SIGTERM"   # matches process.on("SIGTERM", ...) in index.ts
+kill_timeout = "10s"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT     = "8080"        # triple-match: EXPOSE 8080, internal_port 8080, env.ts PORT ?? 8080
+
+[http_service]
+  internal_port        = 8080
+  force_https          = true
+  auto_stop_machines   = "stop"   # scale-to-zero when idle; $0 idle cost
+  auto_start_machines  = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type       = "connections"   # sockets, not requests — correct unit for WS-heavy apps
+    soft_limit = 200
+    hard_limit = 250
+
+[[http_service.checks]]
+  grace_period = "3s"
+  interval     = "15s"
+  method       = "GET"
+  timeout      = "4s"
+  path         = "/health"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus     = 1
+  memory   = "256mb"        # matches shared-cpu-1x free tier

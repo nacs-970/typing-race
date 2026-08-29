@@ -99,6 +99,11 @@ export default defineConfig(({ command }) => {
           changeOrigin: true,
           ws: false,
         },
+        "/health": {
+          target: "http://localhost:8080",
+          changeOrigin: true,
+          ws: false,
+        },
         "/ws": {
           target: "ws://localhost:8080",
           ws: true,

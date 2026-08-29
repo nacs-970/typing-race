@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 current_phase: 1
 current_phase_name: Foundation
-status: executing
-stopped_at: Phase 1 Plan 02 complete. Prod single-process Bun serves built SPA + WS + /health from :8080 (Hono serveStatic, precompressed .gz/.br, WS knobs idleTimeout 120, maxPayloadLength 16KB, backpressureLimit 1MB, sendPings true, perMessageDeflate true). Dev mode (Vite proxy + Bun on separate ports) and prod mode both independently verified end-to-end. README documents both modes.
-last_updated: "2026-08-30T06:10:00.000Z"
+status: phase_complete
+stopped_at: Phase 1 Foundation complete. All 3 plans executed: monorepo + shared Zod wire contract + Bun+Hono /health + /ws + Vite+React hello world; prod single-process Bun serving built SPA with precompressed .gz/.br + WS production knobs; Fly.io Dockerfile + fly.toml + deploy.sh pre-flight script built (no actual deploy — Phase 6). Dev mode + prod mode both verified end-to-end.
+last_updated: "2026-08-30T06:25:00.000Z"
 last_activity: 2026-08-30
-last_activity_desc: Phase 1 Plan 02 complete — prod single-process serving + WS knobs
-state_head: 8d22e23
+last_activity_desc: Phase 1 complete — Foundation ships locally + Fly.io deploy infra ready
+state_head: 1c2f5b1
 progress:
   total_phases: 6
-  completed_phases: 0
-  total_plans: 3
-  completed_plans: 2
-  percent: 67
+  completed_phases: 1
+  total_plans: 22
+  completed_plans: 3
+  percent: 14
 ---
 
 # Project State
@@ -27,26 +27,26 @@ See: .planning/PROJECT.md (updated 2026-08-30)
 
 ## Current Position
 
-Phase: 1 (Foundation) — EXECUTING
-Plan: 2 of 3 (Plans 01 + 02 complete; Plan 03 next)
-Status: Plan 02 done — prod single-process serving + WS knobs
-Last activity: 2026-08-30 — Plan 02 SUMMARY committed
+Phase: 1 (Foundation) — COMPLETE
+Plan: 3 of 3 (all plans complete)
+Status: Phase 1 done — Foundation ships locally + Fly.io deploy infra built
+Last activity: 2026-08-30 — Plan 03 SUMMARY + STATE committed; Phase 1 verified
 
-Progress: [████████░░] 67%
+Progress: [██████████] 100% (Phase 1)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 2
-- Average duration: 20 min
-- Total execution time: 0.7 hours
+- Total plans completed: 3
+- Average duration: 18 min
+- Total execution time: 1.0 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1 — Foundation | 2/3 | 3 | 20 min |
+| 1 — Foundation | 3/3 | 3 | 18 min |
 
 **Recent Trend:**
 

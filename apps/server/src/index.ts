@@ -10,6 +10,14 @@ import { PORT } from "./env.ts";
  * Bun-native WS upgrade (NOT Hono's upgradeWebSocket — that wraps an EventTarget
  * and we lose typed `ws.data`). Bun.serve's typed generic gives us a single
  * source of truth for connection state across open/message/close.
+ *
+ * Production WS knobs (RESEARCH.md Known-Gotchas table):
+ *   idleTimeout: 120               — 2 min, matches Bun's max; Phase 2 adds app ping
+ *   maxPayloadLength: 16 * 1024   — refuse oversize frames (trivial DoS mitigation)
+ *   backpressureLimit: 1 MB        — slow consumer triggers close + log
+ *   closeOnBackpressureLimit: true — explicit signal, not silent buffer growth
+ *   sendPings: true                — Bun emits WS pings automatically
+ *   perMessageDeflate: true        — negotiate permessage-deflate for wire savings
  */
 const server = Bun.serve<WsData>({
   port: PORT,
@@ -30,13 +38,21 @@ const server = Bun.serve<WsData>({
       return routes.fetch(req);
     }
 
-    return staticApp.fetch(req);
+    if (process.env.NODE_ENV === "production") {
+      return staticApp.fetch(req);
+    }
+
+    return new Response(
+      "dev: not found. Use Vite at http://localhost:5173 or run `bun run build` for prod.",
+      { status: 404 },
+    );
   },
 
   websocket: {
     idleTimeout: 120,
     maxPayloadLength: 16 * 1024,
     backpressureLimit: 1024 * 1024,
+    closeOnBackpressureLimit: true,
     sendPings: true,
     perMessageDeflate: true,
 
@@ -61,7 +77,21 @@ const server = Bun.serve<WsData>({
   },
 });
 
-logger.info({ port: server.port }, "[server] listening");
+console.log(
+  JSON.stringify({
+    level: "info",
+    msg: "server.listening",
+    port: server.port,
+    env: process.env.NODE_ENV ?? "development",
+    wsKnobs: {
+      idleTimeout: 120,
+      maxPayloadLength: 16384,
+      backpressureLimit: 1048576,
+      sendPings: true,
+      perMessageDeflate: true,
+    },
+  }),
+);
 
 for (const sig of ["SIGTERM", "SIGINT"] as const) {
   process.on(sig, () => {

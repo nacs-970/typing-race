@@ -1,18 +1,47 @@
 import { Hono } from "hono";
+import { serveStatic } from "hono/bun";
+import path from "node:path";
 
 /**
- * Static-file shim for dev — Phase 1 uses Vite's dev server on :5173 to
- * serve the SPA, so this only catches direct :8080 hits that aren't /health
- * or /ws. Plan 02 will replace this with a real `serveStatic` mount.
+ * Production static SPA serving.
+ *
+ * `import.meta.dir` is `/app/apps/server/src` when WORKDIR is `/app/apps/server`
+ * (the Dockerfile in Plan 03 sets that WORKDIR). From there, the SPA build
+ * lives at `../../web/dist`.
+ *
+ * Hono's `serveStatic` from `hono/bun` resolves paths safely — it refuses to
+ * escape `root` (Pitfall T-02-01: path traversal mitigation). Never hand-roll
+ * `Bun.file(path)` resolution; serveStatic handles it.
+ *
+ * `precompressed: true` lets serveStatic pick `.gz` / `.br` siblings when
+ * the client's `Accept-Encoding` header advertises support, setting the
+ * `Content-Encoding` response header automatically.
  */
+const DIST = path.resolve(import.meta.dir, "../../web/dist");
+
 const app = new Hono();
 
-app.get("*", (c) =>
-  c.text(
-    "Typing Race dev server. Use the Vite dev server at http://localhost:5173 for the SPA. " +
-      "This endpoint serves the API + WebSocket only.",
-    200,
-  ),
+// Content-hashed assets: cache forever (filename changes when content does).
+app.use(
+  "/assets/*",
+  serveStatic({
+    root: DIST,
+    precompressed: true,
+    onFound: (_path, c) =>
+      c.header("Cache-Control", "public, max-age=31536000, immutable"),
+  }),
+);
+
+// SPA fallback: every other GET returns index.html so client-side routing
+// works. index.html MUST revalidate so deploys take effect immediately.
+app.get(
+  "*",
+  serveStatic({
+    root: DIST,
+    path: "./index.html",
+    precompressed: true,
+    onFound: (_path, c) => c.header("Cache-Control", "no-cache"),
+  }),
 );
 
 export default app;

@@ -1,0 +1,23 @@
+node_modules/
+dist/
+*.log
+.env
+.env.local
+.DS_Store
+coverage/
+
+# Bun lockfile variants — keep text bun.lock, ignore binary
+bun.lockb
+bun.lockb.local
+
+# Editor
+.vscode/
+.idea/
+
+# Build outputs
+apps/*/dist/
+packages/*/dist/
+
+# Test artifacts
+*.tsbuildinfo
+.vite/

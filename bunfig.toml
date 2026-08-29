@@ -1,0 +1,6 @@
+[install]
+workspaces = true
+exact = true
+
+[install.cache]
+disable = false

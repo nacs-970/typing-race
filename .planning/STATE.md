@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 current_phase: 1
 current_phase_name: Foundation
 status: executing
-stopped_at: Phase 1 Plan 01 complete. Monorepo skeleton + Zod wire contract + Bun+Hono /health + native /ws + Vite+React SPA proven end-to-end (Node WS client through Vite proxy → Bun → Zod hello frame).
-last_updated: "2026-08-30T05:53:00.000Z"
+stopped_at: Phase 1 Plan 02 complete. Prod single-process Bun serves built SPA + WS + /health from :8080 (Hono serveStatic, precompressed .gz/.br, WS knobs idleTimeout 120, maxPayloadLength 16KB, backpressureLimit 1MB, sendPings true, perMessageDeflate true). Dev mode (Vite proxy + Bun on separate ports) and prod mode both independently verified end-to-end. README documents both modes.
+last_updated: "2026-08-30T06:10:00.000Z"
 last_activity: 2026-08-30
-last_activity_desc: Phase 1 Plan 01 complete — wire tracer proven
-state_head: c943bb9
+last_activity_desc: Phase 1 Plan 02 complete — prod single-process serving + WS knobs
+state_head: 8d22e23
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
-  percent: 33
+  completed_plans: 2
+  percent: 67
 ---
 
 # Project State
@@ -28,30 +28,30 @@ See: .planning/PROJECT.md (updated 2026-08-30)
 ## Current Position
 
 Phase: 1 (Foundation) — EXECUTING
-Plan: 1 of 3 (Plan 01 complete; Plan 02 next)
-Status: Plan 01 done — wire tracer proven
-Last activity: 2026-08-30 — Plan 01 SUMMARY committed
+Plan: 2 of 3 (Plans 01 + 02 complete; Plan 03 next)
+Status: Plan 02 done — prod single-process serving + WS knobs
+Last activity: 2026-08-30 — Plan 02 SUMMARY committed
 
-Progress: [████░░░░░░] 33%
+Progress: [████████░░] 67%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 1
-- Average duration: 25 min
-- Total execution time: 0.4 hours
+- Total plans completed: 2
+- Average duration: 20 min
+- Total execution time: 0.7 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1 — Foundation | 1/3 | 3 | 25 min |
+| 1 — Foundation | 2/3 | 3 | 20 min |
 
 **Recent Trend:**
 
-- Last 5 plans: Plan 01 (25 min, complete)
-- Trend: first plan complete
+- Last 5 plans: Plan 01 (25 min, complete), Plan 02 (15 min, complete)
+- Trend: two plans complete; execution time decreasing as infrastructure stabilizes
 
 *Updated after each plan completion*
 
@@ -91,6 +91,6 @@ Items acknowledged and deferred, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-08-30 (Plan 01 execution)
-Stopped at: Phase 1 Plan 01 complete — bun-workspace monorepo with shared Zod schemas, Bun+Hono /health + /ws, Vite+React SPA, README; wire tracer proven end-to-end.
-Resume file: None — proceed to Phase 1 Plan 02 next.
+Last session: 2026-08-30 (Plan 02 execution)
+Stopped at: Phase 1 Plan 02 complete — Hono serveStatic for prod SPA + precompressed .gz/.br siblings + Bun WS production knobs (idleTimeout 120, maxPayloadLength 16KB, backpressureLimit 1MB, closeOnBackpressureLimit true, sendPings true, perMessageDeflate true). Dev (Vite proxy) and prod (single Bun) modes both independently verified. Both modes documented in README.
+Resume file: None — proceed to Phase 1 Plan 03 next.

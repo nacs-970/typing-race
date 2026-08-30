@@ -141,19 +141,41 @@ export function dispatch(
         return;
       }
       if (room.state !== "lobby") return;
-      // D-01: validate host-picked passageId against corpus
-      if (!isValidPassageId(msg.passageId)) {
-        ws.send(
-          JSON.stringify({
-            type: "error",
-            code: "INVALID_FRAME",
-            message: "unknown passageId",
-          }),
-        );
-        return;
-      }
+
       // D-09: graceSeconds already validated by Zod (3-10, default 5)
-      const passage = getPassageById(msg.passageId);
+      // Determine passage: explicit pick (D-01) or auto-deal for rematch (D-04)
+      let passageId: string;
+      if (msg.passageId !== undefined) {
+        // D-01: validate host-picked passageId against corpus
+        if (!isValidPassageId(msg.passageId)) {
+          ws.send(
+            JSON.stringify({
+              type: "error",
+              code: "INVALID_FRAME",
+              message: "unknown passageId",
+            }),
+          );
+          return;
+        }
+        passageId = msg.passageId;
+      } else {
+        // Rematch path: server auto-deals next passageId from D-04 no-repeat deck
+        if (room.deckOrder.length === 0) {
+          room.deckOrder = shuffle(PASSAGES.map((p) => p.id));
+          room.deckCursor = 0;
+        }
+        const dealt = dealNextPassage({
+          allPassageIds: PASSAGES.map((p) => p.id),
+          deckOrder: room.deckOrder,
+          deckCursor: room.deckCursor,
+          lastPassageId: room.lastPassageId,
+        });
+        room.deckOrder = dealt.deckOrder as string[];
+        room.deckCursor = dealt.deckCursor;
+        passageId = dealt.passageId;
+      }
+
+      const passage = getPassageById(passageId);
       if (!passage) return;
       try {
         transition(room, "countdown");

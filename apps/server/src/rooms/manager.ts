@@ -48,6 +48,9 @@ export function createRoom(
     usedPassageIds: new Set(),
     deckOrder: [],
     deckCursor: 0,
+    // Phase 3 Plan 04
+    firstFinisherId: null,
+    graceEndsAtServerMs: null,
   };
   rooms.set(code, room);
 

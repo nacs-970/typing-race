@@ -55,10 +55,13 @@ export const clockSyncSchema = z.object({
   t3: z.number().int().nonnegative(), // client receive time of last response
 });
 
-/** Host starts the race (only valid in `lobby` state with ≥2 players). */
+/** Host starts the race (only valid in `lobby` state with ≥2 players).
+ *  - `passageId` optional: when omitted, server auto-deals next passage via D-04
+ *    no-repeat deck (used for rematch — Phase 2 host_choice, Phase 3 auto-deal).
+ */
 export const startRaceSchema = z.object({
   type: z.literal("start_race"),
-  passageId: z.string().uuid(),
+  passageId: z.string().uuid().optional(),
   graceSeconds: z.number().int().min(3).max(10).default(5),
 });
 
@@ -197,6 +200,32 @@ export const raceEndSchema = z.object({
   type: z.literal("race_end"),
   reason: z.enum(["finished", "abandoned"]),
   finishedPlayerIds: z.array(z.string().uuid()),
+  results: z
+    .array(
+      z.object({
+        playerId: z.string().uuid(),
+        finishTimeMs: z.number().int().nonnegative(),
+        wpm: z.number().nonnegative(),
+        accuracy: z.number().min(0).max(1),
+      }),
+    )
+    .optional(),
+});
+
+/** Sent at the start of the grace period (D-15): leader finished, others have Ns. */
+export const graceCountdownSchema = z.object({
+  type: z.literal("grace_countdown"),
+  remainingMs: z.number().int().nonnegative(),
+  leaderPlayerId: z.string().uuid(),
+  leaderNickname: z.string(),
+});
+
+/** Single player's final stats in race_end.results (D-10). */
+export const playerFinalStatsSchema = z.object({
+  playerId: z.string().uuid(),
+  finishTimeMs: z.number().int().nonnegative(),
+  wpm: z.number().nonnegative(),
+  accuracy: z.number().min(0).max(1),
 });
 
 export const serverToClientSchema = z.discriminatedUnion("type", [
@@ -209,6 +238,7 @@ export const serverToClientSchema = z.discriminatedUnion("type", [
   raceStartSchema,
   cursorUpdateSchema,
   playerLeftSchema,
+  graceCountdownSchema,
   raceEndSchema,
 ]);
 
@@ -224,3 +254,5 @@ export type RaceStart = z.infer<typeof raceStartSchema>;
 export type CursorUpdate = z.infer<typeof cursorUpdateSchema>;
 export type PlayerLeft = z.infer<typeof playerLeftSchema>;
 export type RaceEnd = z.infer<typeof raceEndSchema>;
+export type GraceCountdown = z.infer<typeof graceCountdownSchema>;
+export type PlayerFinalStats = z.infer<typeof playerFinalStatsSchema>;

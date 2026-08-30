@@ -47,6 +47,13 @@ describe("Phase 2 wire schemas — C→S round-trip", () => {
         graceSeconds: 5,
       }).success,
     ).toBe(true);
+    // Backwards-compat: rematch sends without passageId (D-04 auto-deal)
+    expect(
+      clientToServerSchema.safeParse({
+        type: "start_race",
+        graceSeconds: 5,
+      }).success,
+    ).toBe(true);
     expect(
       clientToServerSchema.safeParse({
         type: "keystroke",
@@ -315,6 +322,46 @@ describe("Anti-cheat invariants baked into schemas", () => {
         index: 0,
         serverTs: 1000,
         charStates: [],
+      }).success,
+    ).toBe(true);
+  });
+
+  test("13. grace_countdown + race_end.results round-trip (D-15 + D-10)", () => {
+    expect(
+      serverToClientSchema.safeParse({
+        type: "grace_countdown",
+        remainingMs: 4500,
+        leaderPlayerId: VALID_UUID,
+        leaderNickname: "Alice",
+      }).success,
+    ).toBe(true);
+    expect(
+      serverToClientSchema.safeParse({
+        type: "race_end",
+        reason: "finished",
+        finishedPlayerIds: [VALID_UUID, VALID_UUID_2],
+        results: [
+          {
+            playerId: VALID_UUID,
+            finishTimeMs: 30000,
+            wpm: 60,
+            accuracy: 0.95,
+          },
+          {
+            playerId: VALID_UUID_2,
+            finishTimeMs: 35000,
+            wpm: 50,
+            accuracy: 0.90,
+          },
+        ],
+      }).success,
+    ).toBe(true);
+    // race_end without results still works (backwards compat)
+    expect(
+      serverToClientSchema.safeParse({
+        type: "race_end",
+        reason: "abandoned",
+        finishedPlayerIds: [VALID_UUID],
       }).success,
     ).toBe(true);
   });

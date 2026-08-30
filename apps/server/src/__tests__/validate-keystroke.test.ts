@@ -40,6 +40,8 @@ function fakeRoom(
     usedPassageIds: new Set(),
     deckOrder: [],
     deckCursor: 0,
+    firstFinisherId: null,
+    graceEndsAtServerMs: null,
   };
 }
 

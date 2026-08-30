@@ -32,6 +32,8 @@ function fakeRoom(state: Room["state"], startsAtServerMs: number | null = null):
     usedPassageIds: new Set(),
     deckOrder: [],
     deckCursor: 0,
+    firstFinisherId: null,
+    graceEndsAtServerMs: null,
   };
 }
 

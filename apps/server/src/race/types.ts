@@ -67,4 +67,8 @@ export interface Room {
   deckOrder: string[];
   /** Phase 3: next-to-deal index into deckOrder. */
   deckCursor: number;
+  /** Phase 3 Plan 04: who finished first in this race (null until first finish). */
+  firstFinisherId: PlayerId | null;
+  /** Phase 3 Plan 04: server-ms timestamp when grace period ends; race ends at 0. */
+  graceEndsAtServerMs: number | null;
 }

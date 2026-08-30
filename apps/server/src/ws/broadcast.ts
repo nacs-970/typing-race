@@ -2,8 +2,9 @@
  * Broadcast helpers — server iterates `room.players` and sends WS frames.
  * Inbound: a `Room` (NOT a `string` code) — caller has already resolved.
  */
-import type { JoinedRoom, LobbyState, PlayerLeft } from "@typing-race/shared";
+import type { JoinedRoom, LobbyState, PlayerLeft, RaceEnd, GraceCountdown, PlayerFinalStats } from "@typing-race/shared";
 import type { Room } from "../race/types.ts";
+import { computeAccuracy } from "../race/scoring.ts";
 
 /** Send a frame to every player in the room. Errors swallowed (one slow client ≠ DoS). */
 export function broadcastToRoom(room: Room, frame: object): void {
@@ -61,4 +62,46 @@ export function broadcastJoinedRoom(room: Room, playerId: string): void {
   } catch {
     // ignore
   }
+}
+
+/** Build a race_end frame with per-player final stats (D-10).
+ *  Players who never finished (no finishedAtServerMs) get `now` as finishTime
+ *  so they still appear in the results — D-08 grace gives them a fair shot.
+ */
+export function buildRaceEndFrame(room: Room, now: number = Date.now()): RaceEnd {
+  const results: PlayerFinalStats[] = [...room.players.values()].map((p) => {
+    const correctChars = p.charStates.length - p.uncorrectedErrors;
+    return {
+      playerId: p.playerId,
+      finishTimeMs: p.finishedAtServerMs ?? now,
+      wpm: p.currentWpm,
+      accuracy: computeAccuracy({
+        correctChars,
+        totalKeystrokes: p.totalKeystrokes,
+      }),
+    };
+  });
+  const finishedPlayerIds = results
+    .filter((r) => room.players.get(r.playerId)?.finishedAtServerMs !== null)
+    .map((r) => r.playerId);
+  return {
+    type: "race_end",
+    reason: "finished",
+    finishedPlayerIds,
+    results,
+  };
+}
+
+/** Broadcast grace_countdown to the room — D-15. */
+export function broadcastGraceCountdown(room: Room, now: number = Date.now()): void {
+  if (room.firstFinisherId === null || room.graceEndsAtServerMs === null) return;
+  const leader = room.players.get(room.firstFinisherId);
+  if (!leader) return;
+  const frame: GraceCountdown = {
+    type: "grace_countdown",
+    remainingMs: Math.max(0, room.graceEndsAtServerMs - now),
+    leaderPlayerId: room.firstFinisherId,
+    leaderNickname: leader.nickname,
+  };
+  broadcastToRoom(room, frame);
 }

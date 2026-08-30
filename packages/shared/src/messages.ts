@@ -9,6 +9,18 @@
 import { z } from "zod";
 
 // ──────────────────────────────────────────────────────────────────────────
+// Shared regex / helpers
+// ──────────────────────────────────────────────────────────────────────────
+
+const ROOM_CODE_REGEX = /^[A-HJ-NP-Z2-9]{6}$/;
+const PLAYER_SUMMARY = z.object({
+  playerId: z.string().uuid(),
+  nickname: z.string(),
+  isHost: z.boolean(),
+  progress: z.number().int().nonnegative(),
+});
+
+// ──────────────────────────────────────────────────────────────────────────
 // Client → Server
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -21,7 +33,7 @@ export const clientPingSchema = z.object({
 /** Join a 6-char room code with a nickname. */
 export const joinRoomSchema = z.object({
   type: z.literal("join_room"),
-  code: z.string().regex(/^[A-HJ-NP-Z2-9]{6}$/, "invalid room code"),
+  code: z.string().regex(ROOM_CODE_REGEX, "invalid room code"),
   nickname: z.string().min(1).max(20),
 });
 
@@ -30,16 +42,59 @@ export const leaveRoomSchema = z.object({
   type: z.literal("leave_room"),
 });
 
+/** Create a new room; client becomes the host. */
+export const createRoomSchema = z.object({
+  type: z.literal("create_room"),
+  nickname: z.string().min(1).max(20),
+});
+
+/** NTP-style clock sync round-trip (WS backup path; HTTP is primary). */
+export const clockSyncSchema = z.object({
+  type: z.literal("clock_sync"),
+  t0: z.number().int().nonnegative(), // client send time
+  t3: z.number().int().nonnegative(), // client receive time of last response
+});
+
+/** Host starts the race (only valid in `lobby` state with ≥2 players). */
+export const startRaceSchema = z.object({
+  type: z.literal("start_race"),
+});
+
+/** Single keystroke during the race; server validates + broadcasts. */
+export const keystrokeSchema = z.object({
+  type: z.literal("keystroke"),
+  index: z.number().int().nonnegative(),
+  char: z.string().length(1),
+  clientTs: z.number().int().nonnegative(),
+});
+
+/** Advisory cursor position; 10Hz throttled client-side. */
+export const cursorPositionSchema = z.object({
+  type: z.literal("cursor_position"),
+  index: z.number().int().nonnegative(),
+  clientTs: z.number().int().nonnegative(),
+});
+
 export const clientToServerSchema = z.discriminatedUnion("type", [
   clientPingSchema,
   joinRoomSchema,
   leaveRoomSchema,
+  createRoomSchema,
+  clockSyncSchema,
+  startRaceSchema,
+  keystrokeSchema,
+  cursorPositionSchema,
 ]);
 
 export type ClientToServer = z.infer<typeof clientToServerSchema>;
 export type ClientPing = z.infer<typeof clientPingSchema>;
 export type JoinRoom = z.infer<typeof joinRoomSchema>;
 export type LeaveRoom = z.infer<typeof leaveRoomSchema>;
+export type CreateRoom = z.infer<typeof createRoomSchema>;
+export type ClockSync = z.infer<typeof clockSyncSchema>;
+export type StartRace = z.infer<typeof startRaceSchema>;
+export type Keystroke = z.infer<typeof keystrokeSchema>;
+export type CursorPosition = z.infer<typeof cursorPositionSchema>;
 
 // ──────────────────────────────────────────────────────────────────────────
 // Server → Client
@@ -75,10 +130,73 @@ export const errorSchema = z.object({
   message: z.string(),
 });
 
+/** Sent to the client that just joined/created a room. */
+export const joinedRoomSchema = z.object({
+  type: z.literal("joined_room"),
+  playerId: z.string().uuid(),
+  roomCode: z.string().regex(ROOM_CODE_REGEX),
+  you: z.object({
+    nickname: z.string(),
+    isHost: z.boolean(),
+  }),
+  players: z.array(PLAYER_SUMMARY),
+  clockOffsetMs: z.number(),
+});
+
+/** Broadcast to all members when the lobby composition changes. */
+export const lobbyStateSchema = z.object({
+  type: z.literal("lobby_state"),
+  roomCode: z.string().regex(ROOM_CODE_REGEX),
+  players: z.array(PLAYER_SUMMARY),
+});
+
+/** Sent when the host starts the race; clients show the countdown UI. */
+export const countdownSchema = z.object({
+  type: z.literal("countdown"),
+  startsAtServerMs: z.number().int(),
+  secondsRemaining: z.number().int().min(0).max(10),
+});
+
+/** Sent at the race-start moment; carries the passage text. */
+export const raceStartSchema = z.object({
+  type: z.literal("race_start"),
+  startsAtServerMs: z.number().int(),
+  passageId: z.string(),
+  passageText: z.string(),
+});
+
+/** Broadcast when a player's cursor advances (accepted keystroke or advisory). */
+export const cursorUpdateSchema = z.object({
+  type: z.literal("cursor_update"),
+  playerId: z.string().uuid(),
+  index: z.number().int().nonnegative(),
+  serverTs: z.number().int(),
+});
+
+/** Broadcast when a player leaves the room. */
+export const playerLeftSchema = z.object({
+  type: z.literal("player_left"),
+  playerId: z.string().uuid(),
+});
+
+/** Sent when the race ends (all finished or abandoned). */
+export const raceEndSchema = z.object({
+  type: z.literal("race_end"),
+  reason: z.enum(["finished", "abandoned"]),
+  finishedPlayerIds: z.array(z.string().uuid()),
+});
+
 export const serverToClientSchema = z.discriminatedUnion("type", [
   helloSchema,
   pongSchema,
   errorSchema,
+  joinedRoomSchema,
+  lobbyStateSchema,
+  countdownSchema,
+  raceStartSchema,
+  cursorUpdateSchema,
+  playerLeftSchema,
+  raceEndSchema,
 ]);
 
 export type ServerToClient = z.infer<typeof serverToClientSchema>;
@@ -86,3 +204,10 @@ export type Hello = z.infer<typeof helloSchema>;
 export type Pong = z.infer<typeof pongSchema>;
 export type ServerError = z.infer<typeof errorSchema>;
 export type ServerErrorCode = ServerError["code"];
+export type JoinedRoom = z.infer<typeof joinedRoomSchema>;
+export type LobbyState = z.infer<typeof lobbyStateSchema>;
+export type Countdown = z.infer<typeof countdownSchema>;
+export type RaceStart = z.infer<typeof raceStartSchema>;
+export type CursorUpdate = z.infer<typeof cursorUpdateSchema>;
+export type PlayerLeft = z.infer<typeof playerLeftSchema>;
+export type RaceEnd = z.infer<typeof raceEndSchema>;

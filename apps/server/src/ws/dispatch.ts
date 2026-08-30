@@ -154,9 +154,11 @@ export function dispatch(
     }
 
     case "clock_sync": {
-      // Plan 03 fills this fully; minimal stub here so dispatch is exhaustive.
+      // WS backup path; HTTP /api/clock-sync is primary.
       const t1 = Date.now();
-      ws.data.clientOffsetMs = ((t1 - msg.t0) + (t1 - msg.t3)) / 2;
+      const t2 = Date.now();
+      // ((t1 - t0) + (t2 - t3)) / 2
+      ws.data.clientOffsetMs = ((t1 - msg.t0) + (t2 - msg.t3)) / 2;
       ws.send(
         JSON.stringify({
           type: "pong",

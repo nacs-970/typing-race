@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 current_phase: 2
 current_phase_name: Race Engine
-status: ready_to_execute
-stopped_at: Phase 1 complete (Foundation ships locally + Fly.io deploy infra ready). Phase 2 Race Engine plans written (4 plans, 2231 lines) and verified PASSED. Ready to execute Phase 2.
-last_updated: "2026-08-30T08:38:00.000Z"
+status: complete
+stopped_at: Phase 2 Race Engine complete (4 plans, 40 tests pass, 22/22 must-haves verified). Ready to plan Phase 3 (Race Track + WPM).
+last_updated: "2026-08-30T22:00:00.000Z"
 last_activity: 2026-08-30
-last_activity_desc: Phase 2 plans verified — ready for execution
-state_head: dbe803f
+last_activity_desc: Phase 2 Race Engine complete + verified
+state_head: 80baeecf8270187c5440568e039c67b35fd4e747
 progress:
   total_phases: 6
-  completed_phases: 1
-  total_plans: 22
-  completed_plans: 3
-  percent: 14
+  completed_phases: 2
+  total_plans: 7
+  completed_plans: 7
+  percent: 33
 ---
 
 # Project State
@@ -23,35 +23,36 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-30)
 
 **Core value:** Two connected clients see each other's cursor in real time and the race ends with a fair, identical WPM/accuracy score.
-**Current focus:** Phase 1 — Foundation
+**Current focus:** Phase 3 — Race Track + WPM
 
 ## Current Position
 
-Phase: 1 (Foundation) — COMPLETE
-Plan: 3 of 3 (all plans complete)
-Status: Phase 1 done — Foundation ships locally + Fly.io deploy infra built
-Last activity: 2026-08-30 — Plan 03 SUMMARY + STATE committed; Phase 1 verified
+Phase: 2 (Race Engine) — COMPLETE
+Plan: 4 of 4 (all complete)
+Status: Phase 2 done — server-authoritative race engine with clock sync + anti-cheat + cursor broadcasting
+Last activity: 2026-08-30 — Plan 04 SUMMARY + VERIFICATION + STATE committed; Phase 2 verified 22/22
 
-Progress: [██████████] 100% (Phase 1)
+Progress: [██████████] 100% (Phase 2)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3
-- Average duration: 18 min
-- Total execution time: 1.0 hours
+- Total plans completed: 7 (3 foundation + 4 race engine)
+- Average duration: 21 min
+- Total execution time: 2.5 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 — Foundation | 3/3 | 3 | 18 min |
+| 2 — Race Engine | 4/4 | 4 | 21 min |
 
 **Recent Trend:**
 
-- Last 5 plans: Plan 01 (25 min, complete), Plan 02 (15 min, complete)
-- Trend: two plans complete; execution time decreasing as infrastructure stabilizes
+- Last 4 plans: 02-01 (18 min), 02-02 (22 min), 02-03 (17 min), 02-04 (20 min)
+- Trend: stable execution time around 20 min/plan as patterns established
 
 *Updated after each plan completion*
 
@@ -64,6 +65,10 @@ Full log in PROJECT.md Key Decisions table. Recent decisions affecting current w
 - Phase 1: bun-workspace monorepo (root + `apps/server`, `apps/client`, `packages/shared`); Bun-native WebSocket (not Hono `upgradeWebSocket`) for typed `ws.data`; Zod 4 discriminated unions as single source of wire schema truth
 - Phase 1 Plan 01 (executed): pinned bun@1.3.2 (per user), `@types/bun@1.4.0`; store-bridge pattern for non-React → Zustand updates; `allowImportingTsExtensions` enabled for Bun-native .ts imports
 - Phase 2: server-authoritative keystroke counting with 4 anti-cheat checks (server-timestamp, pre-start reject, min-interval ≥20ms, char-match); two-phase NTP-style clock sync; 6-char room code, no `I/O/0/1`, collision retry once
+- Phase 2 Plan 01 (executed): nanoid.customAlphabet for room codes; shared/PlayerSummary in race.ts (not messages.ts) to avoid dual-export; Zod 4 UUID v4 strictness required RFC4122-conformant test fixtures
+- Phase 2 Plan 02 (executed): FSM whitelist as `Record<RaceState, ReadonlyArray<RaceState>>`; broadcast helpers swallow individual send errors; `asWs()` cast helper for tests
+- Phase 2 Plan 03 (executed): single `Date.now()` in `recordSyncRequest` (t1===t2 OK); injectable fetch for syncClock tests; App.tsx dev "Simulate countdown" button for one-developer verification
+- Phase 2 Plan 04 (executed): anti-cheat #1 implicit (frame.clientTs never read for timing); cursor_position throttle reuses `lastKeystrokeAt` (Phase 5 may split); `setCursorState` accepts Partial OR function form
 
 ### Pending Todos
 
@@ -71,9 +76,9 @@ None yet.
 
 ### Blockers/Concerns
 
-- Room-code collision math is LOW confidence in research (depends on chosen alphabet). Address in Phase 1 plan 02 (`apps/server/src/codes.ts`).
-- React Compiler config is MEDIUM confidence (new in 2026). Defer to Phase 6 plan 03 — profile first, opt-in only if DevTools shows cursor render bottleneck.
-- Styling choice (Tailwind v4 vs plain CSS vs CSS Modules) deferred to Phase 5 — pick during frontend polish planning. Two design refs ready: Renkit (user's existing React19 + Vite + CSS Modules + data-theme pattern) and Claude.com brand spec. Default to Renkit-style unless user overrides.
+- Room-code collision math: ADDRESSED in Plan 01 (3 retries, 887M keyspace, birthday paradox ~0.006% at 10k rooms)
+- React Compiler config: MEDIUM confidence. Defer to Phase 6 plan 03 — profile first, opt-in only if DevTools shows cursor render bottleneck.
+- Styling choice (Tailwind v4 vs plain CSS vs CSS Modules) deferred to Phase 5 — pick during frontend polish planning. Two design refs ready: Renkit and Claude.com brand spec. Default to Renkit-style unless user overrides.
 - Bun WebSocket lifecycle under browser tab kill (esp. mobile Safari) MEDIUM confidence — verify empirically in Phase 4 plan 04.
 
 ## Deferred Items
@@ -86,11 +91,13 @@ Items acknowledged and deferred, most recent first:
 | Feature | 2-3 themes / dark mode toggle | Deferred | v1 planning | v2 polish |
 | Feature | Reaction emoji on race-end | Deferred | v1 planning | v2 polish |
 | Feature | Sound effects | Deferred | v1 planning | v2 polish |
+| Feature | Cursor interpolation polish | Deferred | Phase 5 | v1 |
+| Feature | Per-char error highlighting | Deferred | Phase 3 | v1 |
 | Feature | Persistent leaderboards | Out of scope | PROJECT.md | v1 |
 | Feature | Accounts / login | Out of scope | PROJECT.md | v1 |
 
 ## Session Continuity
 
-Last session: 2026-08-30 (Plan 02 execution)
-Stopped at: Phase 1 Plan 02 complete — Hono serveStatic for prod SPA + precompressed .gz/.br siblings + Bun WS production knobs (idleTimeout 120, maxPayloadLength 16KB, backpressureLimit 1MB, closeOnBackpressureLimit true, sendPings true, perMessageDeflate true). Dev (Vite proxy) and prod (single Bun) modes both independently verified. Both modes documented in README.
-Resume file: None — proceed to Phase 1 Plan 03 next.
+Last session: 2026-08-30 (Phase 2 execution)
+Stopped at: Phase 2 Race Engine complete + verified (22/22 must-haves). Ready to plan Phase 3 (Race Track + WPM).
+Resume file: None — proceed to Phase 3 planning next.

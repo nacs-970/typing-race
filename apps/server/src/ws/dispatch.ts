@@ -1,11 +1,23 @@
+/**
+ * Decode + validate an inbound WS frame, then dispatch by `type`.
+ * Invalid frames log a warning and are dropped — keeps the connection
+ * open so devs can iterate without losing state.
+ */
 import { clientToServerSchema } from "@typing-race/shared";
 import { logger } from "../logger.ts";
 import { echoPing, type WsData } from "./handlers.ts";
+import {
+  createRoom,
+  addPlayer,
+  removePlayer,
+  rooms,
+} from "../rooms/manager.ts";
+import { transition } from "../race/controller.ts";
+import { broadcastToRoom } from "./broadcast.ts";
+import type { Countdown } from "@typing-race/shared";
 
 /**
  * Decode + validate an inbound WS frame, then dispatch by `type`.
- * Invalid frames log a warning and are dropped — Phase 1 keeps the
- * connection open so devs can keep iterating without losing state.
  */
 export function dispatch(
   ws: import("bun").ServerWebSocket<WsData>,
@@ -42,20 +54,126 @@ export function dispatch(
     case "ping":
       echoPing(ws, msg.clientTs);
       break;
-    case "join_room":
+
+    case "create_room": {
+      if (ws.data.roomCode) {
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            code: "ALREADY_IN_ROOM",
+            message: "leave current room first",
+          }),
+        );
+        return;
+      }
+      const { code } = createRoom(ws, msg.nickname);
+      ws.data.roomCode = code;
+      ws.data.nickname = msg.nickname;
+      logger.info({ playerId: ws.data.playerId, code }, "[ws] create_room");
+      break;
+    }
+
+    case "join_room": {
+      if (ws.data.roomCode) {
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            code: "ALREADY_IN_ROOM",
+            message: "leave current room first",
+          }),
+        );
+        return;
+      }
+      const r = addPlayer(msg.code, ws.data.playerId, msg.nickname, ws);
+      if (!r.ok) {
+        ws.send(
+          JSON.stringify({ type: "error", code: r.code, message: r.code }),
+        );
+        return;
+      }
+      // Send joined_room to THIS client with their offset; lobby_state broadcast
+      // already went out from addPlayer to everyone.
+      ws.send(
+        JSON.stringify({
+          type: "joined_room",
+          playerId: ws.data.playerId,
+          roomCode: r.room.code,
+          you: { nickname: msg.nickname, isHost: r.player.isHost },
+          players: [...r.room.players.values()].map((p) => ({
+            playerId: p.playerId,
+            nickname: p.nickname,
+            isHost: p.isHost,
+            progress: p.progress,
+          })),
+          clockOffsetMs: ws.data.clientOffsetMs,
+        }),
+      );
       logger.info(
-        { playerId: ws.data.playerId, code: msg.code, nickname: msg.nickname },
+        { playerId: ws.data.playerId, code: msg.code },
         "[ws] join_room",
       );
-      ws.data.roomCode = msg.code;
       break;
-    case "leave_room":
-      logger.info({ playerId: ws.data.playerId }, "[ws] leave_room");
+    }
+
+    case "leave_room": {
+      if (!ws.data.roomCode) return;
+      removePlayer(ws.data.roomCode, ws.data.playerId);
       ws.data.roomCode = null;
+      logger.info({ playerId: ws.data.playerId }, "[ws] leave_room");
       break;
+    }
+
+    case "start_race": {
+      const code = ws.data.roomCode;
+      if (!code) return;
+      const room = rooms.get(code);
+      if (!room || room.hostId !== ws.data.playerId) {
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            code: "NOT_IN_ROOM",
+            message: "host-only or not in room",
+          }),
+        );
+        return;
+      }
+      if (room.state !== "lobby") return;
+      try {
+        transition(room, "countdown");
+      } catch {
+        return;
+      }
+      const frame: Countdown = {
+        type: "countdown",
+        startsAtServerMs: room.startsAtServerMs!,
+        secondsRemaining: 3,
+      };
+      broadcastToRoom(room, frame);
+      logger.info({ code, startsAtServerMs: room.startsAtServerMs }, "[ws] start_race");
+      break;
+    }
+
+    case "clock_sync": {
+      // Plan 03 fills this fully; minimal stub here so dispatch is exhaustive.
+      const t1 = Date.now();
+      ws.data.clientOffsetMs = ((t1 - msg.t0) + (t1 - msg.t3)) / 2;
+      ws.send(
+        JSON.stringify({
+          type: "pong",
+          clientTs: msg.t0,
+          serverTs: t1,
+        }),
+      );
+      break;
+    }
+
+    case "keystroke":
+    case "cursor_position":
+      // Plan 04 wires these (anti-cheat + cursor broadcast)
+      // For Plan 02 they're no-ops so the dispatch is exhaustive.
+      break;
+
     default: {
-      // Exhaustive switch — TS will yell if a new message type is added
-      // without a corresponding case here.
       const _exhaustive: never = msg;
       void _exhaustive;
     }

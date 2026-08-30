@@ -4,6 +4,8 @@ import routes from "./routes.ts";
 import staticApp from "./static.ts";
 import { dispatch } from "./ws/dispatch.ts";
 import { type WsData, sendHello } from "./ws/handlers.ts";
+import { tick } from "./race/controller.ts";
+import { removePlayer } from "./rooms/manager.ts";
 import { PORT } from "./env.ts";
 
 /**
@@ -28,7 +30,12 @@ const server = Bun.serve<WsData>({
     if (url.pathname === "/ws") {
       const playerId = crypto.randomUUID();
       const success = srv.upgrade(req, {
-        data: { playerId, roomCode: null } satisfies WsData,
+        data: {
+          playerId,
+          roomCode: null,
+          nickname: null,
+          clientOffsetMs: 0,
+        } satisfies WsData,
       });
       if (success) return undefined;
       return new Response("WebSocket upgrade failed", { status: 400 });
@@ -68,6 +75,11 @@ const server = Bun.serve<WsData>({
         { playerId: ws.data.playerId, code, reason: String(reason) },
         "[ws] close",
       );
+      // Phase 2: remove from room on disconnect
+      if (ws.data.roomCode) {
+        removePlayer(ws.data.roomCode, ws.data.playerId);
+        ws.data.roomCode = null;
+      }
     },
   },
 
@@ -76,6 +88,9 @@ const server = Bun.serve<WsData>({
     return new Response("Internal Server Error", { status: 500 });
   },
 });
+
+// 1Hz tick — drives Race Controller FSM transitions (countdown → racing)
+const tickInterval = setInterval(() => tick(), 1000);
 
 console.log(
   JSON.stringify({
@@ -96,6 +111,7 @@ console.log(
 for (const sig of ["SIGTERM", "SIGINT"] as const) {
   process.on(sig, () => {
     logger.info({ sig }, "[server] shutdown signal");
+    clearInterval(tickInterval);
     server.stop();
     process.exit(0);
   });

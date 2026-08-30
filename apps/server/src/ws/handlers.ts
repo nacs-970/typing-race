@@ -5,6 +5,9 @@
 export type WsData = {
   playerId: string;
   roomCode: string | null;
+  nickname: string | null;
+  /** NTP-computed offset between client and server clock (ms). Set by Plan 03. */
+  clientOffsetMs: number;
 };
 
 /** Helper: send the initial `hello` frame to a freshly-upgraded socket. */

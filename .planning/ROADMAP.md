@@ -7,7 +7,7 @@ Build a realtime multiplayer typing-race game from a greenfield monorepo to a de
 ## Phases
 
 - [ ] **Phase 1: Foundation** - Monorepo, shared contract, deployable hello world
-- [ ] **Phase 2: Race Engine** - Server-authoritative core with clock sync and anti-cheat
+- [x] **Phase 2: Race Engine** - Server-authoritative core with clock sync and anti-cheat (completed 2026-08-30)
 - [ ] **Phase 3: Race Track + WPM** - Per-word correctness, backspace, results board, passage corpus
 - [ ] **Phase 4: Reconnect** - sessionToken, room sweeper, heartbeat, rematch
 - [ ] **Phase 5: Frontend Polish** - Cursor interpolation, smooth UX, error toasts
@@ -24,6 +24,7 @@ Build a realtime multiplayer typing-race game from a greenfield monorepo to a de
 **Requirements**: REQ-12 (Fly.io single-process deploy), REQ-13 (shared TS types)
 
 **Success Criteria** (what must be TRUE):
+
   1. `bun install` from repo root succeeds; `bun run --filter '*' build` produces both `apps/server/dist` and `apps/client/dist`
   2. `bun run dev` (or per-package dev) serves client at `http://localhost:5173` and server at `http://localhost:3000` with `/health` returning `{ok:true}`
   3. `fly deploy` from a clean checkout produces a public URL that serves the React "hello world" page and `GET /health` returns 200
@@ -32,6 +33,7 @@ Build a realtime multiplayer typing-race game from a greenfield monorepo to a de
 **Plans**: 3 plans
 
 Plans:
+
 - [ ] 01-01: bun-workspace monorepo skeleton (root `package.json`, `apps/server`, `apps/client`, `packages/shared`), TypeScript 7, ESLint/Prettier baseline, root scripts (`dev`, `build`, `test`)
 - [ ] 01-02: Server skeleton (Bun.serve + Hono 4, `/health` route, static SPA serving from `apps/client/dist` in prod, dev proxy), Client skeleton (Vite 8 + React 19 + Zod 4, "Hello Typing Race" page)
 - [ ] 01-03: Fly.io config (`fly.toml`, multi-stage `Dockerfile` on `oven/bun:1.3.x-slim`, `auto_stop_machines = "stop"`, `concurrency.type = "connections"`), deploy script, end-to-end deploy verification
@@ -45,6 +47,7 @@ Plans:
 **Requirements**: REQ-01 (room creation), REQ-02 (lobby), REQ-03 (synced race start), REQ-04 (server-authoritative input validation), REQ-06 (live opponent cursors)
 
 **Success Criteria** (what must be TRUE):
+
   1. Two browser windows both pointed at a freshly created room see the same passage start typing within 50ms of each other (clock-sync verified)
   2. Server rejects keystrokes arriving before `serverStartTs + grace` (50ms) — verified by sending `clientTs` set 60s in the future and confirming WPM reflects real elapsed time, not the spoofed timestamp
   3. Server rejects keystrokes whose `clientTs` advances by less than 20ms between frames; cap sustained WPM at ~250
@@ -54,10 +57,11 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 02-01: Shared Zod wire schemas (`create_room`, `join_room`, `lobby_state`, `race_start`, `keystroke`, `cursor`, `error`) with discriminated union, Room code generator (`nanoid` custom alphabet, collision retry once)
-- [ ] 02-02: Room Manager (`Map<code, Room>`, create/lookup/evict, 8-player cap) + Race Controller FSM (lobby → countdown → racing → finished) with server `tick()`
-- [ ] 02-03: Two-phase clock-sync handshake (`sync_request` → `sync_response` with `t0/t1/t2/t3` per NTP, client computes `offset`), server-authoritative `startAtServerMs`, countdown UI gated on `(startAtServerMs - clockOffset)`
-- [ ] 02-04: Keystroke handler with 4 anti-cheat checks (server-timestamp on receipt, pre-start reject, min-interval ≥20ms, char-match against passage) + optimistic local cursor render + server-confirmed opponent cursor broadcast
+
+- [x] 02-01: Shared Zod wire schemas (`create_room`, `join_room`, `lobby_state`, `race_start`, `keystroke`, `cursor`, `error`) with discriminated union, Room code generator (`nanoid` custom alphabet, collision retry once)
+- [x] 02-02: Room Manager (`Map<code, Room>`, create/lookup/evict, 8-player cap) + Race Controller FSM (lobby → countdown → racing → finished) with server `tick()`
+- [x] 02-03: Two-phase clock-sync handshake (`sync_request` → `sync_response` with `t0/t1/t2/t3` per NTP, client computes `offset`), server-authoritative `startAtServerMs`, countdown UI gated on `(startAtServerMs - clockOffset)`
+- [x] 02-04: Keystroke handler with 4 anti-cheat checks (server-timestamp on receipt, pre-start reject, min-interval ≥20ms, char-match against passage) + optimistic local cursor render + server-confirmed opponent cursor broadcast
 
 ### Phase 3: Race Track + WPM
 
@@ -68,8 +72,9 @@ Plans:
 **Requirements**: REQ-05 (per-word correctness + backspace), REQ-08 (race-end board), REQ-10 (bundled passage corpus)
 
 **Success Criteria** (what must be TRUE):
+
   1. Typing a passage with backspaces shows correct chars in green, errored-then-corrected chars in neutral, errored chars in red — word shows correct only when ALL chars end `correct`
-  2. Server-computed WPM = `correctChars / 5 / minutesElapsed` matches a known fixture (e.g., 30 correct chars in 30s → 2 WPM) verified by unit test
+  2. Server-computed WPM = `correctChars / 5 / minutesElapsed` matches a known fixture (e.g., 30 correct chars in 30s → 12 WPM) verified by unit test
   3. When the first player finishes, all other players see a results board within 1s with finish times, WPM, accuracy, and ranking (finish time primary, WPM tiebreaker)
   4. Loading any room pulls a passage from a bundled JSON file (no network call), 30-60 words, no two consecutive races in the same room use the same passage
   5. Rematch button on results board starts a new race in the same room with a new passage; "Starting in 2s…" pause shows server-synced countdown
@@ -77,6 +82,7 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
+
 - [ ] 03-01: Bundled passage corpus (50-100 public-domain English passages, 30-60 words each, JSON in `packages/shared` or server assets) + corpus picker (no-repeat within room)
 - [ ] 03-02: Per-character state model (`pending | correct | error | corrected`), word-correctness aggregator, server `keystroke` updates char states + broadcasts new cursor + char-state snapshot
 - [ ] 03-03: WPM + accuracy computation (server-only, standard formula, unit tests with fixtures: "30 chars in 30s → 2 WPM"; net WPM with errors penalty; raw WPM)
@@ -91,6 +97,7 @@ Plans:
 **Requirements**: REQ-07 (reconnect mid-race), REQ-09 (rematch polish from Phase 3 deliverable)
 
 **Success Criteria** (what must be TRUE):
+
   1. Closing a browser tab mid-race and reopening the room URL within 60s restores the player's progress; opponent views show "X reconnected" not "X joined"
   2. Server sends full race snapshot on reconnect (`lobby_state` or current race state with all player cursors + char states), 500ms grace before reconnected keystrokes count
   3. Idle rooms (>10min no activity) are evicted by a 60s sweeper; opponent views show graceful "room closed" toast within 5s of last player leaving
@@ -100,6 +107,7 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
+
 - [ ] 04-01: `sessionToken` issuance at join (signed or opaque random, stored in WS context), reconnect handshake (`rejoin_room` with `sessionToken`), server re-binds to existing player slot
 - [ ] 04-02: Race snapshot replay on reconnect (full state per player: cursor index, char states, WPM, race timer), 500ms grace period before keystrokes count, "X reconnected" broadcast
 - [ ] 04-03: Room sweeper (60s interval, evict idle >10min), heartbeat ping/pong in `Bun.serve` WS handlers (15s ping, 5s pong timeout, graceful close), per-IP room-creation rate limit (10/hr, in-memory LRU)
@@ -114,6 +122,7 @@ Plans:
 **Requirements**: REQ-06 (live opponent cursors — interpolation polish)
 
 **Success Criteria** (what must be TRUE):
+
   1. Two side-by-side browser windows show opponent cursor moving smoothly across the passage with no visible jitter at 60fps (cursor interpolation verified under simulated 100ms RTT)
   2. CSS `transform: translate3d()` used for cursor positioning outside the React tree — React DevTools profile shows no per-frame React renders for cursor motion
   3. Lobby shows per-player "ready" indicator; countdown UI ticks down based on `startAtServerMs - clockOffset` (not local clock)
@@ -123,6 +132,7 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
+
 - [ ] 05-01: Separate `cursorStore` (30Hz, isolated from `roomStore` ~1Hz) in Zustand 5, cursor interpolation buffer (100ms) with linear rAF lerp, extrapolation cap 150ms
 - [ ] 05-02: CSS `transform: translate3d()` cursor positioning outside React tree, GPU-accelerated layer, React DevTools profile verification (no per-frame React renders)
 - [ ] 05-03: Server-synced countdown UI, per-player "ready" lobby indicator, "Starting in 2s…" pause with synced timer, rematch flow polish
@@ -137,6 +147,7 @@ Plans:
 **Requirements**: REQ-12 (Fly.io deploy finalized)
 
 **Success Criteria** (what must be TRUE):
+
   1. SIGTERM during active race triggers graceful shutdown: in-flight rooms get `error` frame "server shutting down", client shows graceful toast, no orphaned WS connections after 30s
   2. CI workflow (`bun test` + lint + typecheck + production build + smoke `bun run start` against pinned Bun 1.3.x) passes on every PR; deploy blocked on CI failure
   3. Anti-cheat regression tests confirm: future-timestamped `clientTs` rejected, sub-20ms intervals rejected, pre-start keystrokes rejected, WPM cap 250 enforced
@@ -146,6 +157,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
+
 - [ ] 06-01: SIGTERM handler in Bun.serve (drain in-flight rooms, broadcast `error` frame, force-close WS after 30s), `fly deploy --strategy immediate` documented
 - [ ] 06-02: Bun version pinning (`.bun-version`, Dockerfile `oven/bun:1.3.x-slim`), CI workflow (lint + typecheck + test + build + smoke `bun run start`), deploy gate
 - [ ] 06-03: Anti-cheat regression test suite (4 checks confirmed), README rewrite (deploy strategy, restart behavior, local dev, demo instructions), production smoke test, optional React Compiler opt-in (only if profiling shows cursor render bottleneck)
@@ -158,7 +170,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 0/3 | Not started | - |
-| 2. Race Engine | 0/4 | Not started | - |
+| 2. Race Engine | 4/4 | Complete    | 2026-08-30 |
 | 3. Race Track + WPM | 0/4 | Not started | - |
 | 4. Reconnect | 0/4 | Not started | - |
 | 5. Frontend Polish | 0/4 | Not started | - |

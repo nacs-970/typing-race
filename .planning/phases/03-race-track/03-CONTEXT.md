@@ -27,7 +27,7 @@ Out of phase scope: cursor interpolation polish (Phase 5), reconnect/sessionToke
 
 ### WPM semantics
 
-- **D-05: Net WPM shown live during race.** Formula: `netWPM = max(0, (correctChars / 5) − (uncorrectedErrors / 5)) / minutesElapsed`. Matches ROADMAP criterion 2's spec fixture. Updated server-side on each accepted keystroke; broadcast on `cursor_update` or a separate lightweight `wpm_update` frame.
+- **D-05: Net WPM shown live during race.** Formula: `netWPM = max(0, (correctChars / 5) − (uncorrectedErrors / 5)) / minutesElapsed`. Industry standard (Monkeytype, typeracer). Fixture: 30 correct chars in 30s = 12 WPM (the ROADMAP's "2 WPM" claim was a math error — 30/5/0.5 = 12). Updated server-side on each accepted keystroke; broadcast on `cursor_update` or a separate lightweight `wpm_update` frame.
 - **D-06: Char accuracy shown on results board only.** Formula: `correctChars / totalKeystrokes`. (Not during race — minimal noise.)
 - **D-07: No raw WPM live.** Defer to results board (raw + net both shown there). Simpler single-number UI during race.
 

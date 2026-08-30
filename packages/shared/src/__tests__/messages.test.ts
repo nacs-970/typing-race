@@ -18,8 +18,9 @@ import {
   type ClientToServer,
   type ServerToClient,
 } from "../messages.ts";
+import { PASSAGES } from "../passages.ts";
 
-const VALID_UUID = "11111111-1111-4111-8111-111111111111"; // v4 RFC4122 conformant
+const VALID_UUID = "11111111-1111-4111-8111-000000000001"; // v4 RFC4122 conformant
 const VALID_UUID_2 = "22222222-2222-4222-8222-222222222222";
 
 describe("Phase 2 wire schemas — C→S round-trip", () => {
@@ -37,9 +38,15 @@ describe("Phase 2 wire schemas — C→S round-trip", () => {
         t3: 105,
       }).success,
     ).toBe(true);
-    expect(clientToServerSchema.safeParse({ type: "start_race" }).success).toBe(
-      true,
-    );
+    const known = PASSAGES[0];
+    if (!known) throw new Error("PASSAGES empty");
+    expect(
+      clientToServerSchema.safeParse({
+        type: "start_race",
+        passageId: known.id,
+        graceSeconds: 5,
+      }).success,
+    ).toBe(true);
     expect(
       clientToServerSchema.safeParse({
         type: "keystroke",

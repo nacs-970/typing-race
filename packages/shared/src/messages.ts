@@ -58,6 +58,8 @@ export const clockSyncSchema = z.object({
 /** Host starts the race (only valid in `lobby` state with ≥2 players). */
 export const startRaceSchema = z.object({
   type: z.literal("start_race"),
+  passageId: z.string().uuid(),
+  graceSeconds: z.number().int().min(3).max(10).default(5),
 });
 
 /** Single keystroke during the race; server validates + broadcasts. */
@@ -141,6 +143,7 @@ export const joinedRoomSchema = z.object({
   }),
   players: z.array(PLAYER_SUMMARY),
   clockOffsetMs: z.number(),
+  hostPickedPassagePreview: z.string().optional(),
 });
 
 /** Broadcast to all members when the lobby composition changes. */
@@ -148,6 +151,7 @@ export const lobbyStateSchema = z.object({
   type: z.literal("lobby_state"),
   roomCode: z.string().regex(ROOM_CODE_REGEX),
   players: z.array(PLAYER_SUMMARY),
+  hostPickedPassagePreview: z.string().optional(),
 });
 
 /** Sent when the host starts the race; clients show the countdown UI. */

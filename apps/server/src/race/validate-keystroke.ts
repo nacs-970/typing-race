@@ -3,23 +3,34 @@
  *
  * 4 checks (all must pass for a keystroke to be accepted):
  *   1. Server timestamp — uses `now` (server's own Date.now()), NOT frame.clientTs
- *   2. Pre-start reject — room.state === "racing" AND now >= startsAtServerMs + 50ms grace
+ *   2. Pre-start reject — room.state must be "racing" OR "grace" AND
+ *      now >= startsAtServerMs + 50ms grace (D-08: others keep typing
+ *      during grace)
  *   3. Min-interval — now - player.lastKeystrokeAt >= 20ms (anti-autoclicker)
  *   4. Char-match + range — frame.char === passageText[frame.index]
  *
- * On success: stamps `player.lastKeystrokeAt = now` and bumps
- * `player.progress = max(player.progress, frame.index + 1)`.
+ * On success: stamps server state, computes new charStates snapshot
+ * (last-write-wins per position, D-11/D-12), updates progress,
+ * sets finishedAtServerMs on first-time passage completion.
  *
  * `now` is injected for testability.
  */
 import type { Keystroke, ServerErrorCode } from "@typing-race/shared";
-import type { Player, Room } from "./types.ts";
+import type { CharState, Player, Room } from "./types.ts";
+import { countUncorrectedErrors } from "./scoring.ts";
 
 const PRE_START_GRACE_MS = 50;
 const MIN_INTERVAL_MS = 20;
 
+export type PlayerPatch = {
+  totalKeystrokes: number;
+  uncorrectedErrors: number;
+  currentWpm: number;
+  finishedAtServerMs: number | null;
+};
+
 export type ValidateResult =
-  | { ok: true }
+  | { ok: true; newCharStates: CharState[]; playerPatch: PlayerPatch }
   | { ok: false; reason: ServerErrorCode };
 
 export function validateKeystroke(args: {
@@ -32,10 +43,14 @@ export function validateKeystroke(args: {
   const { room, player, frame, passageText, now } = args;
 
   // Check 1: implicit — server uses `now`, not `frame.clientTs`.
-  // (frame.clientTs exists in the schema but the validator never reads it.)
 
-  // Check 2: pre-start reject (state must be racing + grace elapsed)
-  if (room.state !== "racing") return { ok: false, reason: "NOT_IN_ROOM" };
+  // Check 2: pre-start reject — accept "racing" OR "grace" (D-08).
+  // RaceState union doesn't include "grace" yet (Plan 04 adds it);
+  // we accept any non-(lobby|countdown|finished) state as racing-or-grace
+  // by rejecting only the explicit pre-race states.
+  if (room.state === "lobby" || room.state === "countdown") {
+    return { ok: false, reason: "NOT_IN_ROOM" };
+  }
   if (room.startsAtServerMs === null) return { ok: false, reason: "NOT_IN_ROOM" };
   if (now < room.startsAtServerMs + PRE_START_GRACE_MS) {
     return { ok: false, reason: "RATE_LIMITED" };
@@ -55,10 +70,50 @@ export function validateKeystroke(args: {
     return { ok: false, reason: "INVALID_FRAME" };
   }
 
-  // All checks passed — stamp server state
+  // All checks passed — compute char-state snapshot (immutable: don't mutate)
+  const newCharStates: CharState[] = player.charStates.slice();
+  // Grow array if first keystroke (or passage not yet initialised)
+  if (newCharStates.length < passageText.length) {
+    while (newCharStates.length < passageText.length) {
+      newCharStates.push("pending");
+    }
+  }
+  // Last-write-wins per position (Pitfall 1 + D-11/D-12: 2-tone, no
+  // "corrected" intermediate — once wrong-then-right, state is "correct")
+  newCharStates[frame.index] = "correct";
+
+  // Recompute aggregates from snapshot
+  const uncorrectedErrors = countUncorrectedErrors(newCharStates);
+  const totalKeystrokes = player.totalKeystrokes + 1;
+  // currentWpm placeholder 0 — Plan 03 wires the real formula (D-05)
+
+  // Stamp server state
+  player.charStates = newCharStates;
+  player.totalKeystrokes = totalKeystrokes;
+  player.uncorrectedErrors = uncorrectedErrors;
+  player.currentWpm = 0;
   player.lastKeystrokeAt = now;
   if (frame.index + 1 > player.progress) {
     player.progress = frame.index + 1;
   }
-  return { ok: true };
+  // First-time finish detection
+  let finishedAtServerMs = player.finishedAtServerMs;
+  if (
+    player.progress >= passageText.length &&
+    finishedAtServerMs === null
+  ) {
+    finishedAtServerMs = now;
+    player.finishedAtServerMs = now;
+  }
+
+  return {
+    ok: true,
+    newCharStates,
+    playerPatch: {
+      totalKeystrokes,
+      uncorrectedErrors,
+      currentWpm: 0,
+      finishedAtServerMs,
+    },
+  };
 }

@@ -56,6 +56,11 @@ function fakePlayer(lastKeystrokeAt = 0, progress = 0): Player {
     lastKeystrokeAt,
     clientOffsetMs: 0,
     joinedAt: 0,
+    charStates: [],
+    totalKeystrokes: 0,
+    uncorrectedErrors: 0,
+    currentWpm: 0,
+    finishedAtServerMs: null,
   };
 }
 

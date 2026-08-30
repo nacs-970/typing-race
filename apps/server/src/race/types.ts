@@ -16,6 +16,9 @@ export type { PlayerId, PassageId, PlayerSummary, RaceState };
 /** Type alias for a Bun WS reference typed with our WsData shape. */
 export type WsRef = import("bun").ServerWebSocket<WsData>;
 
+/** Per-character state. 2-tone (D-11/D-12): no "corrected" intermediate. */
+export type CharState = "pending" | "correct" | "error";
+
 export interface Player {
   playerId: PlayerId;
   nickname: string;
@@ -29,6 +32,17 @@ export interface Player {
   clientOffsetMs: number;
   /** Server timestamp when player joined (ms). Used for host-promotion tie-break. */
   joinedAt: number;
+  // ---- Phase 3 fields ----
+  /** Per-position state snapshot. Length === passageText.length when racing. */
+  charStates: CharState[];
+  /** Total accepted keystrokes (including errors) — denominator of accuracy (D-06). */
+  totalKeystrokes: number;
+  /** Positions currently in "error" state (uncorrected errors, D-05 numerator). */
+  uncorrectedErrors: number;
+  /** Server-computed net WPM (D-05). Plan 02 placeholder = 0; Plan 03 fills real formula. */
+  currentWpm: number;
+  /** Set on first keystroke that completes the passage (Plan 04 uses for race-end). */
+  finishedAtServerMs: number | null;
 }
 
 export interface Room {

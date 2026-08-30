@@ -85,6 +85,11 @@ describe("tick()", () => {
       lastKeystrokeAt: 0,
       clientOffsetMs: 0,
       joinedAt: 0,
+      charStates: [],
+      totalKeystrokes: 0,
+      uncorrectedErrors: 0,
+      currentWpm: 0,
+      finishedAtServerMs: null,
     });
     room.startsAtServerMs = 1000; // already past
     rooms.set(room.code, room);

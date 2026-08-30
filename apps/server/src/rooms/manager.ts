@@ -91,6 +91,12 @@ export function addPlayer(
     lastKeystrokeAt: 0,
     clientOffsetMs: 0,
     joinedAt: Date.now(),
+    // Phase 3 fields
+    charStates: [],
+    totalKeystrokes: 0,
+    uncorrectedErrors: 0,
+    currentWpm: 0,
+    finishedAtServerMs: null,
   };
   room.players.set(playerId, player);
   room.lastActivityAt = Date.now();

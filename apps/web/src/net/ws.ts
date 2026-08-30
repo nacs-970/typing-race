@@ -1,19 +1,23 @@
-import { serverToClientSchema } from "@typing-race/shared";
+import {
+  serverToClientSchema,
+  type ServerToClient,
+} from "@typing-race/shared";
 import { setConnectionStore } from "../store/store-bridge.ts";
+import { setCursorState } from "../store/cursor.ts";
+import { setClockState } from "../store/clock.ts";
 
 /**
  * Thin wrapper over the browser WebSocket. Opens a connection to the dev
  * proxy (which forwards to Bun on :8080), validates every inbound frame
- * against the shared Zod schema, and pushes updates into the Zustand store.
- *
- * Phase 1: auto-reconnect on close with a 1s backoff.
- * Phase 3: replace with a smarter reconnect (exponential, jitter, leader-aware).
+ * against the shared Zod schema, and pushes updates into the Zustand stores.
  */
 export class WsConnection {
   private url: string;
   private socket: WebSocket | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private explicitlyClosed = false;
+  /** Subscriber callbacks for app-level frame handlers (App.tsx, etc.) */
+  private subscribers: ((frame: ServerToClient) => void)[] = [];
 
   constructor(url: string) {
     this.url = url;
@@ -37,13 +41,11 @@ export class WsConnection {
       try {
         parsed = JSON.parse(typeof ev.data === "string" ? ev.data : "");
       } catch {
-        // ignore malformed frames
         return;
       }
       const result = serverToClientSchema.safeParse(parsed);
       if (!result.success) {
-        // Phase 1: drop silently; future phase may surface to UI
-        return;
+        return; // Phase 1: drop silently
       }
       const msg = result.data;
       if (msg.type === "hello") {
@@ -51,6 +53,34 @@ export class WsConnection {
           playerId: msg.playerId,
           serverTs: msg.serverTs,
         });
+      }
+      if (msg.type === "cursor_update") {
+        // Opponent cursor (filter our own — server already broadcasts to all)
+        setCursorState((s) => {
+          const next = new Map(s.cursors);
+          next.set(msg.playerId, {
+            playerId: msg.playerId,
+            index: msg.index,
+            serverTs: msg.serverTs,
+          });
+          return { cursors: next };
+        });
+      }
+      if (msg.type === "race_end") {
+        setCursorState({ cursors: new Map(), ownIndex: 0 });
+      }
+      if (msg.type === "joined_room") {
+        // Sync server-stamped clockOffsetMs into the clock store on join
+        // (HTTP /api/clock-sync already ran on mount; this is the backup)
+        setClockState({ offsetMs: msg.clockOffsetMs });
+      }
+      // Notify subscribers (App.tsx uses this for race_start / countdown / race_end transitions)
+      for (const sub of this.subscribers) {
+        try {
+          sub(msg);
+        } catch {
+          // ignore
+        }
       }
     });
 
@@ -70,12 +100,22 @@ export class WsConnection {
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.socket?.close();
   }
+
+  subscribe(handler: (frame: ServerToClient) => void): () => void {
+    this.subscribers.push(handler);
+    return () => {
+      this.subscribers = this.subscribers.filter((s) => s !== handler);
+    };
+  }
+
+  /** Send a frame (if connection is open). */
+  send(frame: object): boolean {
+    if (this.socket?.readyState !== WebSocket.OPEN) return false;
+    this.socket.send(JSON.stringify(frame));
+    return true;
+  }
 }
 
-/**
- * In dev, Vite proxies ws://localhost:5173/ws → ws://localhost:8080/ws.
- * In prod, the SPA is served from the same origin, so use the relative /ws.
- */
 const wsUrl =
   import.meta.env.DEV || import.meta.env.MODE === "development"
     ? "ws://localhost:5173/ws"

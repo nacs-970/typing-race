@@ -13,8 +13,9 @@ import {
   rooms,
 } from "../rooms/manager.ts";
 import { transition } from "../race/controller.ts";
+import { validateKeystroke } from "../race/validate-keystroke.ts";
 import { broadcastToRoom } from "./broadcast.ts";
-import type { Countdown } from "@typing-race/shared";
+import type { Countdown, CursorUpdate } from "@typing-race/shared";
 
 /**
  * Decode + validate an inbound WS frame, then dispatch by `type`.
@@ -169,11 +170,83 @@ export function dispatch(
       break;
     }
 
-    case "keystroke":
-    case "cursor_position":
-      // Plan 04 wires these (anti-cheat + cursor broadcast)
-      // For Plan 02 they're no-ops so the dispatch is exhaustive.
+    case "keystroke": {
+      const code = ws.data.roomCode;
+      if (!code) {
+        ws.send(JSON.stringify({ type: "error", code: "NOT_IN_ROOM", message: "no room" }));
+        return;
+      }
+      const room = rooms.get(code);
+      if (!room || !room.passageText) {
+        ws.send(JSON.stringify({ type: "error", code: "NOT_IN_ROOM", message: "no active race" }));
+        return;
+      }
+      const player = room.players.get(ws.data.playerId);
+      if (!player) {
+        ws.send(JSON.stringify({ type: "error", code: "NOT_IN_ROOM", message: "not in room" }));
+        return;
+      }
+      const result = validateKeystroke({
+        room,
+        player,
+        frame: msg,
+        passageText: room.passageText,
+        now: Date.now(),
+      });
+      if (!result.ok) {
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            code: result.reason,
+            message: "keystroke rejected",
+          }),
+        );
+        return;
+      }
+      // Accepted — broadcast cursor_update to OTHER players
+      const cursorFrame: CursorUpdate = {
+        type: "cursor_update",
+        playerId: player.playerId,
+        index: msg.index,
+        serverTs: Date.now(),
+      };
+      for (const other of room.players.values()) {
+        if (other.playerId === player.playerId) continue;
+        try {
+          other.wsRef.send(JSON.stringify(cursorFrame));
+        } catch {
+          // ignore — slow client
+        }
+      }
       break;
+    }
+
+    case "cursor_position": {
+      const code = ws.data.roomCode;
+      if (!code) return;
+      const room = rooms.get(code);
+      if (!room || room.state !== "racing") return; // silent drop
+      const player = room.players.get(ws.data.playerId);
+      if (!player) return;
+      // Throttle at 10Hz (≥100ms) — TODO Phase 5 polish: separate lastCursorAtMs field
+      const now = Date.now();
+      if (now - player.lastKeystrokeAt < 100) return;
+      player.lastKeystrokeAt = now;
+      const cursorFrame: CursorUpdate = {
+        type: "cursor_update",
+        playerId: player.playerId,
+        index: msg.index,
+        serverTs: now,
+      };
+      for (const other of room.players.values()) {
+        try {
+          other.wsRef.send(JSON.stringify(cursorFrame));
+        } catch {
+          // ignore
+        }
+      }
+      break;
+    }
 
     default: {
       const _exhaustive: never = msg;

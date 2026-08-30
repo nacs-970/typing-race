@@ -1,25 +1,30 @@
 import { useEffect, useState } from "react";
 import { useConnectionStore } from "./store/connection.ts";
 import { useClockStore } from "./store/clock.ts";
-import "./net/ws.ts";
+import { ws } from "./net/ws.ts";
+import { setCursorState, shouldSendCursor } from "./store/cursor.ts";
 import { syncClock } from "./net/clock.ts";
 import { CountdownView } from "./components/CountdownView.tsx";
-import type { Countdown } from "@typing-race/shared";
+import { RaceView } from "./components/RaceView.tsx";
+import type { Countdown, RaceStart, ServerToClient } from "@typing-race/shared";
 
 /**
- * Phase 2 SPA — wire + clock-sync + countdown.
- * Phase 4 (Plan 04) extends this with RaceView + cursor rendering.
+ * Phase 2 SPA — wire + clock-sync + countdown + race view (anti-cheat ready).
+ * Phase 3+ extends this with per-char correctness + WPM/accuracy.
  */
 export function App(): React.ReactElement {
   const status = useConnectionStore((s) => s.status);
   const playerId = useConnectionStore((s) => s.playerId);
   const serverTs = useConnectionStore((s) => s.serverTs);
-  const setClockState = useClockStore((s) => s); // unused, but keeps the store subscribed
+  const offsetMs = useClockStore((s) => s.offsetMs);
+  const roundtripMs = useClockStore((s) => s.roundtripMs);
 
   const [clockErr, setClockErr] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<Countdown | null>(null);
+  const [raceStart, setRaceStart] = useState<RaceStart | null>(null);
+  const [raceEnded, setRaceEnded] = useState<boolean>(false);
 
-  // On mount: call /api/clock-sync to compute clientOffsetMs
+  // 1. syncClock on mount
   useEffect(() => {
     let cancelled = false;
     syncClock()
@@ -40,10 +45,43 @@ export function App(): React.ReactElement {
     };
   }, []);
 
+  // 2. WS frame routing (countdown, race_start, race_end)
+  useEffect(() => {
+    const unsub = ws.subscribe((msg: ServerToClient) => {
+      if (msg.type === "countdown") {
+        setCountdown(msg);
+        setRaceStart(null);
+        setRaceEnded(false);
+      }
+      if (msg.type === "race_start") {
+        setCountdown(null);
+        setRaceStart(msg);
+        setRaceEnded(false);
+        setCursorState({ ownIndex: 0, cursors: new Map() });
+      }
+      if (msg.type === "race_end") {
+        setRaceEnded(true);
+      }
+    });
+    return unsub;
+  }, []);
+
+  const onKeystroke = (index: number, char: string): void => {
+    // Optimistic local cursor
+    setCursorState({ ownIndex: index + 1 });
+    // Send keystroke
+    ws.send({ type: "keystroke", index, char, clientTs: Date.now() });
+    // Throttled cursor_position at 10Hz
+    const now = Date.now();
+    if (shouldSendCursor(now)) {
+      ws.send({ type: "cursor_position", index, clientTs: now });
+    }
+  };
+
   return (
     <main>
       <h1>Hello Typing Race</h1>
-      <p className="subtitle">Realtime multiplayer typing — Phase 2 tracer.</p>
+      <p className="subtitle">Realtime multiplayer typing — Phase 2 race engine.</p>
 
       <span className={`status-pill ${status}`}>Status: {status}</span>
 
@@ -57,30 +95,62 @@ export function App(): React.ReactElement {
           <dd>
             {clockErr
               ? `error: ${clockErr}`
-              : `${useClockStore.getState().offsetMs.toFixed(1)}ms (roundtrip ${useClockStore.getState().roundtripMs}ms)`}
+              : `${offsetMs.toFixed(1)}ms (roundtrip ${roundtripMs}ms)`}
           </dd>
         </dl>
       </div>
 
-      {countdown ? (
-        <CountdownView startsAtServerMs={countdown.startsAtServerMs} />
-      ) : (
-        <p className="hint">Waiting for countdown… (host must trigger start_race)</p>
+      {raceEnded && (
+        <div className="race-end-banner">
+          Race ended. <button onClick={() => { setRaceEnded(false); setRaceStart(null); }}>reset</button>
+        </div>
       )}
 
-      {/* countdown state lives in App for now; Phase 4 connects it to the WS */}
+      {countdown && !raceStart && (
+        <CountdownView startsAtServerMs={countdown.startsAtServerMs} />
+      )}
+
+      {raceStart && playerId && (
+        <RaceView
+          passageText={raceStart.passageText}
+          playerId={playerId}
+          onKeystroke={onKeystroke}
+        />
+      )}
+
+      {!countdown && !raceStart && !raceEnded && (
+        <>
+          <p className="hint">Waiting for race start. (Host: create a room and trigger start_race.)</p>
+          <DevTools />
+        </>
+      )}
+    </main>
+  );
+}
+
+/**
+ * Dev-only helpers — let a single developer exercise the lifecycle without
+ * needing a second client. Hidden in prod (no flag here, but harmless).
+ */
+function DevTools(): React.ReactElement {
+  return (
+    <div className="dev-tools">
       <button
         type="button"
-        onClick={() =>
-          setCountdown({
-            type: "countdown",
-            startsAtServerMs: Date.now() + 3000,
-            secondsRemaining: 3,
-          })
-        }
+        onClick={() => {
+          ws.send({ type: "create_room", nickname: "DevHost" });
+        }}
       >
-        Simulate countdown (dev only)
+        Create room
       </button>
-    </main>
+      <button
+        type="button"
+        onClick={() => {
+          ws.send({ type: "start_race" });
+        }}
+      >
+        Start race (dev)
+      </button>
+    </div>
   );
 }

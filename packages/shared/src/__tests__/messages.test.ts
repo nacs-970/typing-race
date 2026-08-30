@@ -259,4 +259,63 @@ describe("Anti-cheat invariants baked into schemas", () => {
       }).success,
     ).toBe(true);
   });
+
+  test("9. cursor_update with charStates + wpm parses; backwards-compat without them", () => {
+    // With new optional fields
+    expect(
+      serverToClientSchema.safeParse({
+        type: "cursor_update",
+        playerId: VALID_UUID,
+        index: 0,
+        serverTs: 1000,
+        charStates: ["correct", "error", "pending"],
+        wpm: 42,
+      }).success,
+    ).toBe(true);
+    // Backwards-compat: without charStates/wpm (Phase 2 style)
+    expect(
+      serverToClientSchema.safeParse({
+        type: "cursor_update",
+        playerId: VALID_UUID,
+        index: 0,
+        serverTs: 1000,
+      }).success,
+    ).toBe(true);
+  });
+
+  test("10. cursor_update wpm negative rejected", () => {
+    expect(
+      serverToClientSchema.safeParse({
+        type: "cursor_update",
+        playerId: VALID_UUID,
+        index: 0,
+        serverTs: 1000,
+        wpm: -1,
+      }).success,
+    ).toBe(false);
+  });
+
+  test("11. cursor_update charStates with invalid enum value rejected", () => {
+    expect(
+      serverToClientSchema.safeParse({
+        type: "cursor_update",
+        playerId: VALID_UUID,
+        index: 0,
+        serverTs: 1000,
+        charStates: ["correct", "foo" as never, "pending"],
+      }).success,
+    ).toBe(false);
+  });
+
+  test("12. cursor_update empty charStates array accepted (edge case)", () => {
+    expect(
+      serverToClientSchema.safeParse({
+        type: "cursor_update",
+        playerId: VALID_UUID,
+        index: 0,
+        serverTs: 1000,
+        charStates: [],
+      }).success,
+    ).toBe(true);
+  });
 });

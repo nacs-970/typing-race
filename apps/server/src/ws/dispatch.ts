@@ -246,6 +246,8 @@ export function dispatch(
         playerId: player.playerId,
         index: msg.index,
         serverTs: Date.now(),
+        charStates: result.newCharStates,
+        wpm: result.playerPatch.currentWpm,
       };
       for (const other of room.players.values()) {
         if (other.playerId === player.playerId) continue;

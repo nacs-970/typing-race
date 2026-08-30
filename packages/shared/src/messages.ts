@@ -169,12 +169,21 @@ export const raceStartSchema = z.object({
   passageText: z.string(),
 });
 
-/** Broadcast when a player's cursor advances (accepted keystroke or advisory). */
+/** Broadcast when a player's cursor advances (accepted keystroke or advisory).
+ *
+ * OUTBOUND ONLY — server is the sole producer. Clients do NOT send cursor_update.
+ * The `charStates` + `wpm` fields are optional() so Phase 2 broadcasts without
+ * them still parse (backwards compat). The inbound `cursor_position` schema does
+ * NOT include these fields (server cannot accept spoofed correctness — Pitfall
+ * V5 / D-13).
+ */
 export const cursorUpdateSchema = z.object({
   type: z.literal("cursor_update"),
   playerId: z.string().uuid(),
   index: z.number().int().nonnegative(),
   serverTs: z.number().int(),
+  charStates: z.array(z.enum(["pending", "correct", "error"])).optional(),
+  wpm: z.number().nonnegative().optional(),
 });
 
 /** Broadcast when a player leaves the room. */

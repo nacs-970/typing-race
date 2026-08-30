@@ -1,22 +1,27 @@
 /**
  * Char-state + scoring helper tests — Phase 3 Plan 02 tracer.
  *
- * 6 tracer tests:
+ * 7 tests:
  *  1. countCorrectChars counts 'correct' positions
  *  2. countUncorrectedErrors counts 'error' positions (still wrong)
  *  3. last-write-wins (Pitfall 1) — overwrite 'correct' with 'error'
  *  4. aggregateWordCorrectness splits on whitespace; positions correctly indexed
  *  5. aggregateWordCorrectness handles contractions + hyphens (Pitfall 7)
  *  6. isWordCorrect partial range
+ *  7. dispatch end-to-end: cursor_update broadcast includes charStates + wpm to opponent
  */
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect, beforeEach } from "bun:test";
 import {
   countCorrectChars,
   countUncorrectedErrors,
   isWordCorrect,
   aggregateWordCorrectness,
 } from "../race/scoring.ts";
+import { rooms, createRoom, addPlayer } from "../rooms/manager.ts";
+import { dispatch } from "../ws/dispatch.ts";
+import type { Keystroke } from "@typing-race/shared";
 import type { CharState } from "../race/types.ts";
+import type { WsData } from "../ws/handlers.ts";
 
 function states(...s: CharState[]): CharState[] {
   return s;
@@ -92,5 +97,92 @@ describe("isWordCorrect", () => {
     expect(isWordCorrect(mixed, 0, 4)).toBe(false);
     expect(isWordCorrect(mixed, 0, 1)).toBe(true); // first char only — correct
     expect(isWordCorrect(mixed, 1, 3)).toBe(false); // error + correct
+  });
+});
+
+describe("dispatch keystroke → cursor_update broadcast (end-to-end)", () => {
+  beforeEach(() => {
+    rooms.clear();
+  });
+
+  function fakeWs(playerId: string) {
+    const ws = {
+      data: {
+        playerId,
+        roomCode: null as string | null,
+        nickname: null as string | null,
+        clientOffsetMs: 0,
+      } satisfies WsData,
+      sent: [] as string[],
+      send(data: string) {
+        ws.sent.push(data);
+      },
+    };
+    return ws;
+  }
+  function asWs(ws: ReturnType<typeof fakeWs>): import("bun").ServerWebSocket<WsData> {
+    return ws as unknown as import("bun").ServerWebSocket<WsData>;
+  }
+
+  test("7. cursor_update broadcast to opponent carries charStates (length === passageText.length) + wpm (placeholder 0)", () => {
+    // Set up a 2-player room in racing state with a known passage
+    const hostWs = fakeWs("host");
+    const { code, room } = createRoom(asWs(hostWs), "Alice");
+    room.state = "racing";
+    room.startsAtServerMs = Date.now() - 200;
+    room.passageText = "hi"; // 2 chars
+    addPlayer(code, "p2", "Bob", asWs(fakeWs("p2")));
+
+    // Find the opponent (Bob) — host plays, opponent observes
+    const opponent = [...room.players.values()].find((p) => p.playerId === "p2");
+    if (!opponent) throw new Error("opponent not in room");
+    opponent.lastKeystrokeAt = 0;
+
+    hostWs.sent.length = 0;
+    // (opponent.wsRef.sent tracked via the FakeWs)
+
+    // Host sends a keystroke at index 0 ('h')
+    const keystroke: Keystroke = {
+      type: "keystroke",
+      index: 0,
+      char: "h",
+      clientTs: Date.now(),
+    };
+    dispatch(asWs(hostWs), JSON.stringify(keystroke));
+
+    // Bob (opponent) should have received a cursor_update with charStates + wpm
+    const cursorFrames = opponent.wsRef
+      ? (opponent.wsRef as unknown as { sent: string[] }).sent ?? []
+      : [];
+    // The fakeWs uses wsRef = the same object we patched; we need to capture differently
+    // Re-cast: opponent.wsRef was set via the FakeWs object — its `sent` array lives on the FakeWs
+    const fakeOpponentWs = opponent.wsRef as unknown as ReturnType<typeof fakeWs>;
+    const sentToOpponent = fakeOpponentWs.sent;
+    const cursorUpdatePayload = sentToOpponent.find((s) =>
+      s.includes('"cursor_update"'),
+    );
+    expect(cursorUpdatePayload).toBeDefined();
+    if (!cursorUpdatePayload) return;
+    const frame = JSON.parse(cursorUpdatePayload) as {
+      type: string;
+      playerId: string;
+      index: number;
+      serverTs: number;
+      charStates?: CharState[];
+      wpm?: number;
+    };
+    expect(frame.type).toBe("cursor_update");
+    expect(frame.playerId).toBe("host");
+    expect(frame.index).toBe(0);
+    expect(typeof frame.serverTs).toBe("number");
+    expect(Array.isArray(frame.charStates)).toBe(true);
+    // charStates must be the full passage length (broadcast the snapshot)
+    expect(frame.charStates?.length).toBe(2);
+    // Position 0 is the host's last keystroke — must be 'correct'
+    expect(frame.charStates?.[0]).toBe("correct");
+    // Position 1 hasn't been typed — must be 'pending'
+    expect(frame.charStates?.[1]).toBe("pending");
+    // wpm field present (Plan 02 placeholder = 0; Plan 03 fills real value)
+    expect(frame.wpm).toBe(0);
   });
 });

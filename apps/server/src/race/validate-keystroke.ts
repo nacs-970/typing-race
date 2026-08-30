@@ -17,7 +17,10 @@
  */
 import type { Keystroke, ServerErrorCode } from "@typing-race/shared";
 import type { CharState, Player, Room } from "./types.ts";
-import { countUncorrectedErrors } from "./scoring.ts";
+import {
+  countUncorrectedErrors,
+  computeNetWpm,
+} from "./scoring.ts";
 
 const PRE_START_GRACE_MS = 50;
 const MIN_INTERVAL_MS = 20;
@@ -84,14 +87,20 @@ export function validateKeystroke(args: {
 
   // Recompute aggregates from snapshot
   const uncorrectedErrors = countUncorrectedErrors(newCharStates);
+  const correctChars = newCharStates.length - uncorrectedErrors;
   const totalKeystrokes = player.totalKeystrokes + 1;
-  // currentWpm placeholder 0 — Plan 03 wires the real formula (D-05)
+
+  // D-05: net WPM = max(0, (correct/5 − uncorrected/5)) / minutesElapsed
+  // elapsedMs uses server's `now` (anti-cheat #1 implicit — never frame.clientTs)
+  const elapsedMs =
+    room.startsAtServerMs === null ? 0 : now - room.startsAtServerMs;
+  const currentWpm = computeNetWpm({ correctChars, uncorrectedErrors, elapsedMs });
 
   // Stamp server state
   player.charStates = newCharStates;
   player.totalKeystrokes = totalKeystrokes;
   player.uncorrectedErrors = uncorrectedErrors;
-  player.currentWpm = 0;
+  player.currentWpm = currentWpm;
   player.lastKeystrokeAt = now;
   if (frame.index + 1 > player.progress) {
     player.progress = frame.index + 1;
@@ -112,7 +121,7 @@ export function validateKeystroke(args: {
     playerPatch: {
       totalKeystrokes,
       uncorrectedErrors,
-      currentWpm: 0,
+      currentWpm,
       finishedAtServerMs,
     },
   };

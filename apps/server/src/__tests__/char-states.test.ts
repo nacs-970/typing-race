@@ -124,7 +124,7 @@ describe("dispatch keystroke → cursor_update broadcast (end-to-end)", () => {
     return ws as unknown as import("bun").ServerWebSocket<WsData>;
   }
 
-  test("7. cursor_update broadcast to opponent carries charStates (length === passageText.length) + wpm (placeholder 0)", () => {
+  test("7. cursor_update broadcast to opponent carries charStates (length === passageText.length) + wpm (real value)", () => {
     // Set up a 2-player room in racing state with a known passage
     const hostWs = fakeWs("host");
     const { code, room } = createRoom(asWs(hostWs), "Alice");
@@ -182,7 +182,8 @@ describe("dispatch keystroke → cursor_update broadcast (end-to-end)", () => {
     expect(frame.charStates?.[0]).toBe("correct");
     // Position 1 hasn't been typed — must be 'pending'
     expect(frame.charStates?.[1]).toBe("pending");
-    // wpm field present (Plan 02 placeholder = 0; Plan 03 fills real value)
-    expect(frame.wpm).toBe(0);
+    // wpm field present (Plan 03 wires real D-05 formula)
+    expect(typeof frame.wpm).toBe("number");
+    expect(frame.wpm).toBeGreaterThanOrEqual(0);
   });
 });

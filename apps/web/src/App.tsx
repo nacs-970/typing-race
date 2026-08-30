@@ -2,15 +2,19 @@ import { useEffect, useState } from "react";
 import { useConnectionStore } from "./store/connection.ts";
 import { useClockStore } from "./store/clock.ts";
 import { ws } from "./net/ws.ts";
-import { setCursorState, shouldSendCursor } from "./store/cursor.ts";
+import { useRaceStore, resetRaceUi } from "./store/race.ts";
+import { setCursorState } from "./store/cursor.ts";
 import { syncClock } from "./net/clock.ts";
 import { CountdownView } from "./components/CountdownView.tsx";
 import { RaceView } from "./components/RaceView.tsx";
-import type { Countdown, RaceStart, ServerToClient } from "@typing-race/shared";
+import { LobbyView } from "./components/LobbyView.tsx";
+import { GraceBanner } from "./components/GraceBanner.tsx";
+import { ResultsBoard } from "./components/ResultsBoard.tsx";
+import type { ServerToClient } from "@typing-race/shared";
 
 /**
- * Phase 2 SPA — wire + clock-sync + countdown + race view (anti-cheat ready).
- * Phase 3+ extends this with per-char correctness + WPM/accuracy.
+ * Phase 2 + Phase 3 SPA — wire + clock-sync + lobby + countdown + race
+ * + grace banner + results board + rematch.
  */
 export function App(): React.ReactElement {
   const status = useConnectionStore((s) => s.status);
@@ -19,10 +23,16 @@ export function App(): React.ReactElement {
   const offsetMs = useClockStore((s) => s.offsetMs);
   const roundtripMs = useClockStore((s) => s.roundtripMs);
 
+  const ownWpm = useRaceStore((s) => s.ownWpm);
+  const passageText = useRaceStore((s) => s.passageText);
+  const raceEndResults = useRaceStore((s) => s.raceEndResults);
+  const hostPickedPassagePreview = useRaceStore((s) => s.hostPickedPassagePreview);
+  const raceStart = passageText !== null;
+  const inResults = raceEndResults !== null;
+
   const [clockErr, setClockErr] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState<Countdown | null>(null);
-  const [raceStart, setRaceStart] = useState<RaceStart | null>(null);
-  const [raceEnded, setRaceEnded] = useState<boolean>(false);
+  const [roomCode, setRoomCode] = useState<string | null>(null);
+  const [isHost, setIsHost] = useState<boolean>(false);
 
   // 1. syncClock on mount
   useEffect(() => {
@@ -30,11 +40,7 @@ export function App(): React.ReactElement {
     syncClock()
       .then(({ offsetMs, roundtripMs }) => {
         if (cancelled) return;
-        useClockStore.setState({
-          offsetMs,
-          roundtripMs,
-          lastSyncedAt: Date.now(),
-        });
+        useClockStore.setState({ offsetMs, roundtripMs, lastSyncedAt: Date.now() });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -45,43 +51,32 @@ export function App(): React.ReactElement {
     };
   }, []);
 
-  // 2. WS frame routing (countdown, race_start, race_end)
+  // 2. WS frame routing for app-level lifecycle (lobby → countdown → race → grace → results)
   useEffect(() => {
     const unsub = ws.subscribe((msg: ServerToClient) => {
-      if (msg.type === "countdown") {
-        setCountdown(msg);
-        setRaceStart(null);
-        setRaceEnded(false);
-      }
-      if (msg.type === "race_start") {
-        setCountdown(null);
-        setRaceStart(msg);
-        setRaceEnded(false);
-        setCursorState({ ownIndex: 0, cursors: new Map() });
-      }
-      if (msg.type === "race_end") {
-        setRaceEnded(true);
+      if (msg.type === "joined_room") {
+        setRoomCode(msg.roomCode);
+        setIsHost(msg.you.isHost);
       }
     });
     return unsub;
   }, []);
 
   const onKeystroke = (index: number, char: string): void => {
-    // Optimistic local cursor
     setCursorState({ ownIndex: index + 1 });
-    // Send keystroke
     ws.send({ type: "keystroke", index, char, clientTs: Date.now() });
-    // Throttled cursor_position at 10Hz
     const now = Date.now();
-    if (shouldSendCursor(now)) {
+    const win = window as unknown as { __lastCursor?: number };
+    if (now - (win.__lastCursor ?? 0) >= 100) {
       ws.send({ type: "cursor_position", index, clientTs: now });
+      win.__lastCursor = now;
     }
   };
 
   return (
     <main>
       <h1>Hello Typing Race</h1>
-      <p className="subtitle">Realtime multiplayer typing — Phase 2 race engine.</p>
+      <p className="subtitle">Realtime multiplayer typing — Phase 3 complete.</p>
 
       <span className={`status-pill ${status}`}>Status: {status}</span>
 
@@ -97,41 +92,50 @@ export function App(): React.ReactElement {
               ? `error: ${clockErr}`
               : `${offsetMs.toFixed(1)}ms (roundtrip ${roundtripMs}ms)`}
           </dd>
+          <dt>Own WPM (live)</dt>
+          <dd>{ownWpm > 0 ? ownWpm.toFixed(1) : "—"}</dd>
         </dl>
       </div>
 
-      {raceEnded && (
-        <div className="race-end-banner">
-          Race ended. <button onClick={() => { setRaceEnded(false); setRaceStart(null); }}>reset</button>
-        </div>
+      <GraceBanner />
+
+      {roomCode && !raceStart && !inResults && (
+        <LobbyView
+          roomCode={roomCode}
+          isHost={isHost}
+          onStartRace={(passageId, graceSeconds) => {
+            ws.send({ type: "start_race", passageId, graceSeconds });
+          }}
+        />
       )}
 
-      {countdown && !raceStart && (
-        <CountdownView startsAtServerMs={countdown.startsAtServerMs} />
-      )}
-
-      {raceStart && playerId && (
+      {raceStart && playerId && passageText && (
         <RaceView
-          passageText={raceStart.passageText}
+          passageText={passageText}
           playerId={playerId}
           onKeystroke={onKeystroke}
         />
       )}
 
-      {!countdown && !raceStart && !raceEnded && (
-        <>
-          <p className="hint">Waiting for race start. (Host: create a room and trigger start_race.)</p>
-          <DevTools />
-        </>
+      {inResults && raceEndResults && (
+        <ResultsBoard
+          results={raceEndResults}
+          isHost={isHost}
+          onRematch={() => {
+            resetRaceUi();
+          }}
+        />
+      )}
+
+      {!roomCode && !raceStart && <DevTools />}
+
+      {hostPickedPassagePreview && !raceStart && (
+        <p className="host-preview-debug">host preview: {hostPickedPassagePreview}</p>
       )}
     </main>
   );
 }
 
-/**
- * Dev-only helpers — let a single developer exercise the lifecycle without
- * needing a second client. Hidden in prod (no flag here, but harmless).
- */
 function DevTools(): React.ReactElement {
   return (
     <div className="dev-tools">
@@ -142,14 +146,6 @@ function DevTools(): React.ReactElement {
         }}
       >
         Create room
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          ws.send({ type: "start_race" });
-        }}
-      >
-        Start race (dev)
       </button>
     </div>
   );

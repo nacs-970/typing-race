@@ -1,17 +1,15 @@
 /**
  * RaceView — passage render + own cursor (optimistic) + opponent cursors
- * (server-confirmed via cursor_update frames).
+ * (server-confirmed) + per-char accents (D-11/D-12).
  *
- * NO interpolation polish yet (Phase 5 owns that). This view proves
- * the wire works: opponent cursor advances via the server round-trip.
- *
- * Own cursor advances on every local keystroke (optimistic). When the
- * server echoes back a cursor_update with our playerId, the index is
- * already at the right place (we rendered optimistically), so we just
- * record the server timestamp for measurement.
+ * charStates from useRaceStore drive the per-char CSS class:
+ *   - .char-pending: gray dim (default)
+ *   - .char-correct: normal text + green underline
+ *   - .char-error: normal text + red underline
  */
 import { useEffect, useState } from "react";
 import { useCursorStore } from "../store/cursor.ts";
+import { useRaceStore, type CharState as CharStateType } from "../store/race.ts";
 
 export function RaceView({
   passageText,
@@ -24,11 +22,12 @@ export function RaceView({
 }): React.ReactElement {
   const ownIndex = useCursorStore((s) => s.ownIndex);
   const cursors = useCursorStore((s) => s.cursors);
+  const ownCharStates = useRaceStore((s) => s.ownCharStates);
   const [buffer, setBuffer] = useState<string>("");
 
   useEffect(() => {
     const onKey = (ev: KeyboardEvent): void => {
-      if (ev.key.length !== 1) return; // skip modifier / arrow keys
+      if (ev.key.length !== 1) return;
       if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
       ev.preventDefault();
       const nextIndex = ownIndex + buffer.length;
@@ -45,11 +44,15 @@ export function RaceView({
       <div className="passage">
         {passageText.split("").map((ch, i) => {
           const isOwnCursor = i === ownIndex + buffer.length;
+          const state: CharStateType = ownCharStates[i] ?? "pending";
           const opponentCursors = [...cursors.entries()]
             .filter(([pid, c]) => c.index === i && pid !== playerId)
             .map(([pid]) => pid);
           return (
-            <span key={i} className={isOwnCursor ? "char own-cursor" : "char"}>
+            <span
+              key={i}
+              className={`char char-${state}${isOwnCursor ? " own-cursor" : ""}`}
+            >
               {ch}
               {opponentCursors.map((pid) => (
                 <span key={pid} className="opponent-cursor" data-pid={pid} />

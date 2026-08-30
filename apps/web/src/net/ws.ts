@@ -5,6 +5,12 @@ import {
 import { setConnectionStore } from "../store/store-bridge.ts";
 import { setCursorState } from "../store/cursor.ts";
 import { setClockState } from "../store/clock.ts";
+import {
+  setRaceState,
+  resetRaceUi,
+  type CharState as CharStateType,
+} from "../store/race.ts";
+import { useConnectionStore } from "../store/connection.ts";
 
 /**
  * Thin wrapper over the browser WebSocket. Opens a connection to the dev
@@ -65,14 +71,53 @@ export class WsConnection {
           });
           return { cursors: next };
         });
+        // Phase 3 Plan 02+03: charStates + wpm live update (D-05, D-11)
+        const charStates = (msg.charStates ?? []) as CharStateType[];
+        const wpm = msg.wpm ?? 0;
+        const myId = useConnectionStore.getState().playerId;
+        if (msg.playerId === myId) {
+          setRaceState({ ownCharStates: charStates, ownWpm: wpm });
+        } else {
+          setRaceState((s) => ({
+            opponentWpm: { ...s.opponentWpm, [msg.playerId]: wpm },
+          }));
+        }
+      }
+      if (msg.type === "grace_countdown") {
+        setRaceState({
+          graceBanner: {
+            leaderPlayerId: msg.leaderPlayerId,
+            leaderNickname: msg.leaderNickname,
+            remainingMs: msg.remainingMs,
+          },
+        });
       }
       if (msg.type === "race_end") {
         setCursorState({ cursors: new Map(), ownIndex: 0 });
+        setRaceState({
+          raceEndResults: msg.results ?? null,
+          ownCharStates: [],
+          ownWpm: 0,
+          graceBanner: null,
+          opponentWpm: {},
+        });
+      }
+      if (msg.type === "race_start") {
+        // New race (or rematch): reset race UI; passage text comes with race_start
+        resetRaceUi();
+        setRaceState({ passageText: msg.passageText });
       }
       if (msg.type === "joined_room") {
         // Sync server-stamped clockOffsetMs into the clock store on join
-        // (HTTP /api/clock-sync already ran on mount; this is the backup)
         setClockState({ offsetMs: msg.clockOffsetMs });
+        setRaceState({
+          hostPickedPassagePreview: msg.hostPickedPassagePreview ?? null,
+        });
+      }
+      if (msg.type === "lobby_state") {
+        setRaceState({
+          hostPickedPassagePreview: msg.hostPickedPassagePreview ?? null,
+        });
       }
       // Notify subscribers (App.tsx uses this for race_start / countdown / race_end transitions)
       for (const sub of this.subscribers) {

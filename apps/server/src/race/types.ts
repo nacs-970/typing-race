@@ -41,4 +41,16 @@ export interface Room {
   players: Map<PlayerId, Player>;
   createdAt: number;
   lastActivityAt: number;
+  /** Phase 3: host-configurable grace period (D-09: 3/5/10s, default 5). */
+  graceSeconds: number;
+  /** Phase 3: host-picked passage preview (first 30 chars + …) for non-host lobby view (D-02). */
+  hostPickedPassagePreview: string | null;
+  /** Phase 3: last served passageId (D-04 — reshuffle excludes this). */
+  lastPassageId: string | null;
+  /** Phase 3: D-04 history of passages served this room's session. */
+  usedPassageIds: Set<string>;
+  /** Phase 3: current shuffled deck (PassageIds); [] until first start_race. */
+  deckOrder: string[];
+  /** Phase 3: next-to-deal index into deckOrder. */
+  deckCursor: number;
 }

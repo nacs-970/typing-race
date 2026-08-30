@@ -19,17 +19,27 @@ import type { WsData } from "../ws/handlers.ts";
 
 const PASSAGE = "hello world";
 
-function fakeRoom(state: Room["state"], startsAtServerMs: number | null = null): Room {
+function fakeRoom(
+  state: Room["state"],
+  startsAtServerMs: number | null = null,
+  passageText: string | null = PASSAGE,
+): Room {
   return {
     code: "ABCDEF",
     hostId: "h",
     state,
-    passageId: "p1",
-    passageText: PASSAGE,
+    passageId: passageText ? "p1" : null,
+    passageText,
     startsAtServerMs,
     players: new Map(),
     createdAt: 0,
     lastActivityAt: 0,
+    graceSeconds: 5,
+    hostPickedPassagePreview: null,
+    lastPassageId: null,
+    usedPassageIds: new Set(),
+    deckOrder: [],
+    deckCursor: 0,
   };
 }
 

@@ -15,6 +15,8 @@ import {
 import { transition } from "../race/controller.ts";
 import { validateKeystroke } from "../race/validate-keystroke.ts";
 import { broadcastToRoom } from "./broadcast.ts";
+import { shuffle, dealNextPassage } from "../race/corpus.ts";
+import { getPassageById, isValidPassageId, hostPickedPreview, PASSAGES } from "@typing-race/shared";
 import type { Countdown, CursorUpdate } from "@typing-race/shared";
 
 /**
@@ -139,18 +141,53 @@ export function dispatch(
         return;
       }
       if (room.state !== "lobby") return;
+      // D-01: validate host-picked passageId against corpus
+      if (!isValidPassageId(msg.passageId)) {
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            code: "INVALID_FRAME",
+            message: "unknown passageId",
+          }),
+        );
+        return;
+      }
+      // D-09: graceSeconds already validated by Zod (3-10, default 5)
+      const passage = getPassageById(msg.passageId);
+      if (!passage) return;
       try {
         transition(room, "countdown");
       } catch {
         return;
       }
+      // D-02: stash preview for non-host lobby view
+      room.passageId = passage.id;
+      room.passageText = passage.text;
+      room.graceSeconds = msg.graceSeconds;
+      room.hostPickedPassagePreview = hostPickedPreview(passage);
+      // D-04: deck state — if empty, initialize on first race; if explicit pick out of order, do NOT advance deck (explicit pick is its own record)
+      if (room.deckOrder.length === 0) {
+        room.deckOrder = shuffle(PASSAGES.map((p) => p.id));
+        room.deckCursor = 0;
+      }
+      room.lastPassageId = passage.id;
+      room.usedPassageIds.add(passage.id);
+      // Re-broadcast lobby_state with preview so joiners see it
       const frame: Countdown = {
         type: "countdown",
         startsAtServerMs: room.startsAtServerMs!,
         secondsRemaining: 3,
       };
       broadcastToRoom(room, frame);
-      logger.info({ code, startsAtServerMs: room.startsAtServerMs }, "[ws] start_race");
+      logger.info(
+        {
+          code,
+          passageId: passage.id,
+          graceSeconds: msg.graceSeconds,
+          startsAtServerMs: room.startsAtServerMs,
+        },
+        "[ws] start_race",
+      );
       break;
     }
 

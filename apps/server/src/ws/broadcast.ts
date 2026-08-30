@@ -28,6 +28,7 @@ export function broadcastLobbyState(room: Room): void {
     type: "lobby_state",
     roomCode: room.code,
     players,
+    hostPickedPassagePreview: room.hostPickedPassagePreview ?? undefined,
   };
   broadcastToRoom(room, frame);
 }
@@ -53,6 +54,7 @@ export function broadcastJoinedRoom(room: Room, playerId: string): void {
     you: { nickname: target.nickname, isHost: target.isHost },
     players,
     clockOffsetMs: target.clientOffsetMs,
+    hostPickedPassagePreview: room.hostPickedPassagePreview ?? undefined,
   };
   try {
     target.wsRef.send(JSON.stringify(frame));

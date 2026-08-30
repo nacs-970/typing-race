@@ -41,6 +41,13 @@ export function createRoom(
     players: new Map(),
     createdAt: Date.now(),
     lastActivityAt: Date.now(),
+    // Phase 3 fields (D-04 deck, D-09 grace)
+    graceSeconds: 5,
+    hostPickedPassagePreview: null,
+    lastPassageId: null,
+    usedPassageIds: new Set(),
+    deckOrder: [],
+    deckCursor: 0,
   };
   rooms.set(code, room);
 

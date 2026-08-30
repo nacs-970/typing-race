@@ -4,8 +4,12 @@
  * 8 unit tests covering Fisher-Yates purity, dealNextPassage semantics,
  * and no-repeat (Pitfall 5) reshuffle exclusion.
  */
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect, beforeEach } from "bun:test";
 import { shuffle, dealNextPassage } from "../race/corpus.ts";
+import { rooms, createRoom, addPlayer } from "../rooms/manager.ts";
+import { dispatch } from "../ws/dispatch.ts";
+import { PASSAGES, type StartRace } from "@typing-race/shared";
+import type { WsData } from "../ws/handlers.ts";
 
 const ALL = ["a", "b", "c", "d", "e"];
 
@@ -124,5 +128,77 @@ describe("dealNextPassage()", () => {
       // No exclusion when lastPassageId is null — all ids eligible
       expect(["p", "q", "r"]).toContain(r.passageId);
     }
+  });
+});
+
+describe("start_race dispatch validation", () => {
+  beforeEach(() => {
+    rooms.clear();
+  });
+
+  function fakeWs(playerId: string) {
+    const ws = {
+      data: {
+        playerId,
+        roomCode: null as string | null,
+        nickname: null as string | null,
+        clientOffsetMs: 0,
+      } satisfies WsData,
+      sent: [] as string[],
+      send(data: string) {
+        ws.sent.push(data);
+      },
+    };
+    return ws;
+  }
+
+  function asWs(ws: ReturnType<typeof fakeWs>): import("bun").ServerWebSocket<WsData> {
+    return ws as unknown as import("bun").ServerWebSocket<WsData>;
+  }
+
+  test("9. start_race with unknown passageId sends INVALID_FRAME error; room state unchanged", () => {
+    const hostWs = fakeWs("host");
+    const { code, room } = createRoom(asWs(hostWs), "Alice");
+    addPlayer(code, "p2", "Bob", asWs(fakeWs("p2")));
+
+    hostWs.sent.length = 0;
+    const badMsg: StartRace = {
+      type: "start_race",
+      passageId: "99999999-9999-4999-8999-999999999999",
+      graceSeconds: 5,
+    };
+    dispatch(asWs(hostWs), JSON.stringify(badMsg));
+
+    expect(room.state).toBe("lobby"); // unchanged
+    expect(room.passageId).toBe(null);
+    expect(hostWs.sent.some((s) => s.includes('"code":"INVALID_FRAME"'))).toBe(true);
+  });
+
+  test("10. start_race with valid passageId sets room fields and triggers countdown", () => {
+    const hostWs = fakeWs("host");
+    const { code, room } = createRoom(asWs(hostWs), "Alice");
+    addPlayer(code, "p2", "Bob", asWs(fakeWs("p2")));
+
+    const passage0 = PASSAGES[0];
+    if (!passage0) throw new Error("PASSAGES empty");
+
+    hostWs.sent.length = 0;
+    const okMsg: StartRace = {
+      type: "start_race",
+      passageId: passage0.id,
+      graceSeconds: 5,
+    };
+    dispatch(asWs(hostWs), JSON.stringify(okMsg));
+
+    expect(room.state).toBe("countdown");
+    expect(room.passageId).toBe(passage0.id);
+    expect(room.passageText).toBe(passage0.text);
+    expect(room.lastPassageId).toBe(passage0.id);
+    expect(room.usedPassageIds.has(passage0.id)).toBe(true);
+    expect(room.graceSeconds).toBe(5);
+    expect(room.hostPickedPassagePreview).not.toBe(null);
+    // Deck initialized lazily on first race
+    expect(room.deckOrder.length).toBeGreaterThan(0);
+    expect(room.deckCursor).toBe(0); // explicit pick out of order — deck NOT advanced
   });
 });

@@ -15,17 +15,23 @@ import { rooms } from "../rooms/manager.ts";
 import type { Room } from "../race/types.ts";
 import type { WsData } from "../ws/handlers.ts";
 
-function fakeRoom(state: Room["state"]): Room {
+function fakeRoom(state: Room["state"], startsAtServerMs: number | null = null): Room {
   return {
     code: "ABCDEF",
     hostId: "h",
     state,
     passageId: null,
     passageText: null,
-    startsAtServerMs: null,
+    startsAtServerMs,
     players: new Map(),
     createdAt: 0,
     lastActivityAt: 0,
+    graceSeconds: 5,
+    hostPickedPassagePreview: null,
+    lastPassageId: null,
+    usedPassageIds: new Set(),
+    deckOrder: [],
+    deckCursor: 0,
   };
 }
 

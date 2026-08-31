@@ -170,8 +170,8 @@ h1 {
 }
 
 .own-cursor {
-  background: rgba(59, 130, 246, 0.2);
-  border-bottom: 2px solid #3b82f6;
+  border-left: 2px solid #3b82f6;
+  margin-left: -2px;
 }
 
 .opponent-cursor {

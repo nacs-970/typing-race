@@ -230,10 +230,6 @@ export function dispatch(
     }
 
     case "keystroke": {
-      logger.info(
-        { playerId: ws.data.playerId, index: msg.index, char: JSON.stringify(msg.char) },
-        "[ws] keystroke",
-      );
       const code = ws.data.roomCode;
       if (!code) {
         ws.send(JSON.stringify({ type: "error", code: "NOT_IN_ROOM", message: "no room" }));

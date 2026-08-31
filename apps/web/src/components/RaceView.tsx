@@ -1,26 +1,28 @@
 /**
- * RaceView — passage render + own cursor (server-confirmed) + opponent
- * cursors (server-confirmed) + per-char accents (D-11/D-12).
+ * RaceView — passage render + own cursor + opponent cursors + per-char
+ * accents (D-11/D-12).
  *
- * Cursor position: `ownIndex` from useCursorStore. App.tsx advances this
- * by 1 in setCursorState({ ownIndex: index + 1 }) on each accepted
- * keystroke. So cursor sits AT the next-to-type index (typing-race
- * convention).
+ * LOCAL own cursor (not in cursor store):
+ *   - RaceView owns ownIndex as local state. On every keystroke, advance
+ *     ownIndex by 1. The server validates; on accept, it broadcasts
+ *     cursor_update to OTHERS (not us). Our ownIndex is purely client-side
+ *     and matches what the server thinks (since the server validates the
+ *     same index). On REJECT (wrong char), we DECREMENT ownIndex so the
+ *     user can retry the same position. (In practice the wrong char shows
+ *     as "error" optimistic and server sends error to sender only — but
+ *     progress doesn't advance, so client should mirror that.)
  *
- * charStates optimistic update:
- *   - On local keystroke: mark ownCharStates[index] as 'correct' or
- *     'error' based on local char match. This gives instant feedback
- *     before server roundtrip.
- *   - On server cursor_update: App.tsx replaces ownCharStates wholesale
- *     with the authoritative array.
+ * SERVER-confirmed ownIndex (on backspace):
+ *   - When the user backspaces, we send a 'correction' frame. The server
+ *     decrements player.progress and echoes cursor_update to all (including
+ *     sender) with the authoritative index. We listen for that and sync.
  *
- * Backspace: client sends {type: 'correction', backspaces} to server.
- * Server decrements progress + broadcasts cursor_update to all (including
- * sender) so ownIndex and ownCharStates update authoritatively.
+ * Optimistic charStates: local — each char-state is set on keystroke.
+ * Race-end resets the cursor store; rematch resets local state.
  */
-import { useEffect, useRef } from "react";
-import { useCursorStore } from "../store/cursor.ts";
+import { useEffect, useState } from "react";
 import { useRaceStore, setRaceState, type CharState as CharStateType } from "../store/race.ts";
+import { useCursorStore } from "../store/cursor.ts";
 
 export function RaceView({
   passageText,
@@ -33,34 +35,29 @@ export function RaceView({
   onKeystroke: (index: number, char: string) => void;
   onCorrection: (backspaces: number) => void;
 }): React.ReactElement {
-  const ownIndex = useCursorStore((s) => s.ownIndex);
-  const cursors = useCursorStore((s) => s.cursors);
+  const opponentCursorsMap = useCursorStore((s) => s.cursors);
   const ownCharStates = useRaceStore((s) => s.ownCharStates);
-
-  // Refs to read fresh state inside the stable keydown listener.
-  // This avoids stale-closure issues when ownIndex/onKeystroke change
-  // (re-render the parent → new onKeystroke function → re-attach).
-  const ownIndexRef = useRef(ownIndex);
-  const passageTextRef = useRef(passageText);
-  const onKeystrokeRef = useRef(onKeystroke);
-  const onCorrectionRef = useRef(onCorrection);
-  useEffect(() => { ownIndexRef.current = ownIndex; }, [ownIndex]);
-  useEffect(() => { passageTextRef.current = passageText; }, [passageText]);
-  useEffect(() => { onKeystrokeRef.current = onKeystroke; }, [onKeystroke]);
-  useEffect(() => { onCorrectionRef.current = onCorrection; }, [onCorrection]);
+  // Local own cursor (single source of truth for THIS player)
+  const [ownIndex, setOwnIndex] = useState(0);
 
   useEffect(() => {
     const onKey = (ev: KeyboardEvent): void => {
       if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
 
-      const idx = ownIndexRef.current;
-      const text = passageTextRef.current;
-
-      // Backspace
+      // Backspace: ask server to decrement progress
       if (ev.key === "Backspace") {
         ev.preventDefault();
-        if (idx <= 0) return;
-        onCorrectionRef.current(1);
+        if (ownIndex <= 0) return;
+        onCorrection(1);
+        // Optimistically decrement (server echo will confirm)
+        setOwnIndex((i) => i - 1);
+        setRaceState((s) => {
+          const next = [...s.ownCharStates];
+          if (next.length > 0) {
+            next[ownIndex - 1] = "pending";
+          }
+          return { ownCharStates: next };
+        });
         return;
       }
 
@@ -69,23 +66,50 @@ export function RaceView({
       if (ch.length !== 1) return;
 
       ev.preventDefault();
-      if (idx >= text.length) return;
+      if (ownIndex >= passageText.length) return;
 
       // Optimistic local char-state
-      const expected = text[idx] ?? "";
+      const expected = passageText[ownIndex] ?? "";
       const charState: CharStateType = ch === expected ? "correct" : "error";
       setRaceState((s) => {
         const next = [...s.ownCharStates];
-        while (next.length <= idx) next.push("pending");
-        next[idx] = charState;
+        while (next.length <= ownIndex) next.push("pending");
+        next[ownIndex] = charState;
         return { ownCharStates: next };
       });
 
-      onKeystrokeRef.current(idx, ch);
+      onKeystroke(ownIndex, ch);
+      // Advance locally; App.tsx will also call setCursorState(ownIndex+1)
+      // but we use our local state for display.
+      setOwnIndex((i) => i + 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []); // attach once; refs give fresh state
+  }, [ownIndex, passageText, onKeystroke, onCorrection]);
+
+  // On rematch (race_start) reset local ownIndex to 0
+  useEffect(() => {
+    // Listen for race_start in our own store. We do it via passageText
+    // change since passageText is reset on race_start.
+    setOwnIndex(0);
+  }, [passageText]);
+
+  // Also sync from server cursor_update echoes (backspace, etc.) by
+  // watching the cursor store's ownIndex field. We mirror it into local
+  // state when it goes DOWN (backspace echo) or when it goes to 0
+  // (race_end reset).
+  useEffect(() => {
+    const unsub = useCursorStore.subscribe((s, prev) => {
+      if (s.ownIndex < prev.ownIndex) {
+        // Server says go back (correction echo)
+        setOwnIndex(s.ownIndex);
+      } else if (s.ownIndex === 0 && prev.ownIndex > 0) {
+        // Race ended / rematch
+        setOwnIndex(0);
+      }
+    });
+    return unsub;
+  }, []);
 
   return (
     <div className="race-view">
@@ -93,7 +117,7 @@ export function RaceView({
         {passageText.split("").map((ch, i) => {
           const isOwnCursor = i === ownIndex;
           const state: CharStateType = ownCharStates[i] ?? "pending";
-          const opponentCursors = [...cursors.entries()]
+          const opponentCursors = [...opponentCursorsMap.entries()]
             .filter(([pid, c]) => c.index === i && pid !== playerId)
             .map(([pid]) => pid);
           return (

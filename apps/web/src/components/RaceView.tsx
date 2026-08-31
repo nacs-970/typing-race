@@ -6,10 +6,17 @@
  *   - .char-pending: gray dim (default)
  *   - .char-correct: normal text + green underline
  *   - .char-error: normal text + red underline
+ *
+ * Typing UX:
+ *   - Single char (a-z, 0-9, punct, space): optimistic-correct + send keystroke
+ *   - Backspace: optimistically revert last typed char to pending
+ *     (do NOT send to server; server's last-write-wins handles corrections
+ *     on the next forward keystroke — D-11 / Pitfall 1)
+ *   - Cursor position = next-to-type (typing-race convention)
  */
 import { useEffect, useState } from "react";
 import { useCursorStore } from "../store/cursor.ts";
-import { useRaceStore, type CharState as CharStateType } from "../store/race.ts";
+import { useRaceStore, setRaceState, type CharState as CharStateType } from "../store/race.ts";
 
 export function RaceView({
   passageText,
@@ -27,11 +34,43 @@ export function RaceView({
 
   useEffect(() => {
     const onKey = (ev: KeyboardEvent): void => {
-      if (ev.key.length !== 1) return;
+      // Ignore modifier-only presses (Ctrl+R, Cmd+T, etc.)
       if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+
+      // Backspace: revert last locally-typed char
+      if (ev.key === "Backspace") {
+        ev.preventDefault();
+        if (buffer.length === 0) return;
+        const nextBuffer = buffer.slice(0, -1);
+        const revertedIndex = ownIndex + nextBuffer.length;
+        // Optimistically revert that char to pending
+        setRaceState((s) => {
+          const next = [...s.ownCharStates];
+          while (next.length <= revertedIndex) next.push("pending");
+          next[revertedIndex] = "pending";
+          return { ownCharStates: next };
+        });
+        setBuffer(nextBuffer);
+        return;
+      }
+
+      // Anything else: ignore if not a single character
+      if (ev.key.length !== 1) return;
+
       ev.preventDefault();
       const nextIndex = ownIndex + buffer.length;
       if (nextIndex >= passageText.length) return;
+
+      // Optimistic: mark as correct locally (server cursor_update will overwrite if wrong)
+      const expected = passageText[nextIndex] ?? "";
+      const charState: CharStateType = ev.key === expected ? "correct" : "error";
+      setRaceState((s) => {
+        const next = [...s.ownCharStates];
+        while (next.length <= nextIndex) next.push("pending");
+        next[nextIndex] = charState;
+        return { ownCharStates: next };
+      });
+
       onKeystroke(nextIndex, ev.key);
       setBuffer((b) => b + ev.key);
     };

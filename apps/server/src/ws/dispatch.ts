@@ -346,6 +346,12 @@ export function dispatch(
           // ignore
         }
       }
+      // Echo to sender so their ownIndex / ownCharStates update
+      try {
+        ws.send(JSON.stringify(cursorFrame));
+      } catch {
+        // ignore
+      }
       break;
     }
 

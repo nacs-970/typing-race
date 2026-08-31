@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-08-31T13:00:00.000Z",
+  "timestamp": "2026-08-31T16:05:00.000Z",
   "phase": "03-race-track",
   "phase_name": "race-track",
   "phase_dir": ".planning/phases/03-race-track",
@@ -9,35 +9,36 @@
   "total_tasks": 5,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Plan 03-01: passage corpus + picker", "status": "done", "commit": "8d0ed72"},
-    {"id": 2, "name": "Plan 03-02: char-state model + word aggregation", "status": "done", "commit": "3b9937f"},
-    {"id": 3, "name": "Plan 03-03: net WPM + char accuracy (D-05/D-06)", "status": "done", "commit": "da8d5ba"},
-    {"id": 4, "name": "Plan 03-04: race-end grace + results + rematch (server+web)", "status": "done", "commit": "e63e020"},
-    {"id": 5, "name": "UAT Test 1: two-laptop demo + countdown", "status": "done", "commit": "4dca60d"}
+    {"id": "03-01", "name": "passage corpus + picker", "status": "done", "commit": "8d0ed72"},
+    {"id": "03-02", "name": "char-state model + word aggregation", "status": "done", "commit": "3b9937f"},
+    {"id": "03-03", "name": "net WPM + char accuracy", "status": "done", "commit": "da8d5ba"},
+    {"id": "03-04", "name": "race-end grace + results + rematch", "status": "done", "commit": "e63e020"},
+    {"id": "UAT-1", "name": "Two-laptop demo + countdown", "status": "done", "commit": "4dca60d"}
   ],
   "remaining_tasks": [
-    {"id": "UAT-2", "name": "Char accents reflect correctness live", "status": "in_progress", "issue": "User reported bugs: backspace doesn't work in typing space; cursor jumps weird not to next character"},
-    {"id": "UAT-3", "name": "Grace period: others keep typing after first finisher", "status": "not_started"},
-    {"id": "UAT-4", "name": "Results board: rank + WPM + accuracy", "status": "not_started"},
-    {"id": "UAT-5", "name": "Rematch serves a new passage (no-repeat)", "status": "not_started"}
+    {"id": "UAT-2", "name": "Char accents live", "status": "blocked", "blocker": "uncommitted hand-edit broke RaceView.tsx"},
+    {"id": "UAT-3", "name": "Grace period", "status": "not_started"},
+    {"id": "UAT-4", "name": "Results board", "status": "not_started"},
+    {"id": "UAT-5", "name": "Rematch no-repeat", "status": "not_started"}
   ],
   "blockers": [
     {
-      "description": "RaceView typing handler: backspace does NOT delete, and cursor advances ownIndex++ on every keystroke before the user types the next char. Pitfall 1 (last-write-wins) is on server side; client-side buffer state missing.",
+      "description": "apps/web/src/components/RaceView.tsx has uncommitted hand-edit breakage: console.log debug, onCorrection commented out, ev.preventDefault commented out, ch replaced with ev.key. Must git checkout before resuming.",
       "type": "technical",
-      "workaround": null
+      "workaround": "git checkout apps/web/src/components/RaceView.tsx"
     }
   ],
   "async_jobs": [],
   "human_actions_pending": [
-    {"action": "User to retry UAT Test 2 after the typing-bug fix", "context": "Reported bugs surface in the same test", "blocking": true}
+    {"action": "Re-test typing in browser after uncommitted edits are discarded", "context": "User reported stuck cursor; fix is restore the file", "blocking": true}
   ],
   "decisions": [
-    {"decision": "Added a join-by-code panel in DevTools", "rationale": "Phase 3 ships with create_room only; two-laptop UAT needed manual join flow", "phase": "03"},
-    {"decision": "Render CountdownView via inCountdown state (separate from raceStart)", "rationale": "race_start frame sets passageText immediately, which made RaceView render before countdown elapsed", "phase": "03"},
-    {"decision": "Set start_race typecheck required auto-deal branch (passageId optional)", "rationale": "Rematch must work without the host re-picking a passage", "phase": "03"}
+    {"decision": "RaceView ownIndex = local useState(0), not cursor store", "rationale": "Decouple from store writes; cursor store is for opponents only", "phase": "03"},
+    {"decision": "Server echoes cursor_update to sender on correction", "rationale": "Sender needs authoritative ownIndex back; without it, ownIndex drifts", "phase": "03"},
+    {"decision": "Server broadcasts index = player.progress (next-to-type)", "rationale": "Match what typist sees on own screen; opponent cursor otherwise off-by-one", "phase": "03"},
+    {"decision": "correction C->S frame for backspace", "rationale": "D-11 last-write-wins means client-only backspace leaves opponent's view stale", "phase": "03"}
   ],
-  "uncommitted_files": [],
-  "next_action": "Diagnose the RaceView typing handler in apps/web/src/components/RaceView.tsx — add Backspace handling (decrement buffer + send correction to server as a separate frame, OR keep client-only and let cursor_update ownIndex step back). Also clarify 'cursor jumps to next character' (could be correct design or could be off-by-one).",
-  "context_notes": "Servers (PID 10779 = bun dev server :8080, PID 12124 = vite dev :5173) running in background. Vite HMR picks up changes automatically. Phase 3 UAT file: .planning/phases/03-race-track/03-UAT.md. Test 1 passed, Test 2 in flight (user hit bugs)."
+  "uncommitted_files": ["apps/web/src/components/RaceView.tsx (BROKEN - discard)"],
+  "next_action": "git checkout apps/web/src/components/RaceView.tsx; reload browser; re-test typing",
+  "context_notes": "Servers running: PID 305424 (server :8080), PID 305439 (web :5173). User created realtime-input-sync skill at 14:28 to capture the typing-handler patterns learned today. Vite HMR is live. Reference: /home/nacs/.hermes/skills/software-development/realtime-input-sync/SKILL.md"
 }

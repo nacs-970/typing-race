@@ -61,7 +61,8 @@ export class WsConnection {
         });
       }
       if (msg.type === "cursor_update") {
-        // Opponent cursor (filter our own — server already broadcasts to all)
+        // Update cursor in store (applies to own + opponent — RaceView
+        // filters own by playerId when rendering)
         setCursorState((s) => {
           const next = new Map(s.cursors);
           next.set(msg.playerId, {
@@ -76,6 +77,8 @@ export class WsConnection {
         const wpm = msg.wpm ?? 0;
         const myId = useConnectionStore.getState().playerId;
         if (msg.playerId === myId) {
+          // Authoritative ownIndex from server (esp. on backspace echo)
+          setCursorState({ ownIndex: msg.index });
           setRaceState({ ownCharStates: charStates, ownWpm: wpm });
         } else {
           setRaceState((s) => ({

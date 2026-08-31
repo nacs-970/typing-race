@@ -55,14 +55,17 @@ export function RaceView({
       }
 
       // Ignore non-character keys (Tab, Escape, Arrow keys, F1-F12, etc.)
-      if (ev.key.length !== 1) return;
+      // ev.key === " " for space (length 1). Some browsers send "Spacebar"
+      // as a legacy alias when alt-graph is engaged.
+      const ch = ev.key === "Spacebar" ? " " : ev.key;
+      if (ch.length !== 1) return;
 
       ev.preventDefault();
       if (ownIndex >= passageText.length) return;
 
       // Optimistic local char-state
       const expected = passageText[ownIndex] ?? "";
-      const charState: CharStateType = ev.key === expected ? "correct" : "error";
+      const charState: CharStateType = ch === expected ? "correct" : "error";
       setRaceState((s) => {
         const next = [...s.ownCharStates];
         while (next.length <= ownIndex) next.push("pending");
@@ -70,7 +73,7 @@ export function RaceView({
         return { ownCharStates: next };
       });
 
-      onKeystroke(ownIndex, ev.key);
+      onKeystroke(ownIndex, ch);
       // NOTE: do NOT advance ownIndex here — App.tsx's onKeystroke handler
       // bumps it on server ack. This keeps cursor in sync with server.
     };

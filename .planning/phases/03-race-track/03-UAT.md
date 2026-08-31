@@ -8,20 +8,14 @@ updated: 2026-08-31
 
 ## Current Test
 
-number: 1
-name: Two-laptop demo: open two browsers to same room, full race
+number: 2
+name: Char accents reflect correctness live
 expected: |
-  Open the URL in two browsers (or two tabs). Host creates a room.
-  Join from the second browser. Host sees passage picker + grace picker
-  + player list with both players. Host picks a passage (or Random) +
-  grace (3/5/10s) and clicks Start. Both browsers see a 3-second
-  countdown, then the race starts. As each player types, their cursor
-  advances on BOTH screens (you see your own + opponent's cursor with
-  red/green underline accents per char). When first player finishes,
-  the OTHER player sees an amber banner: "<name> finished — Ns remaining"
-  and keeps typing. When grace expires (or all done), both see a
-  Results board with rank, time, WPM, accuracy. Host clicks Rematch
-  → new passage loads (different from previous), countdown restarts.
+  While typing, the current position has a BLUE underline (own cursor).
+  Already-typed correct chars have a GREEN underline. Already-typed
+  wrong chars (then backspaced + retyped correct) have a GREEN underline.
+  Untyped chars (still ahead) are gray-dim. Opponent's cursor appears
+  as a red vertical bar at their current position.
 awaiting: user response
 
 ## Tests
@@ -39,7 +33,7 @@ expected: |
   and keeps typing. When grace expires (or all done), both see a
   Results board with rank, time, WPM, accuracy. Host clicks Rematch
   → new passage loads (different from previous), countdown restarts.
-result: [pending]
+result: pass
 
 ### 2. Char accents reflect correctness live
 expected: |
@@ -78,9 +72,9 @@ result: [pending]
 ## Summary
 
 total: 5
-passed: 0
+passed: 1
 issues: 0
-pending: 5
+pending: 4
 skipped: 0
 blocked: 0
 

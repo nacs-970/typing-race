@@ -132,21 +132,68 @@ export function App(): React.ReactElement {
       {hostPickedPassagePreview && !raceStart && (
         <p className="host-preview-debug">host preview: {hostPickedPassagePreview}</p>
       )}
+
+      {roomCode && !raceStart && !inResults && (
+        <p className="room-code-display">Room code: <code>{roomCode}</code></p>
+      )}
     </main>
   );
 }
 
 function DevTools(): React.ReactElement {
+  const [joinCode, setJoinCode] = useState<string>("");
   return (
     <div className="dev-tools">
-      <button
-        type="button"
-        onClick={() => {
-          ws.send({ type: "create_room", nickname: "DevHost" });
-        }}
-      >
-        Create room
-      </button>
+      <div className="dev-row">
+        <span>Nickname:</span>
+        <input
+          type="text"
+          className="nickname-input"
+          placeholder="Your name"
+          maxLength={20}
+          onChange={(e) => {
+            const v = e.target.value;
+            // stash for next action
+            (window as unknown as { __nickname?: string }).__nickname = v;
+          }}
+        />
+      </div>
+      <div className="dev-row">
+        <button
+          type="button"
+          onClick={() => {
+            const nick =
+              (window as unknown as { __nickname?: string }).__nickname ??
+              "DevHost";
+            ws.send({ type: "create_room", nickname: nick });
+          }}
+        >
+          Create room
+        </button>
+        <input
+          type="text"
+          className="room-code-input"
+          placeholder="ABCDEF"
+          maxLength={6}
+          value={joinCode}
+          onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+        />
+        <button
+          type="button"
+          onClick={() => {
+            const nick =
+              (window as unknown as { __nickname?: string }).__nickname ??
+              "DevGuest";
+            ws.send({
+              type: "join_room",
+              code: joinCode,
+              nickname: nick,
+            });
+          }}
+        >
+          Join room
+        </button>
+      </div>
     </div>
   );
 }

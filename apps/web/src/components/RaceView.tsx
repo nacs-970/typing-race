@@ -14,14 +14,12 @@
  *   - On server cursor_update: App.tsx replaces ownCharStates wholesale
  *     with the authoritative array.
  *
- * Backspace:
- *   - Client-only optimistic revert. Revert ownCharStates[ownIndex-1]
- *     to 'pending' and decrement ownIndex. Server's last-write-wins
- *     (D-11 / Pitfall 1) means no server backspace frame is needed —
- *     the user can just retype the corrected char on the next keystroke.
+ * Backspace: client sends {type: 'correction', backspaces} to server.
+ * Server decrements progress + broadcasts cursor_update to all (including
+ * sender) so ownIndex and ownCharStates update authoritatively.
  */
-import { useEffect } from "react";
-import { useCursorStore, setCursorState } from "../store/cursor.ts";
+import { useEffect, useRef } from "react";
+import { useCursorStore } from "../store/cursor.ts";
 import { useRaceStore, setRaceState, type CharState as CharStateType } from "../store/race.ts";
 
 export function RaceView({
@@ -39,47 +37,55 @@ export function RaceView({
   const cursors = useCursorStore((s) => s.cursors);
   const ownCharStates = useRaceStore((s) => s.ownCharStates);
 
+  // Refs to read fresh state inside the stable keydown listener.
+  // This avoids stale-closure issues when ownIndex/onKeystroke change
+  // (re-render the parent → new onKeystroke function → re-attach).
+  const ownIndexRef = useRef(ownIndex);
+  const passageTextRef = useRef(passageText);
+  const onKeystrokeRef = useRef(onKeystroke);
+  const onCorrectionRef = useRef(onCorrection);
+  useEffect(() => { ownIndexRef.current = ownIndex; }, [ownIndex]);
+  useEffect(() => { passageTextRef.current = passageText; }, [passageText]);
+  useEffect(() => { onKeystrokeRef.current = onKeystroke; }, [onKeystroke]);
+  useEffect(() => { onCorrectionRef.current = onCorrection; }, [onCorrection]);
+
   useEffect(() => {
     const onKey = (ev: KeyboardEvent): void => {
       if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
 
-      // Backspace: revert last accepted char + tell server
+      const idx = ownIndexRef.current;
+      const text = passageTextRef.current;
+
+      // Backspace
       if (ev.key === "Backspace") {
         ev.preventDefault();
-        if (ownIndex <= 0) return;
-        onCorrection(1);
-        // Note: server will broadcast a cursor_update that updates
-        // ownIndex + ownCharStates authoritatively. No local state
-        // mutation needed; await server roundtrip.
+        if (idx <= 0) return;
+        onCorrectionRef.current(1);
         return;
       }
 
-      // Ignore non-character keys (Tab, Escape, Arrow keys, F1-F12, etc.)
-      // ev.key === " " for space (length 1). Some browsers send "Spacebar"
-      // as a legacy alias when alt-graph is engaged.
+      // Ignore non-character keys
       const ch = ev.key === "Spacebar" ? " " : ev.key;
       if (ch.length !== 1) return;
 
       ev.preventDefault();
-      if (ownIndex >= passageText.length) return;
+      if (idx >= text.length) return;
 
       // Optimistic local char-state
-      const expected = passageText[ownIndex] ?? "";
+      const expected = text[idx] ?? "";
       const charState: CharStateType = ch === expected ? "correct" : "error";
       setRaceState((s) => {
         const next = [...s.ownCharStates];
-        while (next.length <= ownIndex) next.push("pending");
-        next[ownIndex] = charState;
+        while (next.length <= idx) next.push("pending");
+        next[idx] = charState;
         return { ownCharStates: next };
       });
 
-      onKeystroke(ownIndex, ch);
-      // NOTE: do NOT advance ownIndex here — App.tsx's onKeystroke handler
-      // bumps it on server ack. This keeps cursor in sync with server.
+      onKeystrokeRef.current(idx, ch);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [ownIndex, passageText, onKeystroke, onCorrection]);
+  }, []); // attach once; refs give fresh state
 
   return (
     <div className="race-view">

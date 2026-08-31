@@ -101,6 +101,12 @@ export function App(): React.ReactElement {
 
       <GraceBanner />
 
+      {inCountdown && !raceStart && countdownStartsAtServerMs !== null && (
+        <CountdownView
+          startsAtServerMs={countdownStartsAtServerMs}
+        />
+      )}
+
       {roomCode && !raceStart && !inResults && (
         <LobbyView
           roomCode={roomCode}

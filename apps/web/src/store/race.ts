@@ -28,6 +28,8 @@ export type RaceUiState = {
   hostPickedPassagePreview: string | null;
   hostGraceSeconds: number;
   passageText: string | null;
+  /** Server timestamp when countdown began (ms). Null when not in countdown. */
+  countdownStartsAtServerMs: number | null;
 };
 
 export const useRaceStore = create<RaceUiState>(() => ({
@@ -39,6 +41,7 @@ export const useRaceStore = create<RaceUiState>(() => ({
   hostPickedPassagePreview: null,
   hostGraceSeconds: 5,
   passageText: null,
+  countdownStartsAtServerMs: null,
 }));
 
 export const setRaceState = (
@@ -59,5 +62,6 @@ export function resetRaceUi(): void {
     graceBanner: null,
     raceEndResults: null,
     passageText: null,
+    countdownStartsAtServerMs: null,
   });
 }

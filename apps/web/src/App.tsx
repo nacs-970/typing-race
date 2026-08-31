@@ -27,7 +27,9 @@ export function App(): React.ReactElement {
   const passageText = useRaceStore((s) => s.passageText);
   const raceEndResults = useRaceStore((s) => s.raceEndResults);
   const hostPickedPassagePreview = useRaceStore((s) => s.hostPickedPassagePreview);
+  const countdownStartsAtServerMs = useRaceStore((s) => s.countdownStartsAtServerMs);
   const raceStart = passageText !== null;
+  const inCountdown = countdownStartsAtServerMs !== null;
   const inResults = raceEndResults !== null;
 
   const [clockErr, setClockErr] = useState<string | null>(null);

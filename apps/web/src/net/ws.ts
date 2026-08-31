@@ -102,6 +102,9 @@ export class WsConnection {
           opponentWpm: {},
         });
       }
+      if (msg.type === "countdown") {
+        setRaceState({ countdownStartsAtServerMs: msg.startsAtServerMs });
+      }
       if (msg.type === "race_start") {
         // New race (or rematch): reset race UI; passage text comes with race_start
         resetRaceUi();

@@ -80,6 +80,18 @@ export const cursorPositionSchema = z.object({
   clientTs: z.number().int().nonnegative(),
 });
 
+/**
+ * Client signals a backspace correction.
+ * - backspaces: integer count (1 = single backspace, 2 = select+delete, etc.)
+ * - upToIndex: the new (lowered) cursor position. Server clamps to current progress.
+ *   Optional; if omitted, server decrements progress by `backspaces` from current.
+ */
+export const correctionSchema = z.object({
+  type: z.literal("correction"),
+  backspaces: z.number().int().min(1).max(200),
+  clientTs: z.number().int().nonnegative(),
+});
+
 export const clientToServerSchema = z.discriminatedUnion("type", [
   clientPingSchema,
   joinRoomSchema,
@@ -89,6 +101,7 @@ export const clientToServerSchema = z.discriminatedUnion("type", [
   startRaceSchema,
   keystrokeSchema,
   cursorPositionSchema,
+  correctionSchema,
 ]);
 
 export type ClientToServer = z.infer<typeof clientToServerSchema>;
@@ -100,6 +113,7 @@ export type ClockSync = z.infer<typeof clockSyncSchema>;
 export type StartRace = z.infer<typeof startRaceSchema>;
 export type Keystroke = z.infer<typeof keystrokeSchema>;
 export type CursorPosition = z.infer<typeof cursorPositionSchema>;
+export type Correction = z.infer<typeof correctionSchema>;
 
 // ──────────────────────────────────────────────────────────────────────────
 // Server → Client

@@ -263,10 +263,12 @@ export function dispatch(
         return;
       }
       // Accepted — broadcast cursor_update to OTHER players
+      // index = player.progress (the next char to type), so opponents
+      // see the cursor at the same place the typist sees their own.
       const cursorFrame: CursorUpdate = {
         type: "cursor_update",
         playerId: player.playerId,
-        index: msg.index,
+        index: player.progress,
         serverTs: Date.now(),
         charStates: result.newCharStates,
         wpm: result.playerPatch.currentWpm,
@@ -296,10 +298,48 @@ export function dispatch(
       const cursorFrame: CursorUpdate = {
         type: "cursor_update",
         playerId: player.playerId,
-        index: msg.index,
+        index: player.progress,
         serverTs: now,
       };
       for (const other of room.players.values()) {
+        try {
+          other.wsRef.send(JSON.stringify(cursorFrame));
+        } catch {
+          // ignore
+        }
+      }
+      break;
+    }
+
+    case "correction": {
+      const code = ws.data.roomCode;
+      if (!code) return;
+      const room = rooms.get(code);
+      if (!room) return;
+      if (room.state !== "racing" && room.state !== "grace") return;
+      const player = room.players.get(ws.data.playerId);
+      if (!player) return;
+      if (!room.passageText) return;
+      // Clamp to [0, progress]. Decrement by backspaces; cap to 0.
+      const newProgress = Math.max(0, player.progress - msg.backspaces);
+      // Revert char-states for the reverted range
+      for (let i = newProgress; i < player.progress; i++) {
+        player.charStates[i] = "pending";
+      }
+      player.progress = newProgress;
+      // Update lastKeystrokeAt for cursor throttle
+      player.lastKeystrokeAt = Date.now();
+      // Broadcast cursor_update to OTHER players
+      const cursorFrame: CursorUpdate = {
+        type: "cursor_update",
+        playerId: player.playerId,
+        index: player.progress,
+        serverTs: Date.now(),
+        charStates: player.charStates,
+        wpm: player.currentWpm,
+      };
+      for (const other of room.players.values()) {
+        if (other.playerId === player.playerId) continue;
         try {
           other.wsRef.send(JSON.stringify(cursorFrame));
         } catch {

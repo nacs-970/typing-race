@@ -122,6 +122,9 @@ export function App(): React.ReactElement {
           passageText={passageText}
           playerId={playerId}
           onKeystroke={onKeystroke}
+          onCorrection={(n) => {
+            ws.send({ type: "correction", backspaces: n, clientTs: Date.now() });
+          }}
         />
       )}
 

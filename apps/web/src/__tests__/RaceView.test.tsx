@@ -24,7 +24,7 @@ beforeEach(() => {
 describe("RaceView — char-state accents", () => {
   test("1. char with no state in ownCharStates renders as data-state=pending", () => {
     const { container } = render(
-      <RaceView passageText="hi" playerId="me" onKeystroke={() => {}} />,
+      <RaceView passageText="hi" playerId="me" onKeystroke={() => {}} onCorrection={() => {}} />,
     );
     const spans = container.querySelectorAll(".char");
     expect(spans.length).toBe(2);
@@ -35,7 +35,7 @@ describe("RaceView — char-state accents", () => {
   test("2. char at index 0 with state correct renders data-state=correct", () => {
     useRaceStore.setState({ ownCharStates: ["correct", "pending"] });
     const { container } = render(
-      <RaceView passageText="hi" playerId="me" onKeystroke={() => {}} />,
+      <RaceView passageText="hi" playerId="me" onKeystroke={() => {}} onCorrection={() => {}} />,
     );
     const spans = container.querySelectorAll(".char");
     expect(spans[0]?.classList.contains("char-correct")).toBe(true);
@@ -45,7 +45,7 @@ describe("RaceView — char-state accents", () => {
   test("3. char at index 1 with state error renders data-state=error", () => {
     useRaceStore.setState({ ownCharStates: ["pending", "error"] });
     const { container } = render(
-      <RaceView passageText="hi" playerId="me" onKeystroke={() => {}} />,
+      <RaceView passageText="hi" playerId="me" onKeystroke={() => {}} onCorrection={() => {}} />,
     );
     const spans = container.querySelectorAll(".char");
     expect(spans[0]?.classList.contains("char-pending")).toBe(true);
@@ -57,7 +57,7 @@ describe("RaceView — char-state accents", () => {
       <RaceView
         passageText={PASSAGE}
         playerId="me"
-        onKeystroke={() => {}}
+        onKeystroke={() => {}} onCorrection={() => {}}
       />,
     );
     const spans = container.querySelectorAll(".char");

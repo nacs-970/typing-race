@@ -28,10 +28,12 @@ export function RaceView({
   passageText,
   playerId,
   onKeystroke,
+  onCorrection,
 }: {
   passageText: string;
   playerId: string;
   onKeystroke: (index: number, char: string) => void;
+  onCorrection: (backspaces: number) => void;
 }): React.ReactElement {
   const ownIndex = useCursorStore((s) => s.ownIndex);
   const cursors = useCursorStore((s) => s.cursors);
@@ -41,18 +43,14 @@ export function RaceView({
     const onKey = (ev: KeyboardEvent): void => {
       if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
 
-      // Backspace: revert last accepted char (client-only optimistic)
+      // Backspace: revert last accepted char + tell server
       if (ev.key === "Backspace") {
         ev.preventDefault();
         if (ownIndex <= 0) return;
-        const revertAt = ownIndex - 1;
-        setRaceState((s) => {
-          const next = [...s.ownCharStates];
-          while (next.length <= revertAt) next.push("pending");
-          next[revertAt] = "pending";
-          return { ownCharStates: next };
-        });
-        setCursorState({ ownIndex: revertAt });
+        onCorrection(1);
+        // Note: server will broadcast a cursor_update that updates
+        // ownIndex + ownCharStates authoritatively. No local state
+        // mutation needed; await server roundtrip.
         return;
       }
 
@@ -78,7 +76,7 @@ export function RaceView({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [ownIndex, passageText, onKeystroke]);
+  }, [ownIndex, passageText, onKeystroke, onCorrection]);
 
   return (
     <div className="race-view">

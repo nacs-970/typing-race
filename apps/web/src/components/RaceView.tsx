@@ -20,7 +20,7 @@
  * Optimistic charStates: local — each char-state is set on keystroke.
  * Race-end resets the cursor store; rematch resets local state.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRaceStore, setRaceState, type CharState as CharStateType } from "../store/race.ts";
 import { useCursorStore } from "../store/cursor.ts";
 
@@ -39,22 +39,38 @@ export function RaceView({
   const ownCharStates = useRaceStore((s) => s.ownCharStates);
   // Local own cursor (single source of truth for THIS player)
   const [ownIndex, setOwnIndex] = useState(0);
+  const ownIndexRef = useRef(0);
+
+  const updateOwnIndex = (newIndex: number | ((i: number) => number)) => {
+    const next = typeof newIndex === "function" ? newIndex(ownIndexRef.current) : newIndex;
+    ownIndexRef.current = next;
+    setOwnIndex(next);
+  };
+
+  // Stable refs for callbacks — prevents useEffect from tearing down the
+  // keydown listener every time App.tsx re-renders with new function refs
+  const onKeystrokeRef = useRef(onKeystroke);
+  onKeystrokeRef.current = onKeystroke;
+  const onCorrectionRef = useRef(onCorrection);
+  onCorrectionRef.current = onCorrection;
 
   useEffect(() => {
     const onKey = (ev: KeyboardEvent): void => {
       if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
 
+      const currentIdx = ownIndexRef.current;
+
       // Backspace: ask server to decrement progress
       if (ev.key === "Backspace") {
         ev.preventDefault();
-        if (ownIndex <= 0) return;
-        onCorrection(1);
+        if (currentIdx <= 0) return;
+        onCorrectionRef.current(1);
         // Optimistically decrement (server echo will confirm)
-        setOwnIndex((i) => i - 1);
+        updateOwnIndex((i) => i - 1);
         setRaceState((s) => {
           const next = [...s.ownCharStates];
           if (next.length > 0) {
-            next[ownIndex - 1] = "pending";
+            next[currentIdx - 1] = "pending";
           }
           return { ownCharStates: next };
         });
@@ -66,32 +82,32 @@ export function RaceView({
       if (ch.length !== 1) return;
 
       ev.preventDefault();
-      if (ownIndex >= passageText.length) return;
+      if (currentIdx >= passageText.length) return;
 
       // Optimistic local char-state
-      const expected = passageText[ownIndex] ?? "";
+      const expected = passageText[currentIdx] ?? "";
       const charState: CharStateType = ch === expected ? "correct" : "error";
       setRaceState((s) => {
         const next = [...s.ownCharStates];
-        while (next.length <= ownIndex) next.push("pending");
-        next[ownIndex] = charState;
+        while (next.length <= currentIdx) next.push("pending");
+        next[currentIdx] = charState;
         return { ownCharStates: next };
       });
 
-      onKeystroke(ownIndex, ch);
+      onKeystrokeRef.current(currentIdx, ch);
       // Advance locally; App.tsx will also call setCursorState(ownIndex+1)
       // but we use our local state for display.
-      setOwnIndex((i) => i + 1);
+      updateOwnIndex((i) => i + 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [ownIndex, passageText, onKeystroke, onCorrection]);
+  }, [passageText]);
 
   // On rematch (race_start) reset local ownIndex to 0
   useEffect(() => {
     // Listen for race_start in our own store. We do it via passageText
     // change since passageText is reset on race_start.
-    setOwnIndex(0);
+    updateOwnIndex(0);
   }, [passageText]);
 
   // Also sync from server cursor_update echoes (backspace, etc.) by
@@ -102,10 +118,10 @@ export function RaceView({
     const unsub = useCursorStore.subscribe((s, prev) => {
       if (s.ownIndex < prev.ownIndex) {
         // Server says go back (correction echo)
-        setOwnIndex(s.ownIndex);
+        updateOwnIndex(s.ownIndex);
       } else if (s.ownIndex === 0 && prev.ownIndex > 0) {
         // Race ended / rematch
-        setOwnIndex(0);
+        updateOwnIndex(0);
       }
     });
     return unsub;

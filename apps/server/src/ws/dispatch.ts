@@ -14,7 +14,7 @@ import {
 } from "../rooms/manager.ts";
 import { transition } from "../race/controller.ts";
 import { validateKeystroke } from "../race/validate-keystroke.ts";
-import { broadcastToRoom } from "./broadcast.ts";
+import { broadcastToRoom, broadcastLobbyState } from "./broadcast.ts";
 import { shuffle, dealNextPassage } from "../race/corpus.ts";
 import { getPassageById, isValidPassageId, hostPickedPreview, PASSAGES } from "@typing-race/shared";
 import type { Countdown, CursorUpdate } from "@typing-race/shared";
@@ -126,6 +126,24 @@ export function dispatch(
       break;
     }
 
+    case "return_to_lobby": {
+      const code = ws.data.roomCode;
+      if (!code) return;
+      const room = rooms.get(code);
+      if (!room || room.hostId !== ws.data.playerId) return; // host only
+      if (room.state !== "finished" && room.state !== "countdown") return;
+
+      try {
+        transition(room, "lobby");
+      } catch {
+        return;
+      }
+      
+      broadcastToRoom(room, { type: "return_to_lobby" });
+      broadcastLobbyState(room);
+      break;
+    }
+
     case "start_race": {
       const code = ws.data.roomCode;
       if (!code) return;
@@ -140,7 +158,15 @@ export function dispatch(
         );
         return;
       }
-      if (room.state !== "lobby") return;
+      if (room.state !== "lobby" && room.state !== "finished") return;
+      if (room.state === "finished") {
+        try {
+          // Internal FSM requires going through lobby before countdown
+          transition(room, "lobby");
+        } catch {
+          return;
+        }
+      }
 
       // D-09: graceSeconds already validated by Zod (3-10, default 5)
       // Determine passage: explicit pick (D-01) or auto-deal for rematch (D-04)
@@ -291,10 +317,10 @@ export function dispatch(
       if (!room || room.state !== "racing") return; // silent drop
       const player = room.players.get(ws.data.playerId);
       if (!player) return;
-      // Throttle at 10Hz (≥100ms) — TODO Phase 5 polish: separate lastCursorAtMs field
+      // Throttle at 10Hz (≥100ms)
       const now = Date.now();
-      if (now - player.lastKeystrokeAt < 100) return;
-      player.lastKeystrokeAt = now;
+      if (now - player.lastCursorAtMs < 100) return;
+      player.lastCursorAtMs = now;
       const cursorFrame: CursorUpdate = {
         type: "cursor_update",
         playerId: player.playerId,
@@ -302,6 +328,7 @@ export function dispatch(
         serverTs: now,
       };
       for (const other of room.players.values()) {
+        if (other.playerId === player.playerId) continue;
         try {
           other.wsRef.send(JSON.stringify(cursorFrame));
         } catch {

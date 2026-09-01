@@ -18,6 +18,7 @@
 import type { Keystroke, ServerErrorCode } from "@typing-race/shared";
 import type { CharState, Player, Room } from "./types.ts";
 import {
+  countCorrectChars,
   countUncorrectedErrors,
   computeNetWpm,
 } from "./scoring.ts";
@@ -64,14 +65,12 @@ export function validateKeystroke(args: {
     return { ok: false, reason: "RATE_LIMITED" };
   }
 
-  // Check 4: char-match + range
+  // Char-match + range
   if (frame.index < 0 || frame.index >= passageText.length) {
     return { ok: false, reason: "INVALID_FRAME" };
   }
   const expected = passageText[frame.index];
-  if (frame.char !== expected) {
-    return { ok: false, reason: "INVALID_FRAME" };
-  }
+  const charState: CharState = frame.char === expected ? "correct" : "error";
 
   // All checks passed — compute char-state snapshot (immutable: don't mutate)
   const newCharStates: CharState[] = player.charStates.slice();
@@ -83,11 +82,11 @@ export function validateKeystroke(args: {
   }
   // Last-write-wins per position (Pitfall 1 + D-11/D-12: 2-tone, no
   // "corrected" intermediate — once wrong-then-right, state is "correct")
-  newCharStates[frame.index] = "correct";
+  newCharStates[frame.index] = charState;
 
   // Recompute aggregates from snapshot
   const uncorrectedErrors = countUncorrectedErrors(newCharStates);
-  const correctChars = newCharStates.length - uncorrectedErrors;
+  const correctChars = countCorrectChars(newCharStates);
   const totalKeystrokes = player.totalKeystrokes + 1;
 
   // D-05: net WPM = max(0, (correct/5 − uncorrected/5)) / minutesElapsed

@@ -133,15 +133,19 @@ describe("validateKeystroke — 4 anti-cheat checks", () => {
 
   test("4. char-match: wrong char → INVALID_FRAME; right → ok", () => {
     const now = 1000;
+    const room = fakeRoom("racing", now - 200);
     const wrong = validateKeystroke({
-      room: fakeRoom("racing", now - 200),
+      room,
       player: fakePlayer(now - 50),
       frame: fakeFrame(1, "X"), // expected 'e' at index 1 of "hello world"
       passageText: PASSAGE,
       now,
     });
-    expect(wrong.ok).toBe(false);
-    if (!wrong.ok) expect(wrong.reason).toBe("INVALID_FRAME");
+    expect(wrong.ok).toBe(true);
+    if (wrong.ok) {
+      expect(wrong.newCharStates[1]).toBe("error");
+      expect(wrong.playerPatch.uncorrectedErrors).toBe(1);
+    }
 
     const right = validateKeystroke({
       room: fakeRoom("racing", now - 200),
@@ -356,7 +360,7 @@ describe("validateKeystroke — Phase 3 char-state extension", () => {
     expect(r.ok).toBe(true);
   });
 
-  test("15. D-05 live WPM: 1 correct / 10 pending / 30s = 4.4 WPM (early race)", () => {
+  test("15. D-05 live WPM: 1 correct / 10 pending / 30s = 0.4 WPM (early race)", () => {
     const now = 30_000;
     const player = fakePlayer(0, 0);
     const r = validateKeystroke({
@@ -370,9 +374,9 @@ describe("validateKeystroke — Phase 3 char-state extension", () => {
     if (!r.ok) return;
     // After accept: charStates grows to passageText.length=11 (1 'correct' + 10 'pending')
     // elapsedMs = 30000 - 0 = 30000, minutes = 0.5
-    // netWpm = max(0, (11/5 - 0/5) / 0.5) = max(0, 4.4) = 4.4
-    expect(player.currentWpm).toBe(4.4);
-    expect(r.playerPatch.currentWpm).toBe(4.4);
+    // netWpm = max(0, (1/5 - 0/5) / 0.5) = max(0, 0.4) = 0.4
+    expect(player.currentWpm).toBe(0.4);
+    expect(r.playerPatch.currentWpm).toBe(0.4);
   });
 
   test("16. D-05 spec fixture via validateKeystroke: 30 correct / 30s = 12 WPM", () => {

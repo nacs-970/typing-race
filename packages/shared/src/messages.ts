@@ -92,6 +92,11 @@ export const correctionSchema = z.object({
   clientTs: z.number().int().nonnegative(),
 });
 
+/** Host signals to return the room to the lobby without starting a race. */
+export const returnToLobbySchema = z.object({
+  type: z.literal("return_to_lobby"),
+});
+
 export const clientToServerSchema = z.discriminatedUnion("type", [
   clientPingSchema,
   joinRoomSchema,
@@ -102,6 +107,7 @@ export const clientToServerSchema = z.discriminatedUnion("type", [
   keystrokeSchema,
   cursorPositionSchema,
   correctionSchema,
+  returnToLobbySchema,
 ]);
 
 export type ClientToServer = z.infer<typeof clientToServerSchema>;
@@ -252,8 +258,9 @@ export const serverToClientSchema = z.discriminatedUnion("type", [
   raceStartSchema,
   cursorUpdateSchema,
   playerLeftSchema,
-  graceCountdownSchema,
   raceEndSchema,
+  graceCountdownSchema,
+  returnToLobbySchema,
 ]);
 
 export type ServerToClient = z.infer<typeof serverToClientSchema>;

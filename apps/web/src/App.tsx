@@ -107,7 +107,7 @@ export function App(): React.ReactElement {
         />
       )}
 
-      {roomCode && !raceStart && !inResults && (
+      {roomCode && !raceStart && !inResults && !inCountdown && (
         <LobbyView
           roomCode={roomCode}
           isHost={isHost}
@@ -117,7 +117,7 @@ export function App(): React.ReactElement {
         />
       )}
 
-      {raceStart && playerId && passageText && (
+      {raceStart && playerId && passageText && !inResults && (
         <RaceView
           passageText={passageText}
           playerId={playerId}

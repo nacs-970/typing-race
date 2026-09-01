@@ -8,7 +8,7 @@ Build a realtime multiplayer typing-race game from a greenfield monorepo to a de
 
 - [ ] **Phase 1: Foundation** - Monorepo, shared contract, deployable hello world
 - [x] **Phase 2: Race Engine** - Server-authoritative core with clock sync and anti-cheat (completed 2026-08-30)
-- [ ] **Phase 3: Race Track + WPM** - Per-word correctness, backspace, results board, passage corpus
+- [x] **Phase 3: Race Track + WPM** - Per-word correctness, backspace, results board, passage corpus (completed 2026-09-02)
 - [ ] **Phase 4: Reconnect** - sessionToken, room sweeper, heartbeat, rematch
 - [ ] **Phase 5: Frontend Polish** - Cursor interpolation, smooth UX, error toasts
 - [ ] **Phase 6: Deploy + Hardening** - Graceful shutdown, version pinning, public Fly.io deploy
@@ -83,10 +83,10 @@ Plans:
 
 Plans:
 
-- [ ] 03-01: Bundled passage corpus (50-100 public-domain English passages, 30-60 words each, JSON in `packages/shared` or server assets) + corpus picker (no-repeat within room)
-- [ ] 03-02: Per-character state model (`pending | correct | error | corrected`), word-correctness aggregator, server `keystroke` updates char states + broadcasts new cursor + char-state snapshot
-- [ ] 03-03: WPM + accuracy computation (server-only, standard formula, unit tests with fixtures: "30 chars in 30s → 2 WPM"; net WPM with errors penalty; raw WPM)
-- [ ] 03-04: Race-end detection (all players finished or one finished + others past 95% progress), Results view (ranked board, finish time / WPM / accuracy / time-delta-to-winner), Rematch button
+- [x] 03-01: Bundled passage corpus (50-100 public-domain English passages, 30-60 words each, JSON in `packages/shared` or server assets) + corpus picker (no-repeat within room)
+- [x] 03-02: Per-character state model (`pending | correct | error | corrected`), word-correctness aggregator, server `keystroke` updates char states + broadcasts new cursor + char-state snapshot
+- [x] 03-03: WPM + accuracy computation (server-only, standard formula, unit tests with fixtures: "30 chars in 30s → 2 WPM"; net WPM with errors penalty; raw WPM)
+- [x] 03-04: Race-end detection (all players finished or one finished + others past 95% progress), Results view (ranked board, finish time / WPM / accuracy / time-delta-to-winner), Rematch button
 
 ### Phase 4: Reconnect
 

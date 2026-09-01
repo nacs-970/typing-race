@@ -1,22 +1,14 @@
 ---
-status: testing
+status: complete
 phase: 03-race-track
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md, 03-03-SUMMARY.md, 03-04-SUMMARY.md]
 started: 2026-08-31
-updated: 2026-08-31
+updated: 2026-09-02
 ---
 
 ## Current Test
 
-number: 2
-name: Char accents reflect correctness live
-expected: |
-  While typing, the current position has a BLUE underline (own cursor).
-  Already-typed correct chars have a GREEN underline. Already-typed
-  wrong chars (then backspaced + retyped correct) have a GREEN underline.
-  Untyped chars (still ahead) are gray-dim. Opponent's cursor appears
-  as a red vertical bar at their current position.
-awaiting: user response
+[all tests complete]
 
 ## Tests
 
@@ -42,7 +34,7 @@ expected: |
   wrong chars (then backspaced + retyped correct) have a GREEN underline.
   Untyped chars (still ahead) are gray-dim. Opponent's cursor appears
   as a red vertical bar at their current position.
-result: [pending]
+result: pass
 
 ### 3. Grace period: others keep typing after first finishes
 expected: |
@@ -50,7 +42,7 @@ expected: |
   (still typing) sees an amber banner: "A finished — 5s remaining".
   B can keep typing during the 5s. B's WPM continues to update. When
   the 5s expires, both see the Results board.
-result: [pending]
+result: pass
 
 ### 4. Results board: ranking + per-player stats
 expected: |
@@ -58,7 +50,7 @@ expected: |
   is WPM (higher WPM wins). Each row shows: rank, player ID, time (s),
   WPM, accuracy (%). The current user is highlighted. Host sees a
   Rematch button at the bottom.
-result: [pending]
+result: pass
 
 ### 5. Rematch serves a new passage (no-repeat within room)
 expected: |
@@ -67,14 +59,14 @@ expected: |
   new passage. Run a second rematch — passage is different from both
   previous ones. If you play 5+ rematches in the same room, no
   passage is repeated.
-result: [pending]
+result: pass
 
 ## Summary
 
 total: 5
-passed: 1
+passed: 5
 issues: 0
-pending: 4
+pending: 0
 skipped: 0
 blocked: 0
 

@@ -28,6 +28,8 @@ export interface Player {
   progress: number;
   /** Server timestamp of last accepted keystroke (ms). Used for min-interval check. */
   lastKeystrokeAt: number;
+  /** Server timestamp of last cursor_position broadcast (ms). Used for 10Hz throttle. */
+  lastCursorAtMs: number;
   /** NTP-computed offset between client clock and server clock (Plan 03). */
   clientOffsetMs: number;
   /** Server timestamp when player joined (ms). Used for host-promotion tie-break. */

@@ -15,6 +15,7 @@ import type { Room } from "./types.ts";
 import { rooms } from "../rooms/manager.ts";
 import { broadcastToRoom, broadcastGraceCountdown, buildRaceEndFrame } from "../ws/broadcast.ts";
 import { computeAccuracy } from "./scoring.ts";
+import { logger } from "../logger.ts";
 
 export const COUNTDOWN_DURATION_MS = 3_000; // 3-second countdown
 
@@ -44,6 +45,18 @@ export function transition(room: Room, target: RaceState): void {
 
   if (target === "countdown") {
     room.startsAtServerMs = Date.now() + COUNTDOWN_DURATION_MS;
+    room.firstFinisherId = null;
+    room.graceEndsAtServerMs = null;
+    for (const player of room.players.values()) {
+      player.charStates = [];
+      player.progress = 0;
+      player.totalKeystrokes = 0;
+      player.uncorrectedErrors = 0;
+      player.currentWpm = 0;
+      player.lastKeystrokeAt = 0;
+      player.lastCursorAtMs = 0;
+      player.finishedAtServerMs = null;
+    }
   }
 }
 
@@ -66,12 +79,12 @@ export function tick(now: number = Date.now()): void {
       } catch {
         // skip — defensive (shouldn't happen)
       }
+      logger.info({ code: room.code }, "[race] started");
       const frame: RaceStart = {
         type: "race_start",
         startsAtServerMs: room.startsAtServerMs,
-        passageId: "placeholder",
-        passageText:
-          "The quick brown fox jumps over the lazy dog while a calm wind stirs the autumn leaves",
+        passageId: room.passageId!,
+        passageText: room.passageText!,
       };
       broadcastToRoom(room, frame);
       continue;
@@ -93,6 +106,7 @@ export function tick(now: number = Date.now()): void {
           } catch {
             // skip
           }
+          logger.info({ code: room.code, reason: "all_finished" }, "[race] ended");
           broadcastToRoom(room, buildRaceEndFrame(room, now));
           continue;
         }
@@ -104,6 +118,14 @@ export function tick(now: number = Date.now()): void {
         }
         room.firstFinisherId = firstFinisher.playerId;
         room.graceEndsAtServerMs = now + room.graceSeconds * 1000;
+        logger.info(
+          {
+            code: room.code,
+            firstFinisherId: firstFinisher.playerId,
+            graceSeconds: room.graceSeconds,
+          },
+          "[race] grace started",
+        );
         broadcastGraceCountdown(room, now);
         continue;
       }
@@ -122,6 +144,13 @@ export function tick(now: number = Date.now()): void {
         } catch {
           // skip
         }
+        logger.info(
+          {
+            code: room.code,
+            reason: allFinished ? "all_finished" : "grace_expired",
+          },
+          "[race] ended",
+        );
         broadcastToRoom(room, buildRaceEndFrame(room, now));
         continue;
       }

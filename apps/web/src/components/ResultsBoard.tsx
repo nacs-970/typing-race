@@ -56,17 +56,33 @@ export function ResultsBoard({
           })}
         </tbody>
       </table>
-      {isHost && (
-        <button
-          type="button"
-          className="rematch-button"
-          onClick={() => {
-            ws.send({ type: "start_race", graceSeconds: 5 });
-            onRematch();
-          }}
-        >
-          Rematch (auto-deal new passage)
-        </button>
+      {isHost ? (
+        <div style={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
+          <button
+            type="button"
+            className="rematch-button"
+            onClick={() => {
+              ws.send({ type: "start_race", graceSeconds: 5 });
+              onRematch();
+            }}
+          >
+            Rematch (auto-deal new passage)
+          </button>
+          <button
+            type="button"
+            className="rematch-button"
+            style={{ background: "#4b5563", color: "white" }}
+            onClick={() => {
+              ws.send({ type: "return_to_lobby" });
+            }}
+          >
+            Back to Lobby
+          </button>
+        </div>
+      ) : (
+        <div style={{ marginTop: "1rem", fontStyle: "italic", color: "#94a3b8" }}>
+          Waiting for host to start rematch or return to lobby...
+        </div>
       )}
     </div>
   );

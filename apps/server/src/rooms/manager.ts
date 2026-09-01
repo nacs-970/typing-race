@@ -92,6 +92,7 @@ export function addPlayer(
     wsRef: ws,
     progress: 0,
     lastKeystrokeAt: 0,
+    lastCursorAtMs: 0,
     clientOffsetMs: 0,
     joinedAt: Date.now(),
     // Phase 3 fields

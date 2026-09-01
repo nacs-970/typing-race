@@ -106,12 +106,16 @@ export class WsConnection {
         });
       }
       if (msg.type === "countdown") {
+        resetRaceUi();
         setRaceState({ countdownStartsAtServerMs: msg.startsAtServerMs });
       }
       if (msg.type === "race_start") {
         // New race (or rematch): reset race UI; passage text comes with race_start
         resetRaceUi();
         setRaceState({ passageText: msg.passageText });
+      }
+      if (msg.type === "return_to_lobby") {
+        resetRaceUi();
       }
       if (msg.type === "joined_room") {
         // Sync server-stamped clockOffsetMs into the clock store on join
@@ -168,9 +172,12 @@ export class WsConnection {
 }
 
 const wsUrl =
-  import.meta.env.DEV || import.meta.env.MODE === "development"
+  typeof window !== "undefined" &&
+  (import.meta.env.DEV || import.meta.env.MODE === "development")
     ? "ws://localhost:5173/ws"
-    : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws`;
+    : typeof window !== "undefined"
+      ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws`
+      : "ws://localhost:5173/ws";
 
 export const ws = new WsConnection(wsUrl);
 ws.connect();

@@ -173,7 +173,7 @@ describe("dispatch keystroke → cursor_update broadcast (end-to-end)", () => {
     };
     expect(frame.type).toBe("cursor_update");
     expect(frame.playerId).toBe("host");
-    expect(frame.index).toBe(0);
+    expect(frame.index).toBe(1);
     expect(typeof frame.serverTs).toBe("number");
     expect(Array.isArray(frame.charStates)).toBe(true);
     // charStates must be the full passage length (broadcast the snapshot)

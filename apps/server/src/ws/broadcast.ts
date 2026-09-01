@@ -4,7 +4,7 @@
  */
 import type { JoinedRoom, LobbyState, PlayerLeft, RaceEnd, GraceCountdown, PlayerFinalStats } from "@typing-race/shared";
 import type { Room } from "../race/types.ts";
-import { computeAccuracy } from "../race/scoring.ts";
+import { computeAccuracy, countCorrectChars } from "../race/scoring.ts";
 
 /** Send a frame to every player in the room. Errors swallowed (one slow client ≠ DoS). */
 export function broadcastToRoom(room: Room, frame: object): void {
@@ -70,7 +70,7 @@ export function broadcastJoinedRoom(room: Room, playerId: string): void {
  */
 export function buildRaceEndFrame(room: Room, now: number = Date.now()): RaceEnd {
   const results: PlayerFinalStats[] = [...room.players.values()].map((p) => {
-    const correctChars = p.charStates.length - p.uncorrectedErrors;
+    const correctChars = countCorrectChars(p.charStates);
     return {
       playerId: p.playerId,
       finishTimeMs: p.finishedAtServerMs ?? now,

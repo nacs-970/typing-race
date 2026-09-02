@@ -120,6 +120,9 @@ export function broadcastGraceCountdown(room: Room, now: number = Date.now()): v
 /** Build full authoritative race snapshot for a rejoining player (Plan 04-02). */
 export function buildRejoinedRoomFrame(room: Room, player: Player): RejoinedRoom {
   const isLobby = room.state === "lobby";
+  const sanitizeCharStates = (charStates: import("../race/types.ts").CharState[], progress: number) =>
+    charStates.map((st, i) => (i < progress && st === "pending" ? ("error" as const) : st));
+
   return {
     type: "rejoined_room",
     roomCode: room.code,
@@ -134,7 +137,7 @@ export function buildRejoinedRoomFrame(room: Room, player: Player): RejoinedRoom
       nickname: player.nickname,
       isHost: player.isHost,
       progress: player.progress,
-      charStates: player.charStates,
+      charStates: sanitizeCharStates(player.charStates, player.progress),
       wpm: player.currentWpm,
       uncorrectedErrors: player.uncorrectedErrors,
     },
@@ -143,7 +146,7 @@ export function buildRejoinedRoomFrame(room: Room, player: Player): RejoinedRoom
       nickname: p.nickname,
       isHost: p.isHost,
       progress: p.progress,
-      charStates: p.charStates,
+      charStates: sanitizeCharStates(p.charStates, p.progress),
       wpm: p.currentWpm,
       isDisconnected: p.disconnectedAt !== null,
     })),

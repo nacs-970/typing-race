@@ -123,6 +123,8 @@ export class WsConnection {
             const own = currentOwn[i];
             if (mergedStates[i] === "pending" && own && own !== "pending") {
               mergedStates[i] = own;
+            } else if (mergedStates[i] === "pending") {
+              mergedStates[i] = "error";
             }
           }
           for (let i = msg.index; i < mergedStates.length; i++) {
@@ -196,9 +198,13 @@ export class WsConnection {
         if (msg.roomState === "lobby") {
           resetRaceUi();
         } else {
+          const rawCharStates = (msg.you.charStates ?? []) as CharStateType[];
+          const ownCharStates = rawCharStates.map((st, i) =>
+            i < msg.you.progress && st === "pending" ? "error" : st,
+          );
           setRaceState({
             passageText: msg.passageText,
-            ownCharStates: msg.you.charStates as CharStateType[],
+            ownCharStates,
             ownWpm: msg.you.wpm,
             countdownStartsAtServerMs: msg.startsAtServerMs,
             graceBanner: msg.graceEndsAtServerMs

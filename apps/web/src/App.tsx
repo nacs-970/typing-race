@@ -142,8 +142,10 @@ export function App(): React.ReactElement {
     ws.rejoin(code, token);
   }, [roomCode]);
 
-  // Reclaim session automatically on focus, tab switch, click, or key press
+  // Reclaim session automatically on focus, tab switch, click, or key press when taken over
   useEffect(() => {
+    if (!sessionTakenOver) return;
+
     const onActivate = () => {
       const code =
         roomCode ??
@@ -154,9 +156,7 @@ export function App(): React.ReactElement {
       const token = getSessionCookie(code);
       if (!token) return;
 
-      if (sessionTakenOver || useConnectionStore.getState().status !== "open") {
-        ws.rejoin(code, token);
-      }
+      reclaimSession();
     };
 
     window.addEventListener("focus", onActivate);
@@ -169,7 +169,7 @@ export function App(): React.ReactElement {
       window.removeEventListener("pointerdown", onActivate);
       window.removeEventListener("keydown", onActivate, { capture: true });
     };
-  }, [sessionTakenOver, roomCode]);
+  }, [sessionTakenOver, roomCode, reclaimSession]);
 
   const onKeystroke = (index: number, char: string): void => {
     if (sessionTakenOver) {

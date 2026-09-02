@@ -8,6 +8,7 @@ import { setClockState } from "../store/clock.ts";
 import {
   setRaceState,
   resetRaceUi,
+  useRaceStore,
   type CharState as CharStateType,
 } from "../store/race.ts";
 import { useConnectionStore } from "../store/connection.ts";
@@ -115,7 +116,19 @@ export class WsConnection {
             }
             return { ownIndex: msg.index };
           });
-          setRaceState({ ownCharStates: charStates, ownWpm: wpm });
+          // Merge states: preserve already-typed past characters (< msg.index) so errors don't turn grey
+          const currentOwn = useRaceStore.getState().ownCharStates;
+          const mergedStates = charStates.slice();
+          for (let i = 0; i < msg.index; i++) {
+            const own = currentOwn[i];
+            if (mergedStates[i] === "pending" && own && own !== "pending") {
+              mergedStates[i] = own;
+            }
+          }
+          for (let i = msg.index; i < mergedStates.length; i++) {
+            mergedStates[i] = "pending";
+          }
+          setRaceState({ ownCharStates: mergedStates, ownWpm: wpm });
         } else {
           // Opponent cursor
           setCursorState((s) => {
@@ -278,7 +291,6 @@ export class WsConnection {
 
     const sendRejoin = () => {
       clearTimeout(resetRejoiningTimeout);
-      this.rejoining = false;
       return this.send({
         type: "rejoin_room",
         roomCode,

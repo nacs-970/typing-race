@@ -9,16 +9,15 @@ updated: 2026-09-03
 ## Current Test
 <!-- OVERWRITE each test - shows where we are -->
 
-number: 1
-name: Mid-race disconnect & seamless reconnect
+number: 2
+name: Multi-tab session takeover
 expected: |
-  Start a race between two tabs (Host and Guest).
-  While typing, close or refresh Guest's tab.
-  Host screen immediately displays amber toast: "Guest disconnected — waiting up to 60s for reconnect...".
-  Race continues without interruption on Host's screen.
-  Guest re-opens or reloads the room URL (#ABCDEF) within 60s.
-  Guest immediately rejoins the race at their exact progress and typed characters (cursor at the latest character typed, NOT reset to the first character).
-  Host sees green toast: "Guest reconnected!".
+  Join a room in Tab 1.
+  Open the same room URL (#ABCDEF) in a new Tab 2 in the same browser.
+  Tab 2 claims the session using the room's session cookie and renders the room/race state.
+  Tab 1 receives session_taken_over notice and displays banner:
+  "Session active in another tab: This room is currently open in another browser tab. This window has been disconnected."
+  When the race finishes and players return to the lobby, opening a new tab cleanly renders the Lobby view (not a stuck 0s race view).
 awaiting: user response
 
 ## Tests
@@ -32,7 +31,7 @@ expected: |
   Guest re-opens or reloads the room URL (#ABCDEF) within 60s.
   Guest immediately rejoins the race at their exact progress and typed characters (cursor at the latest character typed, NOT reset to the first character).
   Host sees green toast: "Guest reconnected!".
-result: pending
+result: pass
 
 ### 2. Multi-tab session takeover
 expected: |
@@ -66,9 +65,9 @@ source: automated
 ## Summary
 
 total: 4
-passed: 1
+passed: 2
 issues: 0
-pending: 3
+pending: 2
 skipped: 0
 
 ## Gaps

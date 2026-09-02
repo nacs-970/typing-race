@@ -115,11 +115,17 @@ export function tick(now: number = Date.now()): void {
         (p) => p.finishedAtServerMs !== null,
       );
       if (firstFinisher) {
-        // If EVERY player finished, skip grace — go straight to finished
+        // If EVERY player (or all currently connected players) finished, skip grace — go straight to finished
+        const activePlayers = [...room.players.values()].filter(
+          (p) => p.disconnectedAt === null,
+        );
+        const allActiveFinished =
+          activePlayers.length > 0 &&
+          activePlayers.every((p) => p.finishedAtServerMs !== null);
         const allFinished = [...room.players.values()].every(
           (p) => p.finishedAtServerMs !== null,
         );
-        if (allFinished) {
+        if (allFinished || allActiveFinished) {
           try {
             transition(room, "finished");
           } catch {
@@ -152,12 +158,18 @@ export function tick(now: number = Date.now()): void {
 
     // Grace → finished when (a) all players done OR (b) timer expired
     if (room.state === "grace") {
+      const activePlayers = [...room.players.values()].filter(
+        (p) => p.disconnectedAt === null,
+      );
+      const allActiveFinished =
+        activePlayers.length > 0 &&
+        activePlayers.every((p) => p.finishedAtServerMs !== null);
       const allFinished = [...room.players.values()].every(
         (p) => p.finishedAtServerMs !== null,
       );
       const expired =
         room.graceEndsAtServerMs !== null && now >= room.graceEndsAtServerMs;
-      if (allFinished || expired) {
+      if (allFinished || allActiveFinished || expired) {
         try {
           transition(room, "finished");
         } catch {
@@ -166,7 +178,7 @@ export function tick(now: number = Date.now()): void {
         logger.info(
           {
             code: room.code,
-            reason: allFinished ? "all_finished" : "grace_expired",
+            reason: allFinished || allActiveFinished ? "all_finished" : "grace_expired",
           },
           "[race] ended",
         );

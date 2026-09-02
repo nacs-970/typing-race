@@ -22,6 +22,7 @@ import {
   broadcastToRoom,
   broadcastLobbyState,
   buildRejoinedRoomFrame,
+  buildRaceEndFrame,
   broadcastPlayerReconnected,
 } from "./broadcast.ts";
 import { shuffle, dealNextPassage } from "../race/corpus.ts";
@@ -171,7 +172,22 @@ export function dispatch(
       if (room.state === "lobby") {
         broadcastLobbyState(room);
       }
+      if (
+        room.state === "grace" &&
+        room.graceEndsAtServerMs !== null &&
+        Date.now() >= room.graceEndsAtServerMs
+      ) {
+        try {
+          transition(room, "finished");
+          broadcastToRoom(room, buildRaceEndFrame(room));
+        } catch {
+          // ignore
+        }
+      }
       ws.send(JSON.stringify(buildRejoinedRoomFrame(room, player)));
+      if (room.state === "finished") {
+        ws.send(JSON.stringify(buildRaceEndFrame(room)));
+      }
       break;
     }
 

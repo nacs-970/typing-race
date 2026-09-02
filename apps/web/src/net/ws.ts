@@ -207,13 +207,16 @@ export class WsConnection {
             ownCharStates,
             ownWpm: msg.you.wpm,
             countdownStartsAtServerMs: msg.startsAtServerMs,
-            graceBanner: msg.graceEndsAtServerMs
-              ? {
-                  leaderPlayerId: "",
-                  leaderNickname: "",
-                  remainingMs: Math.max(0, msg.graceEndsAtServerMs - Date.now()),
-                }
-              : null,
+            graceBanner:
+              msg.roomState === "grace" &&
+              msg.graceEndsAtServerMs !== null &&
+              msg.graceEndsAtServerMs > Date.now()
+                ? {
+                    leaderPlayerId: "",
+                    leaderNickname: "",
+                    remainingMs: Math.max(0, msg.graceEndsAtServerMs - Date.now()),
+                  }
+                : null,
           });
           const cursors = new Map<string, { playerId: string; index: number; serverTs: number }>();
           const opponentWpm: Record<string, number> = {};

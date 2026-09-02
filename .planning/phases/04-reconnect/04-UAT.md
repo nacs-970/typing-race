@@ -1,5 +1,5 @@
 ---
-status: testing
+status: complete
 phase: 04-reconnect
 source: [04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md, 04-05-SUMMARY.md]
 started: 2026-09-02
@@ -7,18 +7,8 @@ updated: 2026-09-03
 ---
 
 ## Current Test
-<!-- OVERWRITE each test - shows where we are -->
-
-number: 2
-name: Multi-tab session takeover
-expected: |
-  Join a room in Tab 1.
-  Open the same room URL (#ABCDEF) in a new Tab 2 in the same browser.
-  Tab 2 claims the session using the room's session cookie and renders the room/race state.
-  Tab 1 receives session_taken_over notice and displays banner:
-  "Session active in another tab: This room is currently open in another browser tab. This window has been disconnected."
-  When the race finishes and players return to the lobby, opening a new tab cleanly renders the Lobby view (not a stuck 0s race view).
-awaiting: user response
+<!-- All tests complete -->
+awaiting: none
 
 ## Tests
 
@@ -41,7 +31,7 @@ expected: |
   Tab 1 receives session_taken_over notice and displays banner:
   "Session active in another tab: This room is currently open in another browser tab. This window has been disconnected."
   When the race finishes and players return to the lobby, opening a new tab cleanly renders the Lobby view (not a stuck 0s race view).
-result: pending
+result: pass
 
 ### 3. 60-second eviction & host promotion
 expected: |
@@ -52,7 +42,7 @@ expected: |
   Server evicts Host; Guest receives player_left and is automatically promoted to Host.
   Guest now sees host controls (passage picker / Start Race button).
   Refreshing the page (F5) within 60s does not destroy the room.
-result: pending
+result: pass
 
 ### 4. Per-IP rate limiting
 expected: |
@@ -65,9 +55,9 @@ source: automated
 ## Summary
 
 total: 4
-passed: 2
+passed: 4
 issues: 0
-pending: 2
+pending: 0
 skipped: 0
 
 ## Gaps

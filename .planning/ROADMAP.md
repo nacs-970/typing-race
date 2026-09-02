@@ -34,9 +34,9 @@ Build a realtime multiplayer typing-race game from a greenfield monorepo to a de
 
 Plans:
 
-- [ ] 01-01: bun-workspace monorepo skeleton (root `package.json`, `apps/server`, `apps/client`, `packages/shared`), TypeScript 7, ESLint/Prettier baseline, root scripts (`dev`, `build`, `test`)
-- [ ] 01-02: Server skeleton (Bun.serve + Hono 4, `/health` route, static SPA serving from `apps/client/dist` in prod, dev proxy), Client skeleton (Vite 8 + React 19 + Zod 4, "Hello Typing Race" page)
-- [ ] 01-03: Fly.io config (`fly.toml`, multi-stage `Dockerfile` on `oven/bun:1.3.x-slim`, `auto_stop_machines = "stop"`, `concurrency.type = "connections"`), deploy script, end-to-end deploy verification
+- [x] 01-01: bun-workspace monorepo skeleton (root `package.json`, `apps/server`, `apps/client`, `packages/shared`), TypeScript 7, ESLint/Prettier baseline, root scripts (`dev`, `build`, `test`)
+- [x] 01-02: Server skeleton (Bun.serve + Hono 4, `/health` route, static SPA serving from `apps/client/dist` in prod, dev proxy), Client skeleton (Vite 8 + React 19 + Zod 4, "Hello Typing Race" page)
+- [x] 01-03: Fly.io config (`fly.toml`, multi-stage `Dockerfile` on `oven/bun:1.3.x-slim`, `auto_stop_machines = "stop"`, `concurrency.type = "connections"`), deploy script, end-to-end deploy verification
 
 ### Phase 2: Race Engine
 
@@ -108,10 +108,11 @@ Plans:
 
 Plans:
 
-- [ ] 04-01: `sessionToken` issuance at join (signed or opaque random, stored in WS context), reconnect handshake (`rejoin_room` with `sessionToken`), server re-binds to existing player slot
-- [ ] 04-02: Race snapshot replay on reconnect (full state per player: cursor index, char states, WPM, race timer), 500ms grace period before keystrokes count, "X reconnected" broadcast
-- [ ] 04-03: Room sweeper (60s interval, evict idle >10min), heartbeat ping/pong in `Bun.serve` WS handlers (15s ping, 5s pong timeout, graceful close), per-IP room-creation rate limit (10/hr, in-memory LRU)
-- [ ] 04-04: Graceful disconnect UX (opponents see "X disconnected — waiting 30s" toast, not "X left"), WS lifecycle hardening (close vs error vs tab kill, mobile Safari coverage)
+- [x] 04-01: `sessionToken` issuance at join (signed or opaque random, stored in WS context), reconnect handshake (`rejoin_room` with `sessionToken`), server re-binds to existing player slot
+- [x] 04-02: Race snapshot replay on reconnect (full state per player: cursor index, char states, WPM, race timer), 500ms grace period before keystrokes count, "X reconnected" broadcast
+- [x] 04-03: Room sweeper (60s interval, evict idle >10min), heartbeat ping/pong in `Bun.serve` WS handlers (15s ping, 5s pong timeout, graceful close), per-IP room-creation rate limit (10/hr, in-memory LRU)
+- [x] 04-04: Graceful disconnect UX (opponents see "X disconnected — waiting 30s" toast, not "X left"), WS lifecycle hardening (close vs error vs tab kill, mobile Safari coverage)
+- [x] 04-05: Gap closure — cursor index restore, lobby/finished reconnect cleanup, dynamic host promotion & 60s uniform grace
 
 ### Phase 5: Frontend Polish
 

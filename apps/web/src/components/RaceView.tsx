@@ -111,13 +111,6 @@ export function RaceView({
     return () => window.removeEventListener("keydown", onKey);
   }, [passageText]);
 
-  // On rematch (race_start) reset local ownIndex to 0
-  useEffect(() => {
-    // Listen for race_start in our own store. We do it via passageText
-    // change since passageText is reset on race_start.
-    updateOwnIndex(0);
-  }, [passageText]);
-
   // Also sync from server cursor_update echoes (backspace, etc.) by
   // watching the cursor store's ownIndex field. We mirror it into local
   // state when it goes DOWN (backspace echo) or when it goes to 0

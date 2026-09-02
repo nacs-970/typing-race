@@ -119,14 +119,15 @@ export function broadcastGraceCountdown(room: Room, now: number = Date.now()): v
 
 /** Build full authoritative race snapshot for a rejoining player (Plan 04-02). */
 export function buildRejoinedRoomFrame(room: Room, player: Player): RejoinedRoom {
+  const isLobby = room.state === "lobby";
   return {
     type: "rejoined_room",
     roomCode: room.code,
     roomState: room.state,
-    passageId: room.passageId,
-    passageText: room.passageText,
-    startsAtServerMs: room.startsAtServerMs,
-    graceEndsAtServerMs: room.graceEndsAtServerMs,
+    passageId: isLobby ? null : room.passageId,
+    passageText: isLobby ? null : room.passageText,
+    startsAtServerMs: isLobby ? null : room.startsAtServerMs,
+    graceEndsAtServerMs: isLobby ? null : room.graceEndsAtServerMs,
     clockOffsetMs: player.clientOffsetMs,
     you: {
       playerId: player.playerId,

@@ -190,42 +190,45 @@ export class WsConnection {
       if (msg.type === "rejoined_room") {
         setConnectionStore({ playerId: msg.you.playerId });
         setClockState({ offsetMs: msg.clockOffsetMs });
-        setRaceState({
-          passageText: msg.passageText,
-          ownCharStates: msg.you.charStates as CharStateType[],
-          ownWpm: msg.you.wpm,
-          countdownStartsAtServerMs: msg.startsAtServerMs,
-          graceBanner: msg.graceEndsAtServerMs
-            ? {
-                leaderPlayerId: "",
-                leaderNickname: "",
-                remainingMs: Math.max(0, msg.graceEndsAtServerMs - Date.now()),
-              }
-            : null,
-        });
-        const cursors = new Map<string, { playerId: string; index: number; serverTs: number }>();
-        const opponentWpm: Record<string, number> = {};
-        for (const p of msg.players) {
-          if (p.playerId !== msg.you.playerId) {
-            cursors.set(p.playerId, {
-              playerId: p.playerId,
-              index: p.progress,
-              serverTs: Date.now(),
-            });
-            opponentWpm[p.playerId] = p.wpm;
+        this.rejoining = false;
+        this.sessionTakenOver = false;
+
+        if (msg.roomState === "lobby") {
+          resetRaceUi();
+        } else {
+          setRaceState({
+            passageText: msg.passageText,
+            ownCharStates: msg.you.charStates as CharStateType[],
+            ownWpm: msg.you.wpm,
+            countdownStartsAtServerMs: msg.startsAtServerMs,
+            graceBanner: msg.graceEndsAtServerMs
+              ? {
+                  leaderPlayerId: "",
+                  leaderNickname: "",
+                  remainingMs: Math.max(0, msg.graceEndsAtServerMs - Date.now()),
+                }
+              : null,
+          });
+          const cursors = new Map<string, { playerId: string; index: number; serverTs: number }>();
+          const opponentWpm: Record<string, number> = {};
+          for (const p of msg.players) {
+            if (p.playerId !== msg.you.playerId) {
+              cursors.set(p.playerId, {
+                playerId: p.playerId,
+                index: p.progress,
+                serverTs: Date.now(),
+              });
+              opponentWpm[p.playerId] = p.wpm;
+            }
           }
+          setCursorState({ cursors, ownIndex: msg.you.progress });
+          setRaceState({ opponentWpm });
         }
-        setCursorState({ cursors, ownIndex: msg.you.progress });
-        setRaceState({ opponentWpm });
       }
       if (msg.type === "session_taken_over") {
         this.rejoining = false;
         this.sessionTakenOver = true;
         setConnectionStore({ status: "closed" });
-      }
-      if (msg.type === "rejoined_room") {
-        this.rejoining = false;
-        this.sessionTakenOver = false;
       }
       if (msg.type === "lobby_state") {
         setRaceState({

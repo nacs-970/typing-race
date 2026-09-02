@@ -108,6 +108,16 @@ export function App(): React.ReactElement {
       if (msg.type === "session_taken_over") {
         setSessionTakenOver(true);
       }
+      if (msg.type === "lobby_state") {
+        setRoomCode(msg.roomCode);
+        const myId = useConnectionStore.getState().playerId;
+        if (myId) {
+          const me = msg.players.find((p) => p.playerId === myId);
+          if (me) {
+            setIsHost(me.isHost);
+          }
+        }
+      }
       if (msg.type === "player_disconnected") {
         setDisconnectToasts((prev) => [
           ...prev.filter((t) => t.playerId !== msg.playerId),

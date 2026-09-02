@@ -196,13 +196,7 @@ export function handlePlayerDisconnect(
   // If the socket being closed is not the player's active socket, ignore
   if (closingWs && player.wsRef !== closingWs) return;
 
-  // If only 1 player in lobby or room is empty, remove immediately
-  if (room.state === "lobby" && room.players.size <= 1) {
-    removePlayer(code, playerId);
-    return;
-  }
-
-  // Active room or lobby with multiple players: 60s disconnect grace period
+  // 60s disconnect grace period for any room / lobby
   player.disconnectedAt = Date.now();
   logger.info(
     { playerId, roomCode: code, nickname: player.nickname },

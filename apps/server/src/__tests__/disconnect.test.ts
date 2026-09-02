@@ -63,12 +63,18 @@ describe("Phase 4 Plan 04: Disconnect UX, 60s Grace Period & Eviction", () => {
     expect(parsed.timeoutMs).toBe(60_000);
   });
 
-  test("2. Solo player in lobby is removed immediately on disconnect", () => {
+  test("2. Solo player in lobby is granted 60s grace on disconnect and evicted after 60s", () => {
     const wsHost = fakeWs("host-1");
-    const { code } = createRoom(asWs(wsHost), "Host");
+    const { code, room } = createRoom(asWs(wsHost), "Host");
     expect(rooms.has(code)).toBe(true);
 
     handlePlayerDisconnect(code, "host-1");
+    const hostPlayer = room.players.get("host-1")!;
+    expect(hostPlayer.disconnectedAt).not.toBeNull();
+    expect(rooms.has(code)).toBe(true);
+
+    // After 60s without reconnect, tick evicts player and deletes empty room
+    tick(Date.now() + 60_000);
     expect(rooms.has(code)).toBe(false);
   });
 

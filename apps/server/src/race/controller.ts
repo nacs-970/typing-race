@@ -58,6 +58,25 @@ export function transition(room: Room, target: RaceState): void {
       player.finishedAtServerMs = null;
     }
   }
+
+  if (target === "lobby") {
+    room.passageId = null;
+    room.passageText = null;
+    room.startsAtServerMs = null;
+    room.firstFinisherId = null;
+    room.graceEndsAtServerMs = null;
+    room.hostPickedPassagePreview = null;
+    for (const player of room.players.values()) {
+      player.charStates = [];
+      player.progress = 0;
+      player.totalKeystrokes = 0;
+      player.uncorrectedErrors = 0;
+      player.currentWpm = 0;
+      player.lastKeystrokeAt = 0;
+      player.lastCursorAtMs = 0;
+      player.finishedAtServerMs = null;
+    }
+  }
 }
 
 /**

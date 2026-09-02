@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 current_phase: 4
 current_phase_name: Reconnect
-status: verification
-stopped_at: Phase 4 execution complete. All 4 plans implemented & tested. Ready for UAT verification.
-last_updated: "2026-09-02T18:15:00.000Z"
-last_activity: 2026-09-02
-last_activity_desc: Phase 4 execution complete (all 4 plans implemented & tested)
-state_head: b14b8a4
+status: gaps_found
+stopped_at: Phase 4 UAT completed with 3 issues diagnosed (G-04-1, G-04-2, G-04-3). Plan 04-05 created for gap closure.
+last_updated: "2026-09-03T01:19:00.000Z"
+last_activity: 2026-09-03
+last_activity_desc: Phase 4 UAT completed (1 pass, 3 issues). Root causes diagnosed, Plan 04-05 ready.
+state_head: baca0a1
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 15
+  total_plans: 16
   completed_plans: 15
   percent: 66
 ---
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-08-30)
 
 ## Current Position
 
-Phase: 4 (Reconnect) — UAT VERIFICATION
-Plan: 4 of 4 completed
-Status: Phase 4 execution complete — sessionToken, rejoined_room snapshot, cookie takeover, 15s heartbeat, per-IP rate limiting, 60s disconnect grace window, and opponent waiting toasts.
-Last activity: 2026-09-02 — Phase 4 plans executed and tested
+Phase: 4 (Reconnect) — GAP CLOSURE
+Plan: 4 of 5 completed (Plan 04-05 gap closure ready)
+Status: UAT found 3 issues (reconnect cursor reset, lobby rejoin view, host promotion & solo disconnect). Diagnoses complete; Plan 04-05 prepared.
+Last activity: 2026-09-03 — UAT diagnosed, Plan 04-05 created
 
 Progress: [████████████████████] 66% (Overall)
 
@@ -98,6 +98,6 @@ Items acknowledged and deferred, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-08-30 (Phase 2 execution)
-Stopped at: Phase 2 Race Engine complete + verified (22/22 must-haves). Ready to plan Phase 3 (Race Track + WPM).
-Resume file: None — proceed to Phase 3 planning next.
+Last session: 2026-09-03T01:03:00+07:00
+Stopped at: Session resumed, Phase 4 execution complete (all 4 plans implemented & tested), dev servers running on 8080 & 5173. Ready for Phase 4 UAT verification or advancing to Phase 5.
+Resume file: .planning/phases/04-reconnect/04-UAT.md

@@ -29,12 +29,18 @@ const server = Bun.serve<WsData>({
 
     if (url.pathname === "/ws") {
       const playerId = crypto.randomUUID();
+      const clientIp =
+        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+        srv.requestIP(req)?.address ??
+        "127.0.0.1";
       const success = srv.upgrade(req, {
         data: {
           playerId,
           roomCode: null,
           nickname: null,
           clientOffsetMs: 0,
+          ip: clientIp,
+          lastPongAt: Date.now(),
         } satisfies WsData,
       });
       if (success) return undefined;
@@ -64,13 +70,19 @@ const server = Bun.serve<WsData>({
     perMessageDeflate: true,
 
     open(ws) {
+      activeSockets.add(ws);
+      ws.data.lastPongAt = Date.now();
       logger.info({ playerId: ws.data.playerId }, "[ws] open");
       sendHello(ws);
+    },
+    pong(ws) {
+      ws.data.lastPongAt = Date.now();
     },
     message(ws, raw) {
       dispatch(ws, raw);
     },
     close(ws, code, reason) {
+      activeSockets.delete(ws);
       logger.info(
         { playerId: ws.data.playerId, code, reason: String(reason) },
         "[ws] close",
@@ -88,6 +100,23 @@ const server = Bun.serve<WsData>({
     return new Response("Internal Server Error", { status: 500 });
   },
 });
+
+const activeSockets = new Set<import("bun").ServerWebSocket<WsData>>();
+
+// 15s WS heartbeat — terminates dead sockets after 20s (15s ping + 5s timeout)
+const heartbeatInterval = setInterval(() => {
+  const now = Date.now();
+  for (const ws of activeSockets) {
+    if (now - (ws.data.lastPongAt ?? now) > 20_000) {
+      logger.warn({ playerId: ws.data.playerId }, "[ws] heartbeat timeout");
+      ws.close(1001, "Heartbeat timeout");
+      activeSockets.delete(ws);
+    } else {
+      ws.ping();
+    }
+  }
+}, 15_000);
+heartbeatInterval.unref?.();
 
 // 1Hz tick — drives Race Controller FSM transitions (countdown → racing)
 const tickInterval = setInterval(() => tick(), 1000);

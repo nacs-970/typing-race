@@ -13,6 +13,7 @@ import {
   getRoom,
   findPlayerBySessionToken,
   rebindPlayerSocket,
+  ipRateLimiter,
   rooms,
 } from "../rooms/manager.ts";
 import { transition } from "../race/controller.ts";
@@ -62,6 +63,17 @@ export function dispatch(
       break;
 
     case "create_room": {
+      const ip = ws.data.ip ?? "127.0.0.1";
+      if (!ipRateLimiter.checkAndConsume(ip)) {
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            code: "RATE_LIMITED",
+            message: "Too many rooms created from this IP. Limit is 10 per hour.",
+          }),
+        );
+        return;
+      }
       if (ws.data.roomCode) {
         ws.send(
           JSON.stringify({

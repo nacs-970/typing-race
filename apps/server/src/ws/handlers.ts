@@ -7,6 +7,8 @@ export type WsData = {
   roomCode: string | null;
   nickname: string | null;
   sessionToken?: string;
+  ip?: string;
+  lastPongAt?: number;
   /** NTP-computed offset between client and server clock (ms). Set by Plan 03. */
   clientOffsetMs: number;
 };

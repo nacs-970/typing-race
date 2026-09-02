@@ -102,26 +102,31 @@ export class WsConnection {
         });
       }
       if (msg.type === "cursor_update") {
-        // Update cursor in store (applies to own + opponent — RaceView
-        // filters own by playerId when rendering)
-        setCursorState((s) => {
-          const next = new Map(s.cursors);
-          next.set(msg.playerId, {
-            playerId: msg.playerId,
-            index: msg.index,
-            serverTs: msg.serverTs,
-          });
-          return { cursors: next };
-        });
-        // Phase 3 Plan 02+03: charStates + wpm live update (D-05, D-11)
+        const myId = useConnectionStore.getState().playerId;
         const charStates = (msg.charStates ?? []) as CharStateType[];
         const wpm = msg.wpm ?? 0;
-        const myId = useConnectionStore.getState().playerId;
         if (msg.playerId === myId) {
           // Authoritative ownIndex from server (esp. on backspace echo)
-          setCursorState({ ownIndex: msg.index });
+          setCursorState((s) => {
+            if (s.cursors.has(msg.playerId)) {
+              const next = new Map(s.cursors);
+              next.delete(msg.playerId);
+              return { cursors: next, ownIndex: msg.index };
+            }
+            return { ownIndex: msg.index };
+          });
           setRaceState({ ownCharStates: charStates, ownWpm: wpm });
         } else {
+          // Opponent cursor
+          setCursorState((s) => {
+            const next = new Map(s.cursors);
+            next.set(msg.playerId, {
+              playerId: msg.playerId,
+              index: msg.index,
+              serverTs: msg.serverTs,
+            });
+            return { cursors: next };
+          });
           setRaceState((s) => ({
             opponentWpm: { ...s.opponentWpm, [msg.playerId]: wpm },
           }));
@@ -159,6 +164,7 @@ export class WsConnection {
         resetRaceUi();
       }
       if (msg.type === "joined_room") {
+        setConnectionStore({ playerId: msg.playerId });
         if (msg.sessionToken) {
           setSessionCookie(msg.roomCode, msg.sessionToken);
         }
@@ -169,6 +175,7 @@ export class WsConnection {
         });
       }
       if (msg.type === "rejoined_room") {
+        setConnectionStore({ playerId: msg.you.playerId });
         setClockState({ offsetMs: msg.clockOffsetMs });
         setRaceState({
           passageText: msg.passageText,

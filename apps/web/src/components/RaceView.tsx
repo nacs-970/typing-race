@@ -23,6 +23,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRaceStore, setRaceState, type CharState as CharStateType } from "../store/race.ts";
 import { useCursorStore } from "../store/cursor.ts";
+import { useConnectionStore } from "../store/connection.ts";
 
 export function RaceView({
   passageText,
@@ -35,6 +36,7 @@ export function RaceView({
   onKeystroke: (index: number, char: string) => void;
   onCorrection: (backspaces: number) => void;
 }): React.ReactElement {
+  const myId = useConnectionStore((s) => s.playerId) ?? playerId;
   const opponentCursorsMap = useCursorStore((s) => s.cursors);
   const ownCharStates = useRaceStore((s) => s.ownCharStates);
   // Local own cursor (single source of truth for THIS player, initialized from store on reconnect)
@@ -140,7 +142,7 @@ export function RaceView({
           const isOwnCursor = i === ownIndex;
           const state: CharStateType = ownCharStates[i] ?? "pending";
           const opponentCursors = [...opponentCursorsMap.entries()]
-            .filter(([pid, c]) => c.index === i && pid !== playerId)
+            .filter(([pid, c]) => c.index === i && pid !== myId && pid !== playerId)
             .map(([pid]) => pid);
           return (
             <span

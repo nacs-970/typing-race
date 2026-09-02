@@ -1,13 +1,13 @@
 {
   "version": "1.0",
-  "timestamp": "2026-09-02T14:45:00.000Z",
+  "timestamp": "2026-09-02T15:11:00.000Z",
   "phase": "04-reconnect",
   "phase_name": "reconnect",
   "phase_dir": ".planning/phases/04-reconnect",
   "plan": 1,
-  "task": "planning",
+  "task": 1,
   "total_tasks": 4,
-  "status": "ready",
+  "status": "paused",
   "completed_tasks": [
     {"id": "03-01", "name": "passage corpus + picker", "status": "done", "commit": "8d0ed72"},
     {"id": "03-02", "name": "char-state model + word aggregation", "status": "done", "commit": "3b9937f"},
@@ -21,22 +21,21 @@
   ],
   "remaining_tasks": [
     {"id": "04-01", "name": "sessionToken & reconnect handshake", "status": "not_started"},
-    {"id": "04-02", "name": "race snapshot replay", "status": "not_started"},
-    {"id": "04-03", "name": "room sweeper & heartbeat ping/pong", "status": "not_started"},
-    {"id": "04-04", "name": "graceful disconnect UX", "status": "not_started"}
+    {"id": "04-02", "name": "race snapshot replay & cookie takeover", "status": "not_started"},
+    {"id": "04-03", "name": "heartbeat ping/pong & rate limiting", "status": "not_started"},
+    {"id": "04-04", "name": "graceful disconnect UX & 60s window", "status": "not_started"}
   ],
   "blockers": [],
   "async_jobs": [],
   "human_actions_pending": [],
   "decisions": [
-    {"decision": "RaceView ownIndex = local useState(0), not cursor store", "rationale": "Decouple from store writes; cursor store is for opponents only", "phase": "03"},
-    {"decision": "Server echoes cursor_update to sender on correction", "rationale": "Sender needs authoritative ownIndex back; without it, ownIndex drifts", "phase": "03"},
-    {"decision": "Server broadcasts index = player.progress (next-to-type)", "rationale": "Match what typist sees on own screen; opponent cursor otherwise off-by-one", "phase": "03"},
-    {"decision": "correction C->S frame for backspace", "rationale": "D-11 last-write-wins means client-only backspace leaves opponent's view stale", "phase": "03"},
-    {"decision": "Separate lastCursorAtMs from lastKeystrokeAt", "rationale": "Cursor throttle at 10Hz was starving keystroke anti-cheat validation", "phase": "03"},
-    {"decision": "Reset firstFinisherId and graceEndsAtServerMs on countdown", "rationale": "Rematch rounds must clear previous race leader state to allow new grace countdown", "phase": "03"}
+    {"decision": "Store sessionToken in cookie", "rationale": "Enables seamless multi-tab access and persistence across browser sessions", "phase": "04"},
+    {"decision": "Newest tab takes over session", "rationale": "Seamless takeover; old tab receives session_taken_over notice", "phase": "04"},
+    {"decision": "Race continues live during disconnect", "rationale": "Opponents keep typing without interruption; 60s reconnect window", "phase": "04"},
+    {"decision": "Instant UI restore on reconnect", "rationale": "Player immediately sees restored track and can resume typing (with 500ms anti-burst check)", "phase": "04"},
+    {"decision": "Omit idle room sweeper", "rationale": "User explicit request: no idle room timeouts; rooms stay open until empty", "phase": "04"}
   ],
   "uncommitted_files": [],
-  "next_action": "Plan Phase 4 (Reconnect & Room Lifecycle)",
-  "context_notes": "Phase 3 fully verified and committed in c45a1c1. All 80 unit tests pass."
+  "next_action": "Execute Plan 04-01 (sessionToken & rejoin_room handshake)",
+  "context_notes": "Phase 4 discussion completed (all 4 topics decided and committed in 85638c9). Ready to execute Plan 04-01."
 }

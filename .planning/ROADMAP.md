@@ -133,9 +133,16 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
+**Wave 1**
 
 - [ ] 05-01: Separate `cursorStore` (30Hz, isolated from `roomStore` ~1Hz) in Zustand 5, cursor interpolation buffer (100ms) with linear rAF lerp, extrapolation cap 150ms
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 05-02: CSS `transform: translate3d()` cursor positioning outside React tree, GPU-accelerated layer, React DevTools profile verification (no per-frame React renders)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 05-03: Server-synced countdown UI, per-player "ready" lobby indicator, "Starting in 2s…" pause with synced timer, rematch flow polish
 - [ ] 05-04: Reconnect progress bar (5s grace), distinct error toasts (4 cases: lost connection / server restart / rate limit / version mismatch), WPM display polish (integer + raw/net hover tooltip), time-delta-to-winner
 

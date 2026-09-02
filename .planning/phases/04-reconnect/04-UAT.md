@@ -1,14 +1,25 @@
 ---
-status: diagnosed
+status: testing
 phase: 04-reconnect
-source: [04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md]
+source: [04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md, 04-05-SUMMARY.md]
 started: 2026-09-02
 updated: 2026-09-03
 ---
 
 ## Current Test
+<!-- OVERWRITE each test - shows where we are -->
 
-[testing complete]
+number: 1
+name: Mid-race disconnect & seamless reconnect
+expected: |
+  Start a race between two tabs (Host and Guest).
+  While typing, close or refresh Guest's tab.
+  Host screen immediately displays amber toast: "Guest disconnected — waiting up to 60s for reconnect...".
+  Race continues without interruption on Host's screen.
+  Guest re-opens or reloads the room URL (#ABCDEF) within 60s.
+  Guest immediately rejoins the race at their exact progress and typed characters (cursor at the latest character typed, NOT reset to the first character).
+  Host sees green toast: "Guest reconnected!".
+awaiting: user response
 
 ## Tests
 
@@ -19,11 +30,9 @@ expected: |
   Host screen immediately displays amber toast: "Guest disconnected — waiting up to 60s for reconnect...".
   Race continues without interruption on Host's screen.
   Guest re-opens or reloads the room URL (#ABCDEF) within 60s.
-  Guest immediately rejoins the race at their exact progress and typed characters.
+  Guest immediately rejoins the race at their exact progress and typed characters (cursor at the latest character typed, NOT reset to the first character).
   Host sees green toast: "Guest reconnected!".
-result: issue
-reported: "guest reconnect, reconnected person cursor start at the first char, not the lastest char of they typing"
-severity: major
+result: pending
 
 ### 2. Multi-tab session takeover
 expected: |
@@ -32,9 +41,8 @@ expected: |
   Tab 2 claims the session using the room's session cookie and renders the room/race state.
   Tab 1 receives session_taken_over notice and displays banner:
   "Session active in another tab: This room is currently open in another browser tab. This window has been disconnected."
-result: issue
-reported: "when finished and back to lobby, new tab in host, it show finished 0s and typing view"
-severity: major
+  When the race finishes and players return to the lobby, opening a new tab cleanly renders the Lobby view (not a stuck 0s race view).
+result: pending
 
 ### 3. 60-second eviction & host promotion
 expected: |
@@ -44,9 +52,8 @@ expected: |
   Wait 60s without Host reconnecting.
   Server evicts Host; Guest receives player_left and is automatically promoted to Host.
   Guest now sees host controls (passage picker / Start Race button).
-result: issue
-reported: "60s passed no host control, f5 back to create room/ join room view"
-severity: major
+  Refreshing the page (F5) within 60s does not destroy the room.
+result: pending
 
 ### 4. Per-IP rate limiting
 expected: |
@@ -60,15 +67,17 @@ source: automated
 
 total: 4
 passed: 1
-issues: 3
-pending: 0
+issues: 0
+pending: 3
 skipped: 0
 
 ## Gaps
 
 - gap_id: G-04-1
   truth: "Guest immediately rejoins the race at their exact progress and typed characters with cursor positioned at the latest char typed, not reset to the first char."
-  status: failed
+  status: resolved
+  resolved_by: 04-05-PLAN.md
+  resolved_at: "2026-09-03"
   reason: "User reported: guest reconnect, reconnected person cursor start at the first char, not the lastest char of they typing"
   severity: major
   test: 1
@@ -83,7 +92,9 @@ skipped: 0
 
 - gap_id: G-04-2
   truth: "When room returns to lobby or finishes, opening a new tab properly restores the lobby view (or results view if finished), resetting passageText and race view state if in lobby."
-  status: failed
+  status: resolved
+  resolved_by: 04-05-PLAN.md
+  resolved_at: "2026-09-03"
   reason: "User reported: when finished and back to lobby, new tab in host, it show finished 0s and typing view"
   severity: major
   test: 2
@@ -102,7 +113,9 @@ skipped: 0
 
 - gap_id: G-04-3
   truth: "When host disconnects and is evicted after 60s, guest is promoted to host with visible host controls in UI; refreshing does not destroy the room prematurely."
-  status: failed
+  status: resolved
+  resolved_by: 04-05-PLAN.md
+  resolved_at: "2026-09-03"
   reason: "User reported: 60s passed no host control, f5 back to create room/ join room view"
   severity: major
   test: 3

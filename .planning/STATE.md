@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-08-30)
 
 ## Current Position
 
-Phase: 4 (Reconnect) — GAP CLOSURE
-Plan: 4 of 5 completed (Plan 04-05 gap closure ready)
-Status: UAT found 3 issues (reconnect cursor reset, lobby rejoin view, host promotion & solo disconnect). Diagnoses complete; Plan 04-05 prepared.
-Last activity: 2026-09-03 — UAT diagnosed, Plan 04-05 created
+Phase: 4 (Reconnect) — UAT RE-VERIFICATION
+Plan: 5 of 5 completed
+Status: Plan 04-05 gap closure executed and tested (122 tests passing). Ready for UAT re-verification.
+Last activity: 2026-09-03 — Plan 04-05 gap closure executed
 
 Progress: [████████████████████] 66% (Overall)
 

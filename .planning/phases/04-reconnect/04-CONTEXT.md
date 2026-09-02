@@ -2,23 +2,22 @@
 # Phase 4: Reconnect & Room Lifecycle - Context
 
 **Gathered:** 2026-09-02
-**Status:** Ready for planning
+**Status:** Ready for execution (Discussed with user)
 
 <domain>
 
 ## Phase Boundary
 
-Phase 4 makes the multiplayer typing game resilient to real-world network fluctuations, tab reloads, and server resource leakage. It provides:
+Phase 4 makes the multiplayer typing game resilient to real-world network fluctuations, tab reloads, and multi-tab browser usage. It provides:
 1. Mid-race reconnection without loss of progress or state corruption (`sessionToken`).
-2. Full state snapshot recovery on rejoin (passage, progress, charStates, live cursors, timers).
-3. Temporary disconnect grace period (60s) before permanent player eviction.
-4. Room lifecycle management: idle room sweeper (10 min timeout) and heartbeat ping/pong.
-5. Per-IP rate limiting for room creation (10 rooms/hour) to protect server resources.
+2. Cookie-based session storage and seamless multi-tab takeover.
+3. Full state snapshot recovery on rejoin (passage, progress, charStates, live cursors, timers).
+4. Live race flow during disconnect: opponents keep typing while toast warns "X disconnected — waiting 60s".
+5. Temporary disconnect grace period (60s) before permanent player eviction.
+6. WebSocket heartbeat ping/pong (15s/5s) and per-IP rate limiting on room creation (10 rooms/hour).
 
-Out of scope for Phase 4:
-- Interpolated 60fps cursor animation (Phase 5).
-- Audio effects / UI theme switcher (Phase 5 or v2).
-- Fly.io multi-region deploy & production SSL configuration (Phase 6).
+User explicit exclusions:
+- **NO idle room sweeper**: Rooms do not expire or evict after X minutes of inactivity. Rooms remain active until all players permanently leave.
 
 </domain>
 
@@ -26,32 +25,28 @@ Out of scope for Phase 4:
 
 ## Implementation Decisions
 
-### Session tokens & Rejoin handshake
+### Session tokens & Cookie persistence (User-defined)
 
-- **D-01: `sessionToken` issued on room join/create.** When a player creates or joins a room, the server issues a random `sessionToken` (UUID v4) alongside `playerId`. The token is stored in the browser's `sessionStorage` mapped by `roomCode`.
-- **D-02: `rejoin_room` wire schema.** New client-to-server message `{ type: "rejoin_room", roomCode: string, sessionToken: string }`.
-- **D-03: Server re-binds WebSocket to existing Player slot.** On valid `rejoin_room`, the server attaches the new `ws` connection to the existing `player`, clears `player.disconnectedAt`, and marks the player active. If `sessionToken` does not match, returns `SESSION_INVALID`.
+- **D-01: `sessionToken` stored in Cookie.** When a player creates or joins a room, server issues `sessionToken` (UUID v4). Client saves it in `document.cookie` (`typing_race_${roomCode}=${sessionToken}; path=/; SameSite=Lax`).
+- **D-02: Multi-tab takeover.** When a user opens a new tab with the same room URL, the new tab reads the cookie, connects to the existing session, and takes over. The old tab is sent a `session_taken_over` notice and disconnected.
+- **D-03: `rejoin_room` wire schema.** Client sends `{ type: "rejoin_room", roomCode: string, sessionToken: string }`. Server re-binds WebSocket to existing Player slot, sets `player.reconnectedAt = Date.now()`, and clears `player.disconnectedAt`.
 
-### Disconnect grace & Reconnect snapshot
+### Live race flow & Disconnect grace
 
-- **D-04: 60-second disconnect grace period.** When a WebSocket closes, if the room is active (`countdown`, `racing`, `grace`, or `lobby`), the player is NOT immediately removed. The server records `player.disconnectedAt = Date.now()` and broadcasts `player_disconnected` to opponents.
-- **D-05: Eviction after 60s.** If the player does not rejoin within 60 seconds, the server permanently removes the player, triggers host promotion if necessary, and broadcasts `player_left`.
-- **D-06: `rejoined_room` snapshot frame.** Server sends full authoritative race state to the rejoining client:
-  - Room state (`state`, `passageId`, `passageText`, `startsAtServerMs`, `graceEndsAtServerMs`)
-  - Own progress (`progress`, `charStates`, `wpm`, `totalKeystrokes`)
-  - Opponents (`playerId`, `nickname`, `progress`, `charStates`, `wpm`, `isHost`, `isDisconnected`)
-  - Server clock offset (`clockOffsetMs`).
-- **D-07: 500ms anti-cheat grace period on reconnect.** Server rejects keystrokes for 500ms after reconnection to prevent burst replay attacks and clock desync.
+- **D-04: Race continues live during disconnect.** When a player drops mid-race, the race is NOT paused. Opponents keep typing without interruption. An amber toast warns: `Player [Name] disconnected — waiting 60s`.
+- **D-05: 60-second reconnect window.** Disconnected player has 60 seconds to reconnect. If they reconnect, they immediately resume typing where they left off. If the race ends before they reconnect, the results board includes their last progress.
+- **D-06: Eviction after 60s.** If a player fails to reconnect within 60s, they are permanently removed (`removePlayer`), host is migrated if applicable, and `player_left` is broadcast.
 
-### Opponent notifications
+### Rejoin experience & Anti-cheat
 
-- **D-08: Opponent toasts / status pills.** When a player drops, opponents receive `player_disconnected` with `{ playerId, nickname, timeoutMs: 60000 }`. When they reconnect, opponents receive `player_reconnected` with `{ playerId, nickname }`.
+- **D-07: Instant UI restore.** Rejoining player immediately receives `rejoined_room` snapshot with full room state, passage, their own typed char states, and opponent cursors. They can type immediately.
+- **D-08: 500ms server anti-burst guard.** Server rejects keystrokes for 500ms after reconnection to prevent burst replay attacks and clock skew.
 
-### Room sweeper & Heartbeat
+### Room Lifecycle (Sweeper excluded)
 
-- **D-09: Idle room sweeper (10 min).** Periodic timer (runs every 60s) evicts any room where `Date.now() - room.lastActivityAt > 600_000`. Cleanly notifies connected sockets and frees memory.
-- **D-10: WS Heartbeat ping/pong (15s/5s).** Server sends WS ping every 15s. If client does not respond within 5s, connection is terminated cleanly, triggering the disconnect flow.
-- **D-11: Per-IP room creation rate limit.** In-memory sliding window or bucket limiting IPs to 10 `create_room` calls per hour. Returns `RATE_LIMITED` when exceeded.
+- **D-09: No idle room sweeper.** User explicitly requested no idle eviction. Rooms remain alive until empty.
+- **D-10: WS Heartbeat ping/pong (15s/5s).** Server sends WS ping every 15s. If client does not respond within 5s, socket is terminated cleanly, triggering the 60s disconnect grace flow.
+- **D-11: Per-IP room creation rate limit.** In-memory limiter restricting each IP to 10 `create_room` calls per hour. Returns `RATE_LIMITED` error when exceeded.
 
 </decisions>
 
@@ -65,22 +60,11 @@ Out of scope for Phase 4:
 - `.planning/STATE.md` — Phase 3 completion status and accumulated architectural decisions.
 
 ### Existing code
-- `packages/shared/src/messages.ts` — Wire schemas. Extend with `rejoin_room`, `rejoined_room`, `player_disconnected`, `player_reconnected`.
-- `apps/server/src/race/types.ts` — `Player` and `Room` types. Add `sessionToken`, `disconnectedAt`, `reconnectedAt`.
-- `apps/server/src/rooms/manager.ts` — Room & player lifecycle. Add reconnect rebinding and sweeper.
+- `packages/shared/src/messages.ts` — Wire schemas. Extend with `rejoin_room`, `rejoined_room`, `player_disconnected`, `player_reconnected`, `session_taken_over`.
+- `apps/server/src/race/types.ts` — `Player` interface. Add `sessionToken`, `disconnectedAt`, `reconnectedAt`.
+- `apps/server/src/rooms/manager.ts` — Room & player lifecycle. Add reconnect rebinding and IpRateLimiter.
 - `apps/server/src/ws/dispatch.ts` — Inbound WS routing. Add `rejoin_room` handler.
-- `apps/web/src/net/ws.ts` — WebSocket client connection manager. Add auto-reconnect logic and `sessionStorage` caching.
+- `apps/web/src/net/ws.ts` — WebSocket client connection manager. Add cookie reading/writing, auto-rejoin logic.
 - `apps/web/src/App.tsx` — App state. Handle `rejoined_room` hydration and disconnect toasts.
 
 </canonical_refs>
-
-<code_context>
-
-## Existing Code Insights
-
-### Reusable Assets
-- `apps/server/src/ws/broadcast.ts`: Pattern for broadcasting to room members with error swallowing.
-- `apps/web/src/store/race.ts` and `connection.ts`: Zustand stores ready to receive hydrated snapshot data.
-- `apps/server/src/race/controller.ts`: FSM transitions and 1Hz `tick()` loop. The sweeper and disconnect timeouts can be integrated directly into the ticker or a dedicated interval.
-
-</code_context>

@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 04-reconnect
 source: [04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md]
 started: 2026-09-02
@@ -72,8 +72,14 @@ skipped: 0
   reason: "User reported: guest reconnect, reconnected person cursor start at the first char, not the lastest char of they typing"
   severity: major
   test: 1
-  artifacts: []
-  missing: []
+  root_cause: "RaceView.tsx useEffect on [passageText] unconditionally resets ownIndex to 0 on mount"
+  artifacts:
+    - path: "apps/web/src/components/RaceView.tsx"
+      issue: "useEffect on [passageText] resets ownIndex to 0 on mount, wiping reconnected progress"
+  missing:
+    - "Do not reset ownIndex to 0 on mount when rejoining an active race"
+    - "Preserve useCursorStore ownIndex on RaceView mount"
+  debug_session: .planning/debug/reconnect-cursor-reset.md
 
 - gap_id: G-04-2
   truth: "When room returns to lobby or finishes, opening a new tab properly restores the lobby view (or results view if finished), resetting passageText and race view state if in lobby."
@@ -81,8 +87,18 @@ skipped: 0
   reason: "User reported: when finished and back to lobby, new tab in host, it show finished 0s and typing view"
   severity: major
   test: 2
-  artifacts: []
-  missing: []
+  root_cause: "rejoined_room snapshot retains passageText in lobby state; App.tsx uses passageText != null to render RaceView"
+  artifacts:
+    - path: "apps/server/src/ws/broadcast.ts"
+      issue: "buildRejoinedRoomFrame sends passageText from prior race even when room is in lobby"
+    - path: "apps/web/src/net/ws.ts"
+      issue: "rejoined_room handler sets passageText unconditionally without checking roomState"
+    - path: "apps/web/src/App.tsx"
+      issue: "App.tsx routes to RaceView whenever passageText is not null"
+  missing:
+    - "Clear passageText and reset race state in rejoined_room when roomState is lobby"
+    - "Deliver results in rejoined_room and set raceEndResults when roomState is finished"
+  debug_session: .planning/debug/lobby-rejoin-renders-race-view.md
 
 - gap_id: G-04-3
   truth: "When host disconnects and is evicted after 60s, guest is promoted to host with visible host controls in UI; refreshing does not destroy the room prematurely."
@@ -90,5 +106,13 @@ skipped: 0
   reason: "User reported: 60s passed no host control, f5 back to create room/ join room view"
   severity: major
   test: 3
-  artifacts: []
-  missing: []
+  root_cause: "App.tsx does not update isHost from lobby_state; manager.ts immediately evicts solo player on disconnect in lobby deleting the room"
+  artifacts:
+    - path: "apps/web/src/App.tsx"
+      issue: "App.tsx ignores lobby_state broadcast and fails to update isHost upon host promotion"
+    - path: "apps/server/src/rooms/manager.ts"
+      issue: "handlePlayerDisconnect immediately removes solo player in lobby, destroying room on F5 reload"
+  missing:
+    - "Listen to lobby_state in App.tsx and update isHost for local player"
+    - "Provide 60s disconnect grace window in lobby for players with active sessionToken"
+  debug_session: .planning/debug/host-promotion-and-solo-disconnect.md

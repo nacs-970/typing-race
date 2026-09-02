@@ -41,12 +41,17 @@ export function RaceView({
   const initialIndex = useCursorStore.getState().ownIndex;
   const [ownIndex, setOwnIndex] = useState(initialIndex);
   const ownIndexRef = useRef(initialIndex);
+  const storeOwnIndex = useCursorStore((s) => s.ownIndex);
 
   const updateOwnIndex = (newIndex: number | ((i: number) => number)) => {
     const next = typeof newIndex === "function" ? newIndex(ownIndexRef.current) : newIndex;
     ownIndexRef.current = next;
     setOwnIndex(next);
   };
+
+  useEffect(() => {
+    updateOwnIndex(storeOwnIndex);
+  }, [storeOwnIndex]);
 
   // Stable refs for callbacks — prevents useEffect from tearing down the
   // keydown listener every time App.tsx re-renders with new function refs

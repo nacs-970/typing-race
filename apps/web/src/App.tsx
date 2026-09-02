@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useConnectionStore } from "./store/connection.ts";
 import { useClockStore } from "./store/clock.ts";
 import { ws, getSessionCookie } from "./net/ws.ts";
@@ -92,6 +92,7 @@ export function App(): React.ReactElement {
       if (msg.type === "joined_room") {
         setRoomCode(msg.roomCode);
         setIsHost(msg.you.isHost);
+        setSessionTakenOver(false);
         if (typeof window !== "undefined") {
           window.location.hash = msg.roomCode;
         }
@@ -99,6 +100,7 @@ export function App(): React.ReactElement {
       if (msg.type === "rejoined_room") {
         setRoomCode(msg.roomCode);
         setIsHost(msg.you.isHost);
+        setSessionTakenOver(false);
         if (typeof window !== "undefined") {
           window.location.hash = msg.roomCode;
         }
@@ -127,6 +129,36 @@ export function App(): React.ReactElement {
     });
     return unsub;
   }, []);
+
+  const reclaimSession = useCallback(() => {
+    const code =
+      roomCode ??
+      (typeof window !== "undefined"
+        ? window.location.hash.replace("#", "").trim().toUpperCase()
+        : null);
+    if (!code || code.length !== 6) return;
+    const token = getSessionCookie(code);
+    if (!token) return;
+    ws.rejoin(code, token);
+  }, [roomCode]);
+
+  // Reclaim session automatically on focus, tab switch, or click when session was taken over
+  useEffect(() => {
+    if (!sessionTakenOver) return;
+
+    const onActivate = () => {
+      reclaimSession();
+    };
+
+    window.addEventListener("focus", onActivate);
+    document.addEventListener("visibilitychange", onActivate);
+    window.addEventListener("pointerdown", onActivate);
+    return () => {
+      window.removeEventListener("focus", onActivate);
+      document.removeEventListener("visibilitychange", onActivate);
+      window.removeEventListener("pointerdown", onActivate);
+    };
+  }, [sessionTakenOver, reclaimSession]);
 
   const onKeystroke = (index: number, char: string): void => {
     setCursorState({ ownIndex: index + 1 });
@@ -173,12 +205,34 @@ export function App(): React.ReactElement {
             borderRadius: "8px",
             margin: "1rem 0",
             color: "#991b1b",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-          <strong>Session active in another tab</strong>
-          <p style={{ margin: "0.25rem 0 0" }}>
-            This room is currently open in another browser tab. This window has been disconnected.
-          </p>
+          <div>
+            <strong>Session active in another tab</strong>
+            <p style={{ margin: "0.25rem 0 0" }}>
+              This room is open in another tab. Click anywhere or press the button to resume here.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={reclaimSession}
+            style={{
+              background: "#ef4444",
+              color: "#ffffff",
+              border: "none",
+              padding: "0.5rem 1rem",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontWeight: 600,
+              marginLeft: "1rem",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Resume in this tab
+          </button>
         </div>
       )}
 

@@ -40,6 +40,7 @@ export class WsConnection {
   private socket: WebSocket | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private explicitlyClosed = false;
+  private sessionTakenOver = false;
   /** Subscriber callbacks for app-level frame handlers (App.tsx, etc.) */
   private subscribers: ((frame: ServerToClient) => void)[] = [];
 
@@ -176,7 +177,11 @@ export class WsConnection {
         setRaceState({ opponentWpm });
       }
       if (msg.type === "session_taken_over") {
+        this.sessionTakenOver = true;
         setConnectionStore({ status: "closed" });
+      }
+      if (msg.type === "rejoined_room") {
+        this.sessionTakenOver = false;
       }
       if (msg.type === "lobby_state") {
         setRaceState({
@@ -195,7 +200,7 @@ export class WsConnection {
 
     socket.addEventListener("close", () => {
       setConnectionStore({ status: "closed" });
-      if (this.explicitlyClosed) return;
+      if (this.explicitlyClosed || this.sessionTakenOver) return;
       this.reconnectTimer = setTimeout(() => this.connect(), 1000);
     });
 
@@ -222,6 +227,37 @@ export class WsConnection {
     if (this.socket?.readyState !== WebSocket.OPEN) return false;
     this.socket.send(JSON.stringify(frame));
     return true;
+  }
+
+  /** Reclaim or join session across tabs */
+  rejoin(roomCode: string, sessionToken: string): void {
+    this.sessionTakenOver = false;
+    this.explicitlyClosed = false;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
+    const sendRejoin = () => {
+      return this.send({
+        type: "rejoin_room",
+        roomCode,
+        sessionToken,
+      });
+    };
+
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      sendRejoin();
+    } else {
+      this.connect();
+      const interval = setInterval(() => {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+          sendRejoin();
+          clearInterval(interval);
+        }
+      }, 50);
+      setTimeout(() => clearInterval(interval), 5000);
+    }
   }
 }
 

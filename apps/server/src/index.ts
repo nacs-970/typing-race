@@ -89,7 +89,7 @@ const server = Bun.serve<WsData>({
       );
       // Phase 4: 60s disconnect grace period (evicted after 60s if not reconnected)
       if (ws.data.roomCode) {
-        handlePlayerDisconnect(ws.data.roomCode, ws.data.playerId);
+        handlePlayerDisconnect(ws.data.roomCode, ws.data.playerId, ws);
         ws.data.roomCode = null;
       }
     },

@@ -140,6 +140,7 @@ export function rebindPlayerSocket(
   const oldWs = player.wsRef;
   if (oldWs && oldWs !== newWs) {
     try {
+      oldWs.data.roomCode = null; // Prevent close handler from triggering handlePlayerDisconnect
       oldWs.send(JSON.stringify({ type: "session_taken_over" }));
       oldWs.close(1000, "Session taken over by another tab");
     } catch {
@@ -182,11 +183,18 @@ export function removePlayer(code: string, playerId: PlayerId): void {
   broadcastLobbyState(room);
 }
 
-export function handlePlayerDisconnect(code: string, playerId: PlayerId): void {
+export function handlePlayerDisconnect(
+  code: string,
+  playerId: PlayerId,
+  closingWs?: import("bun").ServerWebSocket<WsData>,
+): void {
   const room = rooms.get(code);
   if (!room) return;
   const player = room.players.get(playerId);
   if (!player) return;
+
+  // If the socket being closed is not the player's active socket, ignore
+  if (closingWs && player.wsRef !== closingWs) return;
 
   // If only 1 player in lobby or room is empty, remove immediately
   if (room.state === "lobby" && room.players.size <= 1) {

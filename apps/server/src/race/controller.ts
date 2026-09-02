@@ -12,7 +12,7 @@
  */
 import type { RaceState, RaceStart, RaceEnd, GraceCountdown, PlayerFinalStats } from "@typing-race/shared";
 import type { Room } from "./types.ts";
-import { rooms } from "../rooms/manager.ts";
+import { rooms, removePlayer } from "../rooms/manager.ts";
 import { broadcastToRoom, broadcastGraceCountdown, buildRaceEndFrame } from "../ws/broadcast.ts";
 import { computeAccuracy } from "./scoring.ts";
 import { logger } from "../logger.ts";
@@ -153,6 +153,20 @@ export function tick(now: number = Date.now()): void {
         );
         broadcastToRoom(room, buildRaceEndFrame(room, now));
         continue;
+      }
+    }
+
+    // Phase 4: Evict players whose 60s disconnect grace period expired
+    for (const player of [...room.players.values()]) {
+      if (
+        player.disconnectedAt !== null &&
+        now - player.disconnectedAt >= 60_000
+      ) {
+        logger.info(
+          { playerId: player.playerId, roomCode: room.code },
+          "[controller] disconnect grace expired — evicting player",
+        );
+        removePlayer(room.code, player.playerId);
       }
     }
   }

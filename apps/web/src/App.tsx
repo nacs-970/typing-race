@@ -36,6 +36,10 @@ export function App(): React.ReactElement {
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [isHost, setIsHost] = useState<boolean>(false);
   const [sessionTakenOver, setSessionTakenOver] = useState<boolean>(false);
+  const [disconnectToasts, setDisconnectToasts] = useState<
+    Array<{ playerId: string; nickname: string }>
+  >([]);
+  const [reconnectedNotice, setReconnectedNotice] = useState<string | null>(null);
 
   // 1. syncClock on mount
   useEffect(() => {
@@ -102,6 +106,24 @@ export function App(): React.ReactElement {
       if (msg.type === "session_taken_over") {
         setSessionTakenOver(true);
       }
+      if (msg.type === "player_disconnected") {
+        setDisconnectToasts((prev) => [
+          ...prev.filter((t) => t.playerId !== msg.playerId),
+          { playerId: msg.playerId, nickname: msg.nickname },
+        ]);
+      }
+      if (msg.type === "player_reconnected") {
+        setDisconnectToasts((prev) =>
+          prev.filter((t) => t.playerId !== msg.playerId),
+        );
+        setReconnectedNotice(`${msg.nickname} reconnected!`);
+        setTimeout(() => setReconnectedNotice(null), 3000);
+      }
+      if (msg.type === "player_left") {
+        setDisconnectToasts((prev) =>
+          prev.filter((t) => t.playerId !== msg.playerId),
+        );
+      }
     });
     return unsub;
   }, []);
@@ -161,6 +183,43 @@ export function App(): React.ReactElement {
       )}
 
       <GraceBanner />
+
+      {disconnectToasts.length > 0 && (
+        <div className="disconnect-toasts" style={{ margin: "0.5rem 0" }}>
+          {disconnectToasts.map((t) => (
+            <div
+              key={t.playerId}
+              className="toast-disconnect"
+              style={{
+                background: "#fef3c7",
+                border: "1px solid #f59e0b",
+                color: "#92400e",
+                padding: "0.5rem 1rem",
+                borderRadius: "6px",
+                marginBottom: "0.5rem",
+              }}
+            >
+              ⚠️ <strong>{t.nickname}</strong> disconnected — waiting up to 60s for reconnect...
+            </div>
+          ))}
+        </div>
+      )}
+
+      {reconnectedNotice && (
+        <div
+          className="toast-reconnected"
+          style={{
+            background: "#d1fae5",
+            border: "1px solid #10b981",
+            color: "#065f46",
+            padding: "0.5rem 1rem",
+            borderRadius: "6px",
+            margin: "0.5rem 0",
+          }}
+        >
+          ✓ {reconnectedNotice}
+        </div>
+      )}
 
       {inCountdown && !raceStart && countdownStartsAtServerMs !== null && (
         <CountdownView

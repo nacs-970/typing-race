@@ -5,7 +5,7 @@ import staticApp from "./static.ts";
 import { dispatch } from "./ws/dispatch.ts";
 import { type WsData, sendHello } from "./ws/handlers.ts";
 import { tick } from "./race/controller.ts";
-import { removePlayer } from "./rooms/manager.ts";
+import { removePlayer, handlePlayerDisconnect } from "./rooms/manager.ts";
 import { PORT } from "./env.ts";
 
 /**
@@ -87,9 +87,9 @@ const server = Bun.serve<WsData>({
         { playerId: ws.data.playerId, code, reason: String(reason) },
         "[ws] close",
       );
-      // Phase 2: remove from room on disconnect
+      // Phase 4: 60s disconnect grace period (evicted after 60s if not reconnected)
       if (ws.data.roomCode) {
-        removePlayer(ws.data.roomCode, ws.data.playerId);
+        handlePlayerDisconnect(ws.data.roomCode, ws.data.playerId);
         ws.data.roomCode = null;
       }
     },

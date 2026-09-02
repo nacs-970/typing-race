@@ -37,9 +37,10 @@ export function RaceView({
 }): React.ReactElement {
   const opponentCursorsMap = useCursorStore((s) => s.cursors);
   const ownCharStates = useRaceStore((s) => s.ownCharStates);
-  // Local own cursor (single source of truth for THIS player)
-  const [ownIndex, setOwnIndex] = useState(0);
-  const ownIndexRef = useRef(0);
+  // Local own cursor (single source of truth for THIS player, initialized from store on reconnect)
+  const initialIndex = useCursorStore.getState().ownIndex;
+  const [ownIndex, setOwnIndex] = useState(initialIndex);
+  const ownIndexRef = useRef(initialIndex);
 
   const updateOwnIndex = (newIndex: number | ((i: number) => number)) => {
     const next = typeof newIndex === "function" ? newIndex(ownIndexRef.current) : newIndex;

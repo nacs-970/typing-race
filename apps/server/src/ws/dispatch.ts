@@ -18,7 +18,12 @@ import {
 } from "../rooms/manager.ts";
 import { transition } from "../race/controller.ts";
 import { validateKeystroke } from "../race/validate-keystroke.ts";
-import { broadcastToRoom, broadcastLobbyState, buildRejoinedRoomFrame } from "./broadcast.ts";
+import {
+  broadcastToRoom,
+  broadcastLobbyState,
+  buildRejoinedRoomFrame,
+  broadcastPlayerReconnected,
+} from "./broadcast.ts";
 import { shuffle, dealNextPassage } from "../race/corpus.ts";
 import { getPassageById, isValidPassageId, hostPickedPreview, PASSAGES } from "@typing-race/shared";
 import type { Countdown, CursorUpdate } from "@typing-race/shared";
@@ -162,6 +167,10 @@ export function dispatch(
         { playerId: player.playerId, roomCode: room.code },
         "[ws] rejoin_room successful",
       );
+      broadcastPlayerReconnected(room, player);
+      if (room.state === "lobby") {
+        broadcastLobbyState(room);
+      }
       ws.send(JSON.stringify(buildRejoinedRoomFrame(room, player)));
       break;
     }

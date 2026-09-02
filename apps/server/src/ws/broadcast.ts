@@ -2,7 +2,17 @@
  * Broadcast helpers — server iterates `room.players` and sends WS frames.
  * Inbound: a `Room` (NOT a `string` code) — caller has already resolved.
  */
-import type { JoinedRoom, LobbyState, PlayerLeft, RaceEnd, GraceCountdown, PlayerFinalStats, RejoinedRoom } from "@typing-race/shared";
+import type {
+  JoinedRoom,
+  LobbyState,
+  PlayerLeft,
+  RaceEnd,
+  GraceCountdown,
+  PlayerFinalStats,
+  RejoinedRoom,
+  PlayerDisconnected,
+  PlayerReconnected,
+} from "@typing-race/shared";
 import type { Room, Player } from "../race/types.ts";
 import { computeAccuracy, countCorrectChars } from "../race/scoring.ts";
 
@@ -137,4 +147,27 @@ export function buildRejoinedRoomFrame(room: Room, player: Player): RejoinedRoom
       isDisconnected: p.disconnectedAt !== null,
     })),
   };
+}
+
+export function broadcastPlayerDisconnected(
+  room: Room,
+  player: Player,
+  timeoutMs: number = 60_000,
+): void {
+  const frame: PlayerDisconnected = {
+    type: "player_disconnected",
+    playerId: player.playerId,
+    nickname: player.nickname,
+    timeoutMs,
+  };
+  broadcastToRoom(room, frame);
+}
+
+export function broadcastPlayerReconnected(room: Room, player: Player): void {
+  const frame: PlayerReconnected = {
+    type: "player_reconnected",
+    playerId: player.playerId,
+    nickname: player.nickname,
+  };
+  broadcastToRoom(room, frame);
 }

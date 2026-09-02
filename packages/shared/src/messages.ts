@@ -297,6 +297,21 @@ export const rejoinedRoomSchema = z.object({
   ),
 });
 
+/** Broadcast when a player's socket closes during an active room (D-04). */
+export const playerDisconnectedSchema = z.object({
+  type: z.literal("player_disconnected"),
+  playerId: z.string().uuid(),
+  nickname: z.string(),
+  timeoutMs: z.number().int().nonnegative(),
+});
+
+/** Broadcast when a disconnected player reconnects within the grace period (D-08). */
+export const playerReconnectedSchema = z.object({
+  type: z.literal("player_reconnected"),
+  playerId: z.string().uuid(),
+  nickname: z.string(),
+});
+
 export const serverToClientSchema = z.discriminatedUnion("type", [
   helloSchema,
   pongSchema,
@@ -312,6 +327,8 @@ export const serverToClientSchema = z.discriminatedUnion("type", [
   returnToLobbySchema,
   sessionTakenOverSchema,
   rejoinedRoomSchema,
+  playerDisconnectedSchema,
+  playerReconnectedSchema,
 ]);
 
 export type ServerToClient = z.infer<typeof serverToClientSchema>;
@@ -329,4 +346,6 @@ export type RaceEnd = z.infer<typeof raceEndSchema>;
 export type GraceCountdown = z.infer<typeof graceCountdownSchema>;
 export type SessionTakenOver = z.infer<typeof sessionTakenOverSchema>;
 export type RejoinedRoom = z.infer<typeof rejoinedRoomSchema>;
+export type PlayerDisconnected = z.infer<typeof playerDisconnectedSchema>;
+export type PlayerReconnected = z.infer<typeof playerReconnectedSchema>;
 export type PlayerFinalStats = z.infer<typeof playerFinalStatsSchema>;

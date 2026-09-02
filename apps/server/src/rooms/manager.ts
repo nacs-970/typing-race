@@ -10,7 +10,9 @@ import {
   broadcastJoinedRoom,
   broadcastLobbyState,
   broadcastPlayerLeft,
+  broadcastPlayerDisconnected,
 } from "../ws/broadcast.ts";
+import { logger } from "../logger.ts";
 
 export const MAX_PLAYERS_PER_ROOM = 8;
 const COLLISION_RETRIES = 3;
@@ -178,6 +180,27 @@ export function removePlayer(code: string, playerId: PlayerId): void {
   }
   broadcastPlayerLeft(room, playerId);
   broadcastLobbyState(room);
+}
+
+export function handlePlayerDisconnect(code: string, playerId: PlayerId): void {
+  const room = rooms.get(code);
+  if (!room) return;
+  const player = room.players.get(playerId);
+  if (!player) return;
+
+  // If only 1 player in lobby or room is empty, remove immediately
+  if (room.state === "lobby" && room.players.size <= 1) {
+    removePlayer(code, playerId);
+    return;
+  }
+
+  // Active room or lobby with multiple players: 60s disconnect grace period
+  player.disconnectedAt = Date.now();
+  logger.info(
+    { playerId, roomCode: code, nickname: player.nickname },
+    "[rooms] player disconnected — 60s grace started",
+  );
+  broadcastPlayerDisconnected(room, player, 60_000);
 }
 
 export class IpRateLimiter {

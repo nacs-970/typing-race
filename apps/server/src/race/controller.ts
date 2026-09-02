@@ -115,17 +115,11 @@ export function tick(now: number = Date.now()): void {
         (p) => p.finishedAtServerMs !== null,
       );
       if (firstFinisher) {
-        // If EVERY player (or all currently connected players) finished, skip grace — go straight to finished
-        const activePlayers = [...room.players.values()].filter(
-          (p) => p.disconnectedAt === null,
+        // If no connected player is still typing, skip grace — go straight to finished
+        const anyoneStillTyping = [...room.players.values()].some(
+          (p) => p.disconnectedAt === null && p.finishedAtServerMs === null,
         );
-        const allActiveFinished =
-          activePlayers.length > 0 &&
-          activePlayers.every((p) => p.finishedAtServerMs !== null);
-        const allFinished = [...room.players.values()].every(
-          (p) => p.finishedAtServerMs !== null,
-        );
-        if (allFinished || allActiveFinished) {
+        if (!anyoneStillTyping) {
           try {
             transition(room, "finished");
           } catch {
@@ -156,20 +150,14 @@ export function tick(now: number = Date.now()): void {
       }
     }
 
-    // Grace → finished when (a) all players done OR (b) timer expired
+    // Grace → finished when (a) no one is still typing OR (b) timer expired
     if (room.state === "grace") {
-      const activePlayers = [...room.players.values()].filter(
-        (p) => p.disconnectedAt === null,
-      );
-      const allActiveFinished =
-        activePlayers.length > 0 &&
-        activePlayers.every((p) => p.finishedAtServerMs !== null);
-      const allFinished = [...room.players.values()].every(
-        (p) => p.finishedAtServerMs !== null,
+      const anyoneStillTyping = [...room.players.values()].some(
+        (p) => p.disconnectedAt === null && p.finishedAtServerMs === null,
       );
       const expired =
         room.graceEndsAtServerMs !== null && now >= room.graceEndsAtServerMs;
-      if (allFinished || allActiveFinished || expired) {
+      if (!anyoneStillTyping || expired) {
         try {
           transition(room, "finished");
         } catch {
@@ -178,7 +166,7 @@ export function tick(now: number = Date.now()): void {
         logger.info(
           {
             code: room.code,
-            reason: allFinished || allActiveFinished ? "all_finished" : "grace_expired",
+            reason: !anyoneStillTyping ? "all_finished" : "grace_expired",
           },
           "[race] ended",
         );

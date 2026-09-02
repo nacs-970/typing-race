@@ -21,6 +21,7 @@ export function GraceBanner(): React.ReactElement | null {
 
   if (!banner) return null;
   const seconds = Math.max(0, Math.ceil(localRemaining / 1000));
+  if (seconds <= 0) return null;
   
   return (
     <div className="grace-banner" role="status" aria-live="polite">

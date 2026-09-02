@@ -119,7 +119,13 @@ const heartbeatInterval = setInterval(() => {
 heartbeatInterval.unref?.();
 
 // 1Hz tick — drives Race Controller FSM transitions (countdown → racing)
-const tickInterval = setInterval(() => tick(), 1000);
+const tickInterval = setInterval(() => {
+  try {
+    tick();
+  } catch (err) {
+    logger.error({ err }, "[tick] unhandled error");
+  }
+}, 1000);
 
 console.log(
   JSON.stringify({

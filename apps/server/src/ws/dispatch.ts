@@ -16,7 +16,7 @@ import {
   ipRateLimiter,
   rooms,
 } from "../rooms/manager.ts";
-import { transition } from "../race/controller.ts";
+import { transition, tick } from "../race/controller.ts";
 import { validateKeystroke } from "../race/validate-keystroke.ts";
 import {
   broadcastToRoom,
@@ -379,6 +379,12 @@ export function dispatch(
         } catch {
           // ignore — slow client
         }
+      }
+      if (
+        player.finishedAtServerMs !== null &&
+        (room.state === "racing" || room.state === "grace")
+      ) {
+        tick();
       }
       break;
     }

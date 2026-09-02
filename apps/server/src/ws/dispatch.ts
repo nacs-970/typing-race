@@ -10,6 +10,9 @@ import {
   createRoom,
   addPlayer,
   removePlayer,
+  getRoom,
+  findPlayerBySessionToken,
+  rebindPlayerSocket,
   rooms,
 } from "../rooms/manager.ts";
 import { transition } from "../race/controller.ts";
@@ -100,6 +103,7 @@ export function dispatch(
         JSON.stringify({
           type: "joined_room",
           playerId: ws.data.playerId,
+          sessionToken: r.player.sessionToken,
           roomCode: r.room.code,
           you: { nickname: msg.nickname, isHost: r.player.isHost },
           players: [...r.room.players.values()].map((p) => ({
@@ -114,6 +118,54 @@ export function dispatch(
       logger.info(
         { playerId: ws.data.playerId, code: msg.code },
         "[ws] join_room",
+      );
+      break;
+    }
+
+    case "rejoin_room": {
+      const room = getRoom(msg.roomCode);
+      if (!room) {
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            code: "ROOM_NOT_FOUND",
+            message: `room ${msg.roomCode} not found`,
+          }),
+        );
+        return;
+      }
+      const player = findPlayerBySessionToken(msg.roomCode, msg.sessionToken);
+      if (!player) {
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            code: "SESSION_INVALID",
+            message: "session token invalid for this room",
+          }),
+        );
+        return;
+      }
+      rebindPlayerSocket(room, player, ws);
+      logger.info(
+        { playerId: player.playerId, roomCode: room.code },
+        "[ws] rejoin_room successful",
+      );
+      // In Plan 01, send joined_room (Plan 02 will send full rejoined_room snapshot)
+      ws.send(
+        JSON.stringify({
+          type: "joined_room",
+          playerId: player.playerId,
+          sessionToken: player.sessionToken,
+          roomCode: room.code,
+          you: { nickname: player.nickname, isHost: player.isHost },
+          players: [...room.players.values()].map((p) => ({
+            playerId: p.playerId,
+            nickname: p.nickname,
+            isHost: p.isHost,
+            progress: p.progress,
+          })),
+          clockOffsetMs: ws.data.clientOffsetMs,
+        }),
       );
       break;
     }

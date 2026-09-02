@@ -97,6 +97,13 @@ export const returnToLobbySchema = z.object({
   type: z.literal("return_to_lobby"),
 });
 
+/** Rejoin an existing room using a previously issued session token. */
+export const rejoinRoomSchema = z.object({
+  type: z.literal("rejoin_room"),
+  roomCode: z.string().regex(ROOM_CODE_REGEX, "invalid room code"),
+  sessionToken: z.string().uuid(),
+});
+
 export const clientToServerSchema = z.discriminatedUnion("type", [
   clientPingSchema,
   joinRoomSchema,
@@ -108,6 +115,7 @@ export const clientToServerSchema = z.discriminatedUnion("type", [
   cursorPositionSchema,
   correctionSchema,
   returnToLobbySchema,
+  rejoinRoomSchema,
 ]);
 
 export type ClientToServer = z.infer<typeof clientToServerSchema>;
@@ -120,6 +128,7 @@ export type StartRace = z.infer<typeof startRaceSchema>;
 export type Keystroke = z.infer<typeof keystrokeSchema>;
 export type CursorPosition = z.infer<typeof cursorPositionSchema>;
 export type Correction = z.infer<typeof correctionSchema>;
+export type RejoinRoom = z.infer<typeof rejoinRoomSchema>;
 
 // ──────────────────────────────────────────────────────────────────────────
 // Server → Client
@@ -151,6 +160,7 @@ export const errorSchema = z.object({
     "NOT_IN_ROOM",
     "RATE_LIMITED",
     "INTERNAL",
+    "SESSION_INVALID",
   ]),
   message: z.string(),
 });
@@ -159,6 +169,7 @@ export const errorSchema = z.object({
 export const joinedRoomSchema = z.object({
   type: z.literal("joined_room"),
   playerId: z.string().uuid(),
+  sessionToken: z.string().uuid(),
   roomCode: z.string().regex(ROOM_CODE_REGEX),
   you: z.object({
     nickname: z.string(),

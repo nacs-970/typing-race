@@ -51,6 +51,7 @@ export function broadcastJoinedRoom(room: Room, playerId: string): void {
   const frame: JoinedRoom = {
     type: "joined_room",
     playerId: target.playerId,
+    sessionToken: target.sessionToken,
     roomCode: room.code,
     you: { nickname: target.nickname, isHost: target.isHost },
     players,

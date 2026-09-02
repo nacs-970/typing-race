@@ -85,8 +85,10 @@ export function addPlayer(
   }
 
   const isFirstPlayer = room.players.size === 0;
+  const sessionToken = crypto.randomUUID();
   const player: Player = {
     playerId,
+    sessionToken,
     nickname,
     isHost: isHostOverride ?? isFirstPlayer,
     wsRef: ws,
@@ -106,9 +108,37 @@ export function addPlayer(
   room.lastActivityAt = Date.now();
   ws.data.roomCode = code;
   ws.data.nickname = nickname;
+  ws.data.sessionToken = sessionToken;
 
   broadcastLobbyState(room);
   return { ok: true, player, room };
+}
+
+export function findPlayerBySessionToken(
+  code: string,
+  sessionToken: string,
+): Player | null {
+  const room = rooms.get(code);
+  if (!room) return null;
+  for (const player of room.players.values()) {
+    if (player.sessionToken === sessionToken) {
+      return player;
+    }
+  }
+  return null;
+}
+
+export function rebindPlayerSocket(
+  room: Room,
+  player: Player,
+  newWs: import("bun").ServerWebSocket<WsData>,
+): void {
+  player.wsRef = newWs;
+  newWs.data.playerId = player.playerId;
+  newWs.data.roomCode = room.code;
+  newWs.data.nickname = player.nickname;
+  newWs.data.sessionToken = player.sessionToken;
+  room.lastActivityAt = Date.now();
 }
 
 export function removePlayer(code: string, playerId: PlayerId): void {

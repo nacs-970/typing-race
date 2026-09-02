@@ -21,6 +21,7 @@ export type CharState = "pending" | "correct" | "error";
 
 export interface Player {
   playerId: PlayerId;
+  sessionToken: string;
   nickname: string;
   isHost: boolean;
   wsRef: WsRef;

@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 current_phase: 4
 current_phase_name: Reconnect
-status: ready
-stopped_at: Phase 3 Race Track + WPM complete (all 5 UAT passed, 80 tests pass). Ready to plan Phase 4 (Reconnect).
-last_updated: "2026-09-02T14:45:00.000Z"
+status: verification
+stopped_at: Phase 4 execution complete. All 4 plans implemented & tested. Ready for UAT verification.
+last_updated: "2026-09-02T18:15:00.000Z"
 last_activity: 2026-09-02
-last_activity_desc: Phase 3 Race Track + WPM complete + UAT verified
-state_head: c45a1c1
+last_activity_desc: Phase 4 execution complete (all 4 plans implemented & tested)
+state_head: b14b8a4
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 11
-  completed_plans: 11
-  percent: 50
+  total_plans: 15
+  completed_plans: 15
+  percent: 66
 ---
 
 # Project State
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-08-30)
 
 ## Current Position
 
-Phase: 4 (Reconnect) — READY TO PLAN
-Plan: 0 of 4
-Status: Phase 3 complete — per-char live accents, net WPM, char accuracy, race-end grace period, results board, rematch, and back-to-lobby.
-Last activity: 2026-09-02 — Phase 3 UAT complete (5/5 passed); commit c45a1c1
+Phase: 4 (Reconnect) — UAT VERIFICATION
+Plan: 4 of 4 completed
+Status: Phase 4 execution complete — sessionToken, rejoined_room snapshot, cookie takeover, 15s heartbeat, per-IP rate limiting, 60s disconnect grace window, and opponent waiting toasts.
+Last activity: 2026-09-02 — Phase 4 plans executed and tested
 
-Progress: [████████████████] 50% (Overall)
+Progress: [████████████████████] 66% (Overall)
 
 ## Performance Metrics
 

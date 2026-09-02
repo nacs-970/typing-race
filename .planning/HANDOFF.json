@@ -1,41 +1,97 @@
 {
   "version": "1.0",
-  "timestamp": "2026-09-02T15:11:00.000Z",
-  "phase": "04-reconnect",
-  "phase_name": "reconnect",
-  "phase_dir": ".planning/phases/04-reconnect",
+  "timestamp": "2026-09-02T20:34:28.701Z",
+  "phase": "05",
+  "phase_name": "frontend-polish",
+  "phase_dir": ".planning/phases/05-frontend-polish",
   "plan": 1,
-  "task": 1,
-  "total_tasks": 4,
+  "task": 0,
+  "total_tasks": 12,
   "status": "paused",
-  "completed_tasks": [
-    {"id": "03-01", "name": "passage corpus + picker", "status": "done", "commit": "8d0ed72"},
-    {"id": "03-02", "name": "char-state model + word aggregation", "status": "done", "commit": "3b9937f"},
-    {"id": "03-03", "name": "net WPM + char accuracy", "status": "done", "commit": "da8d5ba"},
-    {"id": "03-04", "name": "race-end grace + results + rematch", "status": "done", "commit": "e63e020"},
-    {"id": "UAT-1", "name": "Two-laptop demo + countdown", "status": "done", "commit": "4dca60d"},
-    {"id": "UAT-2", "name": "Char accents live", "status": "done", "commit": "c45a1c1"},
-    {"id": "UAT-3", "name": "Grace period", "status": "done", "commit": "c45a1c1"},
-    {"id": "UAT-4", "name": "Results board", "status": "done", "commit": "c45a1c1"},
-    {"id": "UAT-5", "name": "Rematch no-repeat", "status": "done", "commit": "c45a1c1"}
-  ],
+  "completed_tasks": [],
   "remaining_tasks": [
-    {"id": "04-01", "name": "sessionToken & reconnect handshake", "status": "not_started"},
-    {"id": "04-02", "name": "race snapshot replay & cookie takeover", "status": "not_started"},
-    {"id": "04-03", "name": "heartbeat ping/pong & rate limiting", "status": "not_started"},
-    {"id": "04-04", "name": "graceful disconnect UX & 60s window", "status": "not_started"}
+    {
+      "id": "05-01-01",
+      "name": "Headless TypingEngine extraction",
+      "status": "not_started"
+    },
+    {
+      "id": "05-01-02",
+      "name": "Headless CursorManager with 100ms snapshot buffer & lerp",
+      "status": "not_started"
+    },
+    {
+      "id": "05-01-03",
+      "name": "RaceClient singleton with auto-rejoin & NTP clock sync",
+      "status": "not_started"
+    },
+    {
+      "id": "05-02-01",
+      "name": "Tailwind CSS v4 setup with botanical palette tokens",
+      "status": "not_started"
+    },
+    {
+      "id": "05-02-02",
+      "name": "Pretext canvas 2D multiline text layout calculation",
+      "status": "not_started"
+    },
+    {
+      "id": "05-02-03",
+      "name": "Zero-render translate3d cursor overlay with leader wake",
+      "status": "not_started"
+    },
+    {
+      "id": "05-03-01",
+      "name": "Per-player lobby ready check & host start logic",
+      "status": "not_started"
+    },
+    {
+      "id": "05-03-02",
+      "name": "Dramatic 3-2-1 GO countdown overlay",
+      "status": "not_started"
+    },
+    {
+      "id": "05-03-03",
+      "name": "Passage length & punctuation filters in lobby",
+      "status": "not_started"
+    },
+    {
+      "id": "05-04-01",
+      "name": "Race HUD status bar & WPM hover breakdown tooltip",
+      "status": "not_started"
+    },
+    {
+      "id": "05-04-02",
+      "name": "Pinned glowing grace banner & stacked toast notifications",
+      "status": "not_started"
+    },
+    {
+      "id": "05-04-03",
+      "name": "Ranked results board with podium medals & rematch flow",
+      "status": "not_started"
+    }
   ],
   "blockers": [],
   "async_jobs": [],
   "human_actions_pending": [],
   "decisions": [
-    {"decision": "Store sessionToken in cookie", "rationale": "Enables seamless multi-tab access and persistence across browser sessions", "phase": "04"},
-    {"decision": "Newest tab takes over session", "rationale": "Seamless takeover; old tab receives session_taken_over notice", "phase": "04"},
-    {"decision": "Race continues live during disconnect", "rationale": "Opponents keep typing without interruption; 60s reconnect window", "phase": "04"},
-    {"decision": "Instant UI restore on reconnect", "rationale": "Player immediately sees restored track and can resume typing (with 500ms anti-burst check)", "phase": "04"},
-    {"decision": "Omit idle room sweeper", "rationale": "User explicit request: no idle room timeouts; rooms stay open until empty", "phase": "04"}
+    {
+      "decision": "Extract typing engine, race client, and cursor manager into headless modules in Plan 05-01",
+      "rationale": "D-01 to D-04 UI decoupling pass prevents rework",
+      "phase": "05"
+    },
+    {
+      "decision": "Use @chenglou/pretext for multiline text layout",
+      "rationale": "Zero DOM reflows / getBoundingClientRect during 60fps cursor animation",
+      "phase": "05"
+    },
+    {
+      "decision": "Adopt Tailwind CSS v4 with custom botanical tokens",
+      "rationale": "D-05, D-06 palette styling foundation",
+      "phase": "05"
+    }
   ],
   "uncommitted_files": [],
-  "next_action": "Execute Plan 04-01 (sessionToken & rejoin_room handshake)",
-  "context_notes": "Phase 4 discussion completed (all 4 topics decided and committed in 85638c9). Ready to execute Plan 04-01."
+  "next_action": "/gsd-execute-phase 05",
+  "context_notes": "Phase 5 planning complete (4 plans in 3 waves). Ready for execution starting with Plan 05-01 (Core Engine Modularity & Interpolation Math)."
 }

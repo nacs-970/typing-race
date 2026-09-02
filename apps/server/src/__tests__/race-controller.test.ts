@@ -80,11 +80,13 @@ describe("tick()", () => {
     const room = fakeRoom("countdown");
     room.players.set("p", {
       playerId: "p",
+      sessionToken: "mock-session-token",
       nickname: "P",
       isHost: false,
       wsRef: fakeWs as unknown as import("bun").ServerWebSocket<WsData>,
       progress: 0,
       lastKeystrokeAt: 0,
+      lastCursorAtMs: 0,
       clientOffsetMs: 0,
       joinedAt: 0,
       charStates: [],
@@ -92,6 +94,8 @@ describe("tick()", () => {
       uncorrectedErrors: 0,
       currentWpm: 0,
       finishedAtServerMs: null,
+      disconnectedAt: null,
+      reconnectedAt: null,
     });
     room.startsAtServerMs = 1000; // already past
     rooms.set(room.code, room);

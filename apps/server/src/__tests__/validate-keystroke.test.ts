@@ -51,11 +51,13 @@ function fakePlayer(lastKeystrokeAt = 0, progress = 0): Player {
   };
   return {
     playerId: "p",
+    sessionToken: "mock-session-token",
     nickname: "P",
     isHost: false,
     wsRef: fakeWs as unknown as Player["wsRef"],
     progress,
     lastKeystrokeAt,
+    lastCursorAtMs: 0,
     clientOffsetMs: 0,
     joinedAt: 0,
     charStates: [],
@@ -63,6 +65,8 @@ function fakePlayer(lastKeystrokeAt = 0, progress = 0): Player {
     uncorrectedErrors: 0,
     currentWpm: 0,
     finishedAtServerMs: null,
+    disconnectedAt: null,
+    reconnectedAt: null,
   };
 }
 

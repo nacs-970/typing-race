@@ -71,11 +71,13 @@ function addPlayerToRoom(
 ) {
   const player: Player = {
     playerId,
+    sessionToken: `token-${playerId}`,
     nickname: `P-${playerId}`,
     isHost,
     wsRef: asWs(ws),
     progress: 0,
     lastKeystrokeAt: 0,
+    lastCursorAtMs: 0,
     clientOffsetMs: 0,
     joinedAt: Date.now(),
     charStates: [],
@@ -83,6 +85,8 @@ function addPlayerToRoom(
     uncorrectedErrors: 0,
     currentWpm: 0,
     finishedAtServerMs: null,
+    disconnectedAt: null,
+    reconnectedAt: null,
   };
   room.players.set(playerId, player);
 }

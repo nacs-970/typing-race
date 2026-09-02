@@ -97,7 +97,7 @@ describe("Phase 4 Plan 03: Per-IP Rate Limiting", () => {
 
     expect(wsBlocked.data.roomCode).toBeNull();
     expect(wsBlocked.sent.length).toBe(1);
-    const err = JSON.parse(wsBlocked.sent[0]);
+    const err = JSON.parse(wsBlocked.sent[0]!);
     expect(err.type).toBe("error");
     expect(err.code).toBe("RATE_LIMITED");
   });

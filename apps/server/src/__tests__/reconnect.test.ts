@@ -113,7 +113,7 @@ describe("Phase 4 Plan 01: sessionToken & reconnect handshake", () => {
 
     expect(hostPlayer.wsRef).toBe(asWs(wsNew));
     expect(wsNew.sent.length).toBeGreaterThan(0);
-    const lastMsg = JSON.parse(wsNew.sent[wsNew.sent.length - 1]);
+    const lastMsg = JSON.parse(wsNew.sent[wsNew.sent.length - 1]!);
     expect(lastMsg.type).toBe("rejoined_room");
     expect(lastMsg.you.playerId).toBe("p1");
     expect(lastMsg.roomCode).toBe(code);
@@ -134,7 +134,7 @@ describe("Phase 4 Plan 01: sessionToken & reconnect handshake", () => {
     );
 
     expect(wsNew.sent.length).toBe(1);
-    const err = JSON.parse(wsNew.sent[0]);
+    const err = JSON.parse(wsNew.sent[0]!);
     expect(err.type).toBe("error");
     expect(err.code).toBe("SESSION_INVALID");
   });
@@ -151,7 +151,7 @@ describe("Phase 4 Plan 01: sessionToken & reconnect handshake", () => {
     );
 
     expect(wsNew.sent.length).toBe(1);
-    const err = JSON.parse(wsNew.sent[0]);
+    const err = JSON.parse(wsNew.sent[0]!);
     expect(err.type).toBe("error");
     expect(err.code).toBe("ROOM_NOT_FOUND");
   });

@@ -170,7 +170,7 @@ export const errorSchema = z.object({
 export const joinedRoomSchema = z.object({
   type: z.literal("joined_room"),
   playerId: z.string().uuid(),
-  sessionToken: z.string().uuid(),
+  sessionToken: z.string().uuid().optional(),
   roomCode: z.string().regex(ROOM_CODE_REGEX),
   you: z.object({
     nickname: z.string(),

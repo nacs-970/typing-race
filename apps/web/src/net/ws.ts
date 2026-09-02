@@ -17,7 +17,7 @@ export function getSessionCookie(roomCode: string): string | null {
   const match = document.cookie.match(
     new RegExp(`(?:^|;\\s*)typing_race_${roomCode}=([^;]+)`),
   );
-  return match ? decodeURIComponent(match[1]) : null;
+  return match && match[1] ? decodeURIComponent(match[1]) : null;
 }
 
 export function setSessionCookie(roomCode: string, sessionToken: string): void {
@@ -136,7 +136,9 @@ export class WsConnection {
         resetRaceUi();
       }
       if (msg.type === "joined_room") {
-        setSessionCookie(msg.roomCode, msg.sessionToken);
+        if (msg.sessionToken) {
+          setSessionCookie(msg.roomCode, msg.sessionToken);
+        }
         // Sync server-stamped clockOffsetMs into the clock store on join
         setClockState({ offsetMs: msg.clockOffsetMs });
         setRaceState({
@@ -174,7 +176,7 @@ export class WsConnection {
         setRaceState({ opponentWpm });
       }
       if (msg.type === "session_taken_over") {
-        setConnectionState({ status: "closed" });
+        setConnectionStore({ status: "closed" });
       }
       if (msg.type === "lobby_state") {
         setRaceState({

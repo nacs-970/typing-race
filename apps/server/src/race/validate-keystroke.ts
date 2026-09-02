@@ -24,6 +24,7 @@ import {
 } from "./scoring.ts";
 
 const PRE_START_GRACE_MS = 50;
+const RECONNECT_GRACE_MS = 500;
 const MIN_INTERVAL_MS = 20;
 
 export type PlayerPatch = {
@@ -57,6 +58,14 @@ export function validateKeystroke(args: {
   }
   if (room.startsAtServerMs === null) return { ok: false, reason: "NOT_IN_ROOM" };
   if (now < room.startsAtServerMs + PRE_START_GRACE_MS) {
+    return { ok: false, reason: "RATE_LIMITED" };
+  }
+
+  // Check 2b: 500ms anti-cheat grace period on reconnect (REQ-07, D-08)
+  if (
+    player.reconnectedAt !== null &&
+    now < player.reconnectedAt + RECONNECT_GRACE_MS
+  ) {
     return { ok: false, reason: "RATE_LIMITED" };
   }
 

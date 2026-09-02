@@ -46,6 +46,11 @@ export interface Player {
   currentWpm: number;
   /** Set on first keystroke that completes the passage (Plan 04 uses for race-end). */
   finishedAtServerMs: number | null;
+  // ---- Phase 4 fields ----
+  /** Set when socket drops; cleared on rejoin_room. */
+  disconnectedAt: number | null;
+  /** Set on successful rejoin_room; used for 500ms anti-cheat grace period. */
+  reconnectedAt: number | null;
 }
 
 export interface Room {

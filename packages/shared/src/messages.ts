@@ -7,6 +7,7 @@
  * nothing can drift between sender and receiver.
  */
 import { z } from "zod";
+import { raceStateSchema } from "./race.ts";
 
 // ──────────────────────────────────────────────────────────────────────────
 // Shared regex / helpers
@@ -259,6 +260,43 @@ export const playerFinalStatsSchema = z.object({
   accuracy: z.number().min(0).max(1),
 });
 
+/** Sent to an existing connection when a new tab/session takes over the player slot. */
+export const sessionTakenOverSchema = z.object({
+  type: z.literal("session_taken_over"),
+});
+
+/** Full authoritative race snapshot sent to a client on rejoin_room (REQ-07). */
+export const rejoinedRoomSchema = z.object({
+  type: z.literal("rejoined_room"),
+  roomCode: z.string().regex(ROOM_CODE_REGEX),
+  roomState: raceStateSchema,
+  passageId: z.string().uuid().nullable(),
+  passageText: z.string().nullable(),
+  startsAtServerMs: z.number().int().nullable(),
+  graceEndsAtServerMs: z.number().int().nullable(),
+  clockOffsetMs: z.number(),
+  you: z.object({
+    playerId: z.string().uuid(),
+    nickname: z.string(),
+    isHost: z.boolean(),
+    progress: z.number().int().nonnegative(),
+    charStates: z.array(z.enum(["pending", "correct", "error"])),
+    wpm: z.number(),
+    uncorrectedErrors: z.number().int().nonnegative(),
+  }),
+  players: z.array(
+    z.object({
+      playerId: z.string().uuid(),
+      nickname: z.string(),
+      isHost: z.boolean(),
+      progress: z.number().int().nonnegative(),
+      charStates: z.array(z.enum(["pending", "correct", "error"])),
+      wpm: z.number(),
+      isDisconnected: z.boolean(),
+    }),
+  ),
+});
+
 export const serverToClientSchema = z.discriminatedUnion("type", [
   helloSchema,
   pongSchema,
@@ -272,6 +310,8 @@ export const serverToClientSchema = z.discriminatedUnion("type", [
   raceEndSchema,
   graceCountdownSchema,
   returnToLobbySchema,
+  sessionTakenOverSchema,
+  rejoinedRoomSchema,
 ]);
 
 export type ServerToClient = z.infer<typeof serverToClientSchema>;
@@ -287,4 +327,6 @@ export type CursorUpdate = z.infer<typeof cursorUpdateSchema>;
 export type PlayerLeft = z.infer<typeof playerLeftSchema>;
 export type RaceEnd = z.infer<typeof raceEndSchema>;
 export type GraceCountdown = z.infer<typeof graceCountdownSchema>;
+export type SessionTakenOver = z.infer<typeof sessionTakenOverSchema>;
+export type RejoinedRoom = z.infer<typeof rejoinedRoomSchema>;
 export type PlayerFinalStats = z.infer<typeof playerFinalStatsSchema>;

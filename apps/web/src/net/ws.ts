@@ -12,6 +12,24 @@ import {
 } from "../store/race.ts";
 import { useConnectionStore } from "../store/connection.ts";
 
+export function getSessionCookie(roomCode: string): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(
+    new RegExp(`(?:^|;\\s*)typing_race_${roomCode}=([^;]+)`),
+  );
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+export function setSessionCookie(roomCode: string, sessionToken: string): void {
+  if (typeof document === "undefined") return;
+  document.cookie = `typing_race_${roomCode}=${encodeURIComponent(sessionToken)}; path=/; max-age=86400; SameSite=Lax`;
+}
+
+export function clearSessionCookie(roomCode: string): void {
+  if (typeof document === "undefined") return;
+  document.cookie = `typing_race_${roomCode}=; path=/; max-age=0; SameSite=Lax`;
+}
+
 /**
  * Thin wrapper over the browser WebSocket. Opens a connection to the dev
  * proxy (which forwards to Bun on :8080), validates every inbound frame
@@ -118,11 +136,45 @@ export class WsConnection {
         resetRaceUi();
       }
       if (msg.type === "joined_room") {
+        setSessionCookie(msg.roomCode, msg.sessionToken);
         // Sync server-stamped clockOffsetMs into the clock store on join
         setClockState({ offsetMs: msg.clockOffsetMs });
         setRaceState({
           hostPickedPassagePreview: msg.hostPickedPassagePreview ?? null,
         });
+      }
+      if (msg.type === "rejoined_room") {
+        setClockState({ offsetMs: msg.clockOffsetMs });
+        setRaceState({
+          passageText: msg.passageText,
+          ownCharStates: msg.you.charStates as CharStateType[],
+          ownWpm: msg.you.wpm,
+          countdownStartsAtServerMs: msg.startsAtServerMs,
+          graceBanner: msg.graceEndsAtServerMs
+            ? {
+                leaderPlayerId: "",
+                leaderNickname: "",
+                remainingMs: Math.max(0, msg.graceEndsAtServerMs - Date.now()),
+              }
+            : null,
+        });
+        const cursors = new Map<string, { playerId: string; index: number; serverTs: number }>();
+        const opponentWpm: Record<string, number> = {};
+        for (const p of msg.players) {
+          if (p.playerId !== msg.you.playerId) {
+            cursors.set(p.playerId, {
+              playerId: p.playerId,
+              index: p.progress,
+              serverTs: Date.now(),
+            });
+            opponentWpm[p.playerId] = p.wpm;
+          }
+        }
+        setCursorState({ cursors, ownIndex: msg.you.progress });
+        setRaceState({ opponentWpm });
+      }
+      if (msg.type === "session_taken_over") {
+        setConnectionState({ status: "closed" });
       }
       if (msg.type === "lobby_state") {
         setRaceState({

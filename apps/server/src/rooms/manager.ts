@@ -103,6 +103,8 @@ export function addPlayer(
     uncorrectedErrors: 0,
     currentWpm: 0,
     finishedAtServerMs: null,
+    disconnectedAt: null,
+    reconnectedAt: null,
   };
   room.players.set(playerId, player);
   room.lastActivityAt = Date.now();
@@ -133,7 +135,18 @@ export function rebindPlayerSocket(
   player: Player,
   newWs: import("bun").ServerWebSocket<WsData>,
 ): void {
+  const oldWs = player.wsRef;
+  if (oldWs && oldWs !== newWs) {
+    try {
+      oldWs.send(JSON.stringify({ type: "session_taken_over" }));
+      oldWs.close(1000, "Session taken over by another tab");
+    } catch {
+      // ignore
+    }
+  }
   player.wsRef = newWs;
+  player.disconnectedAt = null;
+  player.reconnectedAt = Date.now();
   newWs.data.playerId = player.playerId;
   newWs.data.roomCode = room.code;
   newWs.data.nickname = player.nickname;

@@ -17,7 +17,7 @@ import {
 } from "../rooms/manager.ts";
 import { transition } from "../race/controller.ts";
 import { validateKeystroke } from "../race/validate-keystroke.ts";
-import { broadcastToRoom, broadcastLobbyState } from "./broadcast.ts";
+import { broadcastToRoom, broadcastLobbyState, buildRejoinedRoomFrame } from "./broadcast.ts";
 import { shuffle, dealNextPassage } from "../race/corpus.ts";
 import { getPassageById, isValidPassageId, hostPickedPreview, PASSAGES } from "@typing-race/shared";
 import type { Countdown, CursorUpdate } from "@typing-race/shared";
@@ -150,23 +150,7 @@ export function dispatch(
         { playerId: player.playerId, roomCode: room.code },
         "[ws] rejoin_room successful",
       );
-      // In Plan 01, send joined_room (Plan 02 will send full rejoined_room snapshot)
-      ws.send(
-        JSON.stringify({
-          type: "joined_room",
-          playerId: player.playerId,
-          sessionToken: player.sessionToken,
-          roomCode: room.code,
-          you: { nickname: player.nickname, isHost: player.isHost },
-          players: [...room.players.values()].map((p) => ({
-            playerId: p.playerId,
-            nickname: p.nickname,
-            isHost: p.isHost,
-            progress: p.progress,
-          })),
-          clockOffsetMs: ws.data.clientOffsetMs,
-        }),
-      );
+      ws.send(JSON.stringify(buildRejoinedRoomFrame(room, player)));
       break;
     }
 

@@ -8,6 +8,7 @@ import {
   getRoom,
 } from "../rooms/manager.ts";
 import { dispatch } from "../ws/dispatch.ts";
+import { validateKeystroke } from "../race/validate-keystroke.ts";
 import type { WsData } from "../ws/handlers.ts";
 
 type FakeWs = {
@@ -93,7 +94,7 @@ describe("Phase 4 Plan 01: sessionToken & reconnect handshake", () => {
     expect(newWs.data.sessionToken).toBe(hostPlayer.sessionToken);
   });
 
-  test("4. dispatch rejoin_room successfully re-binds socket and returns joined_room", () => {
+  test("4. dispatch rejoin_room successfully re-binds socket and returns rejoined_room snapshot", () => {
     const ws1 = fakeWs("p1");
     const { code, room } = createRoom(asWs(ws1), "Host");
     const hostPlayer = room.players.get("p1")!;
@@ -113,9 +114,9 @@ describe("Phase 4 Plan 01: sessionToken & reconnect handshake", () => {
     expect(hostPlayer.wsRef).toBe(asWs(wsNew));
     expect(wsNew.sent.length).toBeGreaterThan(0);
     const lastMsg = JSON.parse(wsNew.sent[wsNew.sent.length - 1]);
-    expect(lastMsg.type).toBe("joined_room");
-    expect(lastMsg.sessionToken).toBe(token);
-    expect(lastMsg.playerId).toBe("p1");
+    expect(lastMsg.type).toBe("rejoined_room");
+    expect(lastMsg.you.playerId).toBe("p1");
+    expect(lastMsg.roomCode).toBe(code);
   });
 
   test("5. dispatch rejoin_room rejects invalid sessionToken with SESSION_INVALID", () => {
@@ -153,5 +154,65 @@ describe("Phase 4 Plan 01: sessionToken & reconnect handshake", () => {
     const err = JSON.parse(wsNew.sent[0]);
     expect(err.type).toBe("error");
     expect(err.code).toBe("ROOM_NOT_FOUND");
+  });
+
+  test("7. multi-tab takeover sends session_taken_over to previous socket", () => {
+    const ws1 = fakeWs("p1");
+    const { code, room } = createRoom(asWs(ws1), "Host");
+    const hostPlayer = room.players.get("p1")!;
+    const token = hostPlayer.sessionToken;
+
+    const wsTab2 = fakeWs("tab2");
+    dispatch(
+      asWs(wsTab2),
+      JSON.stringify({
+        type: "rejoin_room",
+        roomCode: code,
+        sessionToken: token,
+      }),
+    );
+
+    // ws1 should have received session_taken_over
+    const takeoverMsg = ws1.sent.find((s) => s.includes("session_taken_over"));
+    expect(takeoverMsg).toBeDefined();
+    const parsed = JSON.parse(takeoverMsg!);
+    expect(parsed.type).toBe("session_taken_over");
+  });
+
+  test("8. validateKeystroke enforces 500ms anti-cheat grace period on reconnect", () => {
+    const ws1 = fakeWs("p1");
+    const { room } = createRoom(asWs(ws1), "Host");
+    const player = room.players.get("p1")!;
+    room.state = "racing";
+    room.passageText = "Hello world";
+    room.startsAtServerMs = 1000;
+
+    // Simulate player just reconnected
+    const reconnectedTime = 5000;
+    player.reconnectedAt = reconnectedTime;
+    player.lastKeystrokeAt = 0;
+
+    // Keystroke at reconnectedTime + 200ms (< 500ms grace) -> RATE_LIMITED
+    const resTooSoon = validateKeystroke({
+      room,
+      player,
+      frame: { type: "keystroke", index: 0, char: "H", clientTs: reconnectedTime + 200 },
+      passageText: "Hello world",
+      now: reconnectedTime + 200,
+    });
+    expect(resTooSoon.ok).toBe(false);
+    if (!resTooSoon.ok) {
+      expect(resTooSoon.reason).toBe("RATE_LIMITED");
+    }
+
+    // Keystroke at reconnectedTime + 550ms (>= 500ms grace) -> Accepted
+    const resOk = validateKeystroke({
+      room,
+      player,
+      frame: { type: "keystroke", index: 0, char: "H", clientTs: reconnectedTime + 550 },
+      passageText: "Hello world",
+      now: reconnectedTime + 550,
+    });
+    expect(resOk.ok).toBe(true);
   });
 });

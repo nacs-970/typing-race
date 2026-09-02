@@ -2,8 +2,8 @@
  * Broadcast helpers — server iterates `room.players` and sends WS frames.
  * Inbound: a `Room` (NOT a `string` code) — caller has already resolved.
  */
-import type { JoinedRoom, LobbyState, PlayerLeft, RaceEnd, GraceCountdown, PlayerFinalStats } from "@typing-race/shared";
-import type { Room } from "../race/types.ts";
+import type { JoinedRoom, LobbyState, PlayerLeft, RaceEnd, GraceCountdown, PlayerFinalStats, RejoinedRoom } from "@typing-race/shared";
+import type { Room, Player } from "../race/types.ts";
 import { computeAccuracy, countCorrectChars } from "../race/scoring.ts";
 
 /** Send a frame to every player in the room. Errors swallowed (one slow client ≠ DoS). */
@@ -105,4 +105,36 @@ export function broadcastGraceCountdown(room: Room, now: number = Date.now()): v
     leaderNickname: leader.nickname,
   };
   broadcastToRoom(room, frame);
+}
+
+/** Build full authoritative race snapshot for a rejoining player (Plan 04-02). */
+export function buildRejoinedRoomFrame(room: Room, player: Player): RejoinedRoom {
+  return {
+    type: "rejoined_room",
+    roomCode: room.code,
+    roomState: room.state,
+    passageId: room.passageId,
+    passageText: room.passageText,
+    startsAtServerMs: room.startsAtServerMs,
+    graceEndsAtServerMs: room.graceEndsAtServerMs,
+    clockOffsetMs: player.clientOffsetMs,
+    you: {
+      playerId: player.playerId,
+      nickname: player.nickname,
+      isHost: player.isHost,
+      progress: player.progress,
+      charStates: player.charStates,
+      wpm: player.currentWpm,
+      uncorrectedErrors: player.uncorrectedErrors,
+    },
+    players: [...room.players.values()].map((p) => ({
+      playerId: p.playerId,
+      nickname: p.nickname,
+      isHost: p.isHost,
+      progress: p.progress,
+      charStates: p.charStates,
+      wpm: p.currentWpm,
+      isDisconnected: p.disconnectedAt !== null,
+    })),
+  };
 }

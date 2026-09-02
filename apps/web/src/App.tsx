@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useConnectionStore } from "./store/connection.ts";
 import { useClockStore } from "./store/clock.ts";
-import { ws } from "./net/ws.ts";
+import { ws, getSessionCookie } from "./net/ws.ts";
 import { useRaceStore, resetRaceUi } from "./store/race.ts";
 import { setCursorState } from "./store/cursor.ts";
 import { syncClock } from "./net/clock.ts";
@@ -35,6 +35,7 @@ export function App(): React.ReactElement {
   const [clockErr, setClockErr] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [isHost, setIsHost] = useState<boolean>(false);
+  const [sessionTakenOver, setSessionTakenOver] = useState<boolean>(false);
 
   // 1. syncClock on mount
   useEffect(() => {
@@ -53,12 +54,53 @@ export function App(): React.ReactElement {
     };
   }, []);
 
+  // Auto-rejoin on mount if room hash and cookie exist
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash.replace("#", "").trim().toUpperCase();
+    if (hash.length === 6) {
+      const token = getSessionCookie(hash);
+      if (token) {
+        const tryRejoin = () => {
+          ws.send({
+            type: "rejoin_room",
+            roomCode: hash,
+            sessionToken: token,
+          });
+        };
+        if (useConnectionStore.getState().status === "open") {
+          tryRejoin();
+        } else {
+          const unsub = useConnectionStore.subscribe((s) => {
+            if (s.status === "open") {
+              tryRejoin();
+              unsub();
+            }
+          });
+        }
+      }
+    }
+  }, []);
+
   // 2. WS frame routing for app-level lifecycle (lobby → countdown → race → grace → results)
   useEffect(() => {
     const unsub = ws.subscribe((msg: ServerToClient) => {
       if (msg.type === "joined_room") {
         setRoomCode(msg.roomCode);
         setIsHost(msg.you.isHost);
+        if (typeof window !== "undefined") {
+          window.location.hash = msg.roomCode;
+        }
+      }
+      if (msg.type === "rejoined_room") {
+        setRoomCode(msg.roomCode);
+        setIsHost(msg.you.isHost);
+        if (typeof window !== "undefined") {
+          window.location.hash = msg.roomCode;
+        }
+      }
+      if (msg.type === "session_taken_over") {
+        setSessionTakenOver(true);
       }
     });
     return unsub;
@@ -98,6 +140,25 @@ export function App(): React.ReactElement {
           <dd>{ownWpm > 0 ? ownWpm.toFixed(1) : "—"}</dd>
         </dl>
       </div>
+
+      {sessionTakenOver && (
+        <div
+          className="session-taken-over-banner"
+          style={{
+            background: "#fee2e2",
+            border: "1px solid #ef4444",
+            padding: "1rem",
+            borderRadius: "8px",
+            margin: "1rem 0",
+            color: "#991b1b",
+          }}
+        >
+          <strong>Session active in another tab</strong>
+          <p style={{ margin: "0.25rem 0 0" }}>
+            This room is currently open in another browser tab. This window has been disconnected.
+          </p>
+        </div>
+      )}
 
       <GraceBanner />
 

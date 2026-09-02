@@ -41,6 +41,7 @@ export class WsConnection {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private explicitlyClosed = false;
   private sessionTakenOver = false;
+  private rejoining = false;
   /** Subscriber callbacks for app-level frame handlers (App.tsx, etc.) */
   private subscribers: ((frame: ServerToClient) => void)[] = [];
 
@@ -48,8 +49,29 @@ export class WsConnection {
     this.url = url;
   }
 
-  connect(): void {
-    if (this.socket && this.socket.readyState !== WebSocket.CLOSED) return;
+  connect(force = false): void {
+    if (
+      !force &&
+      this.socket &&
+      (this.socket.readyState === WebSocket.OPEN ||
+        this.socket.readyState === WebSocket.CONNECTING)
+    ) {
+      return;
+    }
+
+    if (this.socket) {
+      try {
+        this.socket.onclose = null;
+        this.socket.onerror = null;
+        this.socket.onmessage = null;
+        this.socket.onopen = null;
+        this.socket.close();
+      } catch {
+        // ignore
+      }
+      this.socket = null;
+    }
+
     this.explicitlyClosed = false;
 
     setConnectionStore({ status: "connecting" });
@@ -177,10 +199,12 @@ export class WsConnection {
         setRaceState({ opponentWpm });
       }
       if (msg.type === "session_taken_over") {
+        this.rejoining = false;
         this.sessionTakenOver = true;
         setConnectionStore({ status: "closed" });
       }
       if (msg.type === "rejoined_room") {
+        this.rejoining = false;
         this.sessionTakenOver = false;
       }
       if (msg.type === "lobby_state") {
@@ -231,14 +255,23 @@ export class WsConnection {
 
   /** Reclaim or join session across tabs */
   rejoin(roomCode: string, sessionToken: string): void {
+    if (this.rejoining) return;
+    this.rejoining = true;
     this.sessionTakenOver = false;
     this.explicitlyClosed = false;
+
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
 
+    const resetRejoiningTimeout = setTimeout(() => {
+      this.rejoining = false;
+    }, 3000);
+
     const sendRejoin = () => {
+      clearTimeout(resetRejoiningTimeout);
+      this.rejoining = false;
       return this.send({
         type: "rejoin_room",
         roomCode,
@@ -249,14 +282,16 @@ export class WsConnection {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       sendRejoin();
     } else {
-      this.connect();
-      const interval = setInterval(() => {
-        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-          sendRejoin();
-          clearInterval(interval);
-        }
-      }, 50);
-      setTimeout(() => clearInterval(interval), 5000);
+      this.connect(true);
+      if (this.socket) {
+        this.socket.addEventListener(
+          "open",
+          () => {
+            sendRejoin();
+          },
+          { once: true },
+        );
+      }
     }
   }
 }

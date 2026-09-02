@@ -142,25 +142,40 @@ export function App(): React.ReactElement {
     ws.rejoin(code, token);
   }, [roomCode]);
 
-  // Reclaim session automatically on focus, tab switch, or click when session was taken over
+  // Reclaim session automatically on focus, tab switch, click, or key press
   useEffect(() => {
-    if (!sessionTakenOver) return;
-
     const onActivate = () => {
-      reclaimSession();
+      const code =
+        roomCode ??
+        (typeof window !== "undefined"
+          ? window.location.hash.replace("#", "").trim().toUpperCase()
+          : null);
+      if (!code || code.length !== 6) return;
+      const token = getSessionCookie(code);
+      if (!token) return;
+
+      if (sessionTakenOver || useConnectionStore.getState().status !== "open") {
+        ws.rejoin(code, token);
+      }
     };
 
     window.addEventListener("focus", onActivate);
     document.addEventListener("visibilitychange", onActivate);
     window.addEventListener("pointerdown", onActivate);
+    window.addEventListener("keydown", onActivate, { capture: true });
     return () => {
       window.removeEventListener("focus", onActivate);
       document.removeEventListener("visibilitychange", onActivate);
       window.removeEventListener("pointerdown", onActivate);
+      window.removeEventListener("keydown", onActivate, { capture: true });
     };
-  }, [sessionTakenOver, reclaimSession]);
+  }, [sessionTakenOver, roomCode]);
 
   const onKeystroke = (index: number, char: string): void => {
+    if (sessionTakenOver) {
+      reclaimSession();
+      return;
+    }
     setCursorState({ ownIndex: index + 1 });
     ws.send({ type: "keystroke", index, char, clientTs: Date.now() });
     const now = Date.now();
@@ -169,6 +184,14 @@ export function App(): React.ReactElement {
       ws.send({ type: "cursor_position", index, clientTs: now });
       win.__lastCursor = now;
     }
+  };
+
+  const onCorrection = (backspaces: number): void => {
+    if (sessionTakenOver) {
+      reclaimSession();
+      return;
+    }
+    ws.send({ type: "correction", backspaces, clientTs: Date.now() });
   };
 
   return (
@@ -296,9 +319,7 @@ export function App(): React.ReactElement {
           passageText={passageText}
           playerId={playerId}
           onKeystroke={onKeystroke}
-          onCorrection={(n) => {
-            ws.send({ type: "correction", backspaces: n, clientTs: Date.now() });
-          }}
+          onCorrection={onCorrection}
         />
       )}
 

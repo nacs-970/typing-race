@@ -1,19 +1,19 @@
 ---
 gsd_state_version: 1.0
-current_phase: 2
-current_phase_name: Race Engine
-status: complete
-stopped_at: Phase 2 Race Engine complete (4 plans, 40 tests pass, 22/22 must-haves verified). Ready to plan Phase 3 (Race Track + WPM).
-last_updated: "2026-08-30T22:00:00.000Z"
-last_activity: 2026-08-30
-last_activity_desc: Phase 2 Race Engine complete + verified
-state_head: 80baeecf8270187c5440568e039c67b35fd4e747
+current_phase: 4
+current_phase_name: Reconnect
+status: ready
+stopped_at: Phase 3 Race Track + WPM complete (all 5 UAT passed, 80 tests pass). Ready to plan Phase 4 (Reconnect).
+last_updated: "2026-09-02T14:45:00.000Z"
+last_activity: 2026-09-02
+last_activity_desc: Phase 3 Race Track + WPM complete + UAT verified
+state_head: c45a1c1
 progress:
   total_phases: 6
-  completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
-  percent: 33
+  completed_phases: 3
+  total_plans: 11
+  completed_plans: 11
+  percent: 50
 ---
 
 # Project State
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-30)
 
 **Core value:** Two connected clients see each other's cursor in real time and the race ends with a fair, identical WPM/accuracy score.
-**Current focus:** Phase 3 — Race Track + WPM
+**Current focus:** Phase 4 — Reconnect
 
 ## Current Position
 
-Phase: 2 (Race Engine) — COMPLETE
-Plan: 4 of 4 (all complete)
-Status: Phase 2 done — server-authoritative race engine with clock sync + anti-cheat + cursor broadcasting
-Last activity: 2026-08-30 — Plan 04 SUMMARY + VERIFICATION + STATE committed; Phase 2 verified 22/22
+Phase: 4 (Reconnect) — READY TO PLAN
+Plan: 0 of 4
+Status: Phase 3 complete — per-char live accents, net WPM, char accuracy, race-end grace period, results board, rematch, and back-to-lobby.
+Last activity: 2026-09-02 — Phase 3 UAT complete (5/5 passed); commit c45a1c1
 
-Progress: [██████████] 100% (Phase 2)
+Progress: [████████████████] 50% (Overall)
 
 ## Performance Metrics
 

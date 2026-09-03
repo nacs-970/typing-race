@@ -135,7 +135,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 05-01: Separate `cursorStore` (30Hz, isolated from `roomStore` ~1Hz) in Zustand 5, cursor interpolation buffer (100ms) with linear rAF lerp, extrapolation cap 150ms
+- [x] 05-01: Separate `cursorStore` (30Hz, isolated from `roomStore` ~1Hz) in Zustand 5, cursor interpolation buffer (100ms) with linear rAF lerp, extrapolation cap 150ms
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -181,5 +181,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Race Engine | 4/4 | Complete    | 2026-08-30 |
 | 3. Race Track + WPM | 0/4 | Not started | - |
 | 4. Reconnect | 0/4 | Not started | - |
-| 5. Frontend Polish | 0/4 | Not started | - |
+| 5. Frontend Polish | 1/4 | In progress | - |
 | 6. Deploy + Hardening | 0/3 | Not started | - |

@@ -173,4 +173,35 @@ describe("CursorManager", () => {
     expect(dom!.root.style.opacity).toBe("0.00");
     expect(dom!.root.style.visibility).toBe("hidden");
   });
+
+  it("fades away opponent who has not started typing when local player moves 5 words ahead", () => {
+    const container = document.createElement("div");
+    const mockLayout = {
+      getCoordinates: (idx: number) => ({ x: idx * 10, y: 0 }),
+      init: () => {},
+      updateLayout: () => {},
+    };
+    const text = "zero one two three four five six seven eight";
+    manager.setPassageText(text);
+    manager.mount(container, mockLayout as any);
+
+    // Opponent 'p1' has NOT typed a single keystroke (buffer is empty)
+    // When local player is at index 0, opponent is visible (opacity 1.0)
+    manager.setLocalProgress(0);
+    manager.renderFrame(1000);
+
+    const dom = manager.getElements().get("p1");
+    expect(dom).toBeDefined();
+    expect(dom!.root.style.opacity).toBe("1.00");
+    expect(dom!.root.style.visibility).toBe("visible");
+
+    // Local player moves 5 words ahead ('five')
+    const fiveIdx = text.indexOf("five");
+    manager.setLocalProgress(fiveIdx);
+    manager.renderFrame(1100);
+
+    // Opponent at index 0 is now 5 words behind -> completely faded away!
+    expect(dom!.root.style.opacity).toBe("0.00");
+    expect(dom!.root.style.visibility).toBe("hidden");
+  });
 });

@@ -200,9 +200,7 @@ export class CursorManager {
     this.leaderId = leaderPlayerId;
 
     // Second pass: position cursors with translate3d
-    for (const [playerId, buf] of this.buffers.entries()) {
-      if (buf.length === 0) continue;
-
+    for (const playerId of this.buffers.keys()) {
       let dom = this.elements.get(playerId);
       if (!dom) {
         const nickname = this.playerNicknames.get(playerId) ?? "Player";

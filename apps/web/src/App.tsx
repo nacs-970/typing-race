@@ -157,8 +157,20 @@ export function App(): React.ReactElement {
           title = "Room Lost";
           body = "Room lost — connection expired. Return to lobby or create a new room.";
         } else if (msg.code === "RATE_LIMITED") {
-          title = "Rate Limit";
-          body = "Rate limit reached (max 10 rooms/hr). Wait 15 minutes or join an existing room.";
+          if (
+            msg.message &&
+            (msg.message.includes("rooms") ||
+              msg.message.includes("IP") ||
+              msg.message.includes("hour"))
+          ) {
+            title = "Rate Limit";
+            body =
+              "Rate limit reached (max 10 rooms/hr). Wait 15 minutes or join an existing room.";
+          } else {
+            title = "Typing Throttled";
+            body =
+              "Keystroke rate limit exceeded (<20ms interval or race start grace).";
+          }
         }
         addToast({
           type: "error",

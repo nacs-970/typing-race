@@ -26,7 +26,8 @@ export interface OpponentCursorDom {
 }
 
 export class CursorManager {
-  public static readonly MAX_AHEAD_WORDS = 5;
+  public static readonly MAX_DISTANCE_WORDS = 5;
+  public static readonly MAX_AHEAD_WORDS = 5; // alias for backwards compatibility
 
   private buffers: Map<string, CursorSnapshot[]> = new Map();
   private playerColors: Map<string, string> = new Map();
@@ -222,25 +223,28 @@ export class CursorManager {
         dom.caret.classList.remove("leader-glow");
       }
 
-      // Distance-based fading: slowly fade away as ahead player distance approaches 5 words
-      const wordsAhead = this.calculateWordsAhead(this.localProgress, renderIndex);
+      // Distance-based fading: slowly fade away as opponent distance (ahead or behind) approaches 5 words
+      const wordDistance = this.calculateWordDistance(this.localProgress, renderIndex);
       let opacity = 1.0;
-      if (wordsAhead > 0) {
-        opacity = Math.max(0, 1 - wordsAhead / CursorManager.MAX_AHEAD_WORDS);
+      if (wordDistance > 0) {
+        opacity = Math.max(0, 1 - wordDistance / CursorManager.MAX_DISTANCE_WORDS);
       }
       dom.root.style.opacity = opacity.toFixed(2);
       dom.root.style.visibility = opacity <= 0 ? "hidden" : "visible";
     }
   }
 
-  public calculateWordsAhead(localIndex: number, targetIndex: number): number {
-    if (targetIndex <= localIndex) return 0;
+  public calculateWordDistance(fromIndex: number, toIndex: number): number {
+    const min = Math.min(fromIndex, toIndex);
+    const max = Math.max(fromIndex, toIndex);
+    if (min === max) return 0;
+
     if (!this.passageText || this.passageText.length === 0) {
-      return (targetIndex - localIndex) / 5;
+      return (max - min) / 5;
     }
 
-    const start = Math.max(0, Math.min(this.passageText.length, Math.floor(localIndex)));
-    const end = Math.max(0, Math.min(this.passageText.length, targetIndex));
+    const start = Math.max(0, Math.min(this.passageText.length, Math.floor(min)));
+    const end = Math.max(0, Math.min(this.passageText.length, max));
     if (end <= start) return 0;
 
     let spaces = 0;
@@ -259,6 +263,10 @@ export class CursorManager {
     const fraction = (end - lastSpaceIndex) / wordLength;
 
     return spaces + Math.min(0.99, Math.max(0, fraction));
+  }
+
+  public calculateWordsAhead(localIndex: number, targetIndex: number): number {
+    return this.calculateWordDistance(localIndex, targetIndex);
   }
 
   public setPassageText(text: string): void {

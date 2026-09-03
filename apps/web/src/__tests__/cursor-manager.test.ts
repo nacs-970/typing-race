@@ -94,45 +94,48 @@ describe("CursorManager", () => {
     expect(manager.getLocalProgress()).toBe(35);
   });
 
-  it("calculates words ahead accurately based on passage text", () => {
+  it("calculates word distance accurately (both ahead and behind) based on passage text", () => {
     const text = "one two three four five six seven eight";
     manager.setPassageText(text);
 
-    // Behind or equal: 0 words ahead
-    expect(manager.calculateWordsAhead(10, 5)).toBe(0);
-    expect(manager.calculateWordsAhead(10, 10)).toBe(0);
+    // Same position: 0 distance
+    expect(manager.calculateWordDistance(10, 10)).toBe(0);
 
-    // Local at index 0 ('one')
-    // Opponent at index 4 ('two'): 1 space crossed
-    const words1 = manager.calculateWordsAhead(0, 4);
-    expect(words1).toBeGreaterThanOrEqual(1);
-    expect(words1).toBeLessThan(2);
+    // Opponent ahead (0 -> 4): 1 word distance
+    const distAhead = manager.calculateWordDistance(0, 4);
+    expect(distAhead).toBeGreaterThanOrEqual(1);
+    expect(distAhead).toBeLessThan(2);
 
-    // Opponent at index 20 ('five'): 4 spaces crossed
-    const words4 = manager.calculateWordsAhead(0, 20);
-    expect(words4).toBeGreaterThanOrEqual(4);
-    expect(words4).toBeLessThan(5);
+    // Opponent behind (4 -> 0): 1 word distance
+    const distBehind = manager.calculateWordDistance(4, 0);
+    expect(distBehind).toBeGreaterThanOrEqual(1);
+    expect(distBehind).toBeLessThan(2);
 
-    // Opponent at index 26 ('six'): 5 spaces crossed (5 words ahead)
-    const words5 = manager.calculateWordsAhead(0, 26);
-    expect(words5).toBeGreaterThanOrEqual(5);
+    // Opponent 5 words ahead (0 -> 26): 5 words distance
+    expect(manager.calculateWordDistance(0, 26)).toBeGreaterThanOrEqual(5);
+
+    // Opponent 5 words behind (26 -> 0): 5 words distance
+    expect(manager.calculateWordDistance(26, 0)).toBeGreaterThanOrEqual(5);
   });
 
-  it("fades opponent cursor and nametag smoothly as distance increases up to 5 words max", () => {
+  it("fades opponent cursor and nametag smoothly for opponents both ahead and behind", () => {
     const container = document.createElement("div");
     const mockLayout = {
       getCoordinates: (idx: number) => ({ x: idx * 10, y: 0 }),
       init: () => {},
       updateLayout: () => {},
     };
-    manager.setPassageText("one two three four five six seven");
+    // 13 words: index 0..6 before 'six', and 6 words after 'six'
+    const text = "zero one two three four five six seven eight nine ten eleven twelve";
+    manager.setPassageText(text);
     manager.mount(container, mockLayout as any);
 
-    // Local player at index 0
-    manager.setLocalProgress(0);
+    // Local player at 'six' (index 29)
+    const localIdx = text.indexOf("six");
+    manager.setLocalProgress(localIdx);
 
-    // Opponent p1 at index 0 (same position): opacity 1.0
-    manager.onCursorUpdate("p1", 0, 1000);
+    // Opponent p1 at same position: opacity 1.0
+    manager.onCursorUpdate("p1", localIdx, 1000);
     manager.renderFrame(1100);
 
     const dom = manager.getElements().get("p1");
@@ -140,16 +143,33 @@ describe("CursorManager", () => {
     expect(dom!.root.style.opacity).toBe("1.00");
     expect(dom!.root.style.visibility).toBe("visible");
 
-    // Opponent p1 2 words ahead (index 9)
-    manager.onCursorUpdate("p1", 9, 1100);
+    // Opponent p1 2 words ahead ('eight'): partially faded
+    const twoAhead = text.indexOf("eight");
+    manager.onCursorUpdate("p1", twoAhead, 1100);
     manager.renderFrame(1200);
-    const opacityMid = parseFloat(dom!.root.style.opacity);
-    expect(opacityMid).toBeLessThan(1.0);
-    expect(opacityMid).toBeGreaterThan(0.0);
+    const opacityAhead = parseFloat(dom!.root.style.opacity);
+    expect(opacityAhead).toBeLessThan(1.0);
+    expect(opacityAhead).toBeGreaterThan(0.0);
 
-    // Opponent p1 5 words ahead (index 24)
-    manager.onCursorUpdate("p1", 24, 1200);
+    // Opponent p1 5+ words ahead ('eleven'): completely faded away
+    const fiveAhead = text.indexOf("eleven");
+    manager.onCursorUpdate("p1", fiveAhead, 1200);
     manager.renderFrame(1300);
+    expect(dom!.root.style.opacity).toBe("0.00");
+    expect(dom!.root.style.visibility).toBe("hidden");
+
+    // Opponent p1 2 words behind ('four'): partially faded
+    const twoBehind = text.indexOf("four");
+    manager.onCursorUpdate("p1", twoBehind, 1300);
+    manager.renderFrame(1400);
+    const opacityBehind = parseFloat(dom!.root.style.opacity);
+    expect(opacityBehind).toBeLessThan(1.0);
+    expect(opacityBehind).toBeGreaterThan(0.0);
+
+    // Opponent p1 5+ words behind ('zero'): completely faded away
+    const fiveBehind = text.indexOf("zero");
+    manager.onCursorUpdate("p1", fiveBehind, 1400);
+    manager.renderFrame(1500);
     expect(dom!.root.style.opacity).toBe("0.00");
     expect(dom!.root.style.visibility).toBe("hidden");
   });

@@ -335,16 +335,20 @@ h1 {
 /* Grace banner */
 .grace-banner {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: #cc6722;
-  color: #12190b;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 800px;
+  background: #15180c;
+  color: #fefbe6;
   padding: 0.75rem 1rem;
   text-align: center;
   font-weight: 600;
   z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(204, 103, 34, 0.6);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(204, 103, 34, 0.25);
 }
 .grace-banner .grace-text { font-size: 1rem; }
 

@@ -24,7 +24,7 @@ export function GraceBanner(): React.ReactElement | null {
 
   return (
     <div
-      className="grace-banner relative overflow-hidden mb-3 p-3 rounded-lg bg-[#15180c] border border-[#cc6722]/60 shadow-[0_0_16px_rgba(204,103,34,0.25)] text-[#fefbe6] font-mono"
+      className="grace-banner fixed top-[5%] left-1/2 -translate-x-1/2 w-[80%] max-w-[800px] overflow-hidden p-3 rounded-xl bg-[#15180c] border border-[#cc6722]/60 shadow-[0_8px_24px_rgba(0,0,0,0.6),0_0_16px_rgba(204,103,34,0.3)] text-[#fefbe6] font-mono z-50"
       role="status"
       aria-live="polite"
       data-testid="grace-banner"

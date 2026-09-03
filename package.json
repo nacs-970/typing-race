@@ -4,12 +4,12 @@
   "type": "module",
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "dev": "concurrently -k -n server,web -c blue,green \"bun --filter @typing-race/server run dev\" \"bun --filter @typing-race/web run dev\"",
-    "dev:server": "bun --filter @typing-race/server run dev",
-    "dev:web": "bun --filter @typing-race/web run dev",
-    "typecheck": "bun --filter '*' run typecheck",
-    "build": "bun --filter @typing-race/web run build",
-    "start": "bun --filter @typing-race/server run start"
+    "dev": "concurrently -k -n server,web -c blue,green \"bun run --cwd apps/server dev\" \"bun run --cwd apps/web dev\"",
+    "dev:server": "bun run --cwd apps/server dev",
+    "dev:web": "bun run --cwd apps/web dev",
+    "typecheck": "bun run --cwd apps/server typecheck && bun run --cwd apps/web typecheck",
+    "build": "bun run --cwd apps/web build",
+    "start": "bun run --cwd apps/server start"
   },
   "devDependencies": {
     "concurrently": "^9.1.0",

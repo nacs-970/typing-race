@@ -18,24 +18,35 @@ export class PassageLayout {
   private lineHeight: number = 32;
   private containerWidth: number = 800;
 
+  public measureCharWidth(font: string): void {
+    if (typeof document === "undefined") return;
+    try {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.font = font;
+        const measured = ctx.measureText("MMMMMMMMMM").width / 10;
+        if (measured > 0) {
+          this.charWidth = measured;
+        }
+      }
+    } catch {
+      // Fall back
+    }
+  }
+
   public init(passageText: string, font: string = '16px "JetBrains Mono", monospace', lineHeight: number = 32): void {
     this.lineHeight = lineHeight;
     this.prepared = prepareWithSegments(passageText, font);
+    this.measureCharWidth(font);
 
-    if (typeof document !== "undefined") {
-      try {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.font = font;
-          const measured = ctx.measureText("M").width;
-          if (measured > 0) {
-            this.charWidth = measured;
-          }
+    if (typeof document !== "undefined" && document.fonts?.ready) {
+      document.fonts.ready.then(() => {
+        this.measureCharWidth(font);
+        if (this.containerWidth > 0) {
+          this.updateLayout(this.containerWidth);
         }
-      } catch {
-        // Fall back to default charWidth
-      }
+      });
     }
   }
 

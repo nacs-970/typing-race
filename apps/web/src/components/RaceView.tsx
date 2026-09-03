@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import { useRaceStore, type CharState } from "../store/race.ts";
+import { useRaceStore, setRaceState, type CharState } from "../store/race.ts";
 import { useCursorStore, setCursorState } from "../store/cursor.ts";
 import { CursorManager } from "../core/cursor-manager.ts";
 import { PassageLayout } from "../core/layout.ts";
@@ -35,12 +35,14 @@ export function RaceView({
   const localLayout = useMemo(() => passageLayout ?? new PassageLayout(), [passageLayout]);
 
   const ownCharStates = useRaceStore((s) => s.ownCharStates);
+  const [charStates, setCharStates] = useState<readonly CharState[]>(() => localEngine.getCharStates());
   const ownIndex = useCursorStore((s) => s.ownIndex);
   const [localCoords, setLocalCoords] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Initialize engine and layout with passage text
   useEffect(() => {
     localEngine.init(passageText);
+    setCharStates([...localEngine.getCharStates()]);
     localLayout.init(passageText, '16px "JetBrains Mono", monospace', 32);
     localLayout.updateLayout(trackRef.current?.clientWidth || 800);
   }, [passageText, localEngine, localLayout]);
@@ -52,15 +54,33 @@ export function RaceView({
     return () => localManager.unmount();
   }, [localManager, localLayout]);
 
+  // Register lobby players with their entered nicknames
+  useEffect(() => {
+    const syncOpponents = () => {
+      const lobbyPlayers = useRaceStore.getState().lobbyPlayers;
+      let slot = 0;
+      for (const p of lobbyPlayers) {
+        if (p.playerId !== playerId) {
+          localManager.registerPlayer(p.playerId, p.nickname, slot);
+          slot++;
+        }
+      }
+    };
+    syncOpponents();
+    const unsub = useRaceStore.subscribe(syncOpponents);
+    return unsub;
+  }, [localManager, playerId]);
+
   // Synchronize opponent cursors from cursor store into CursorManager
   useEffect(() => {
     const unsub = useCursorStore.subscribe((s) => {
+      const lobbyPlayers = useRaceStore.getState().lobbyPlayers;
       let slot = 0;
       for (const [pid, cursor] of s.cursors.entries()) {
         if (pid !== playerId) {
-          if (!localManager.getPlayerNickname(pid)) {
-            localManager.registerPlayer(pid, `Player ${slot + 1}`, slot);
-          }
+          const found = lobbyPlayers.find((p) => p.playerId === pid);
+          const nickname = found?.nickname || localManager.getPlayerNickname(pid) || `Player ${slot + 1}`;
+          localManager.registerPlayer(pid, nickname, slot);
           localManager.onCursorUpdate(pid, cursor.index);
           slot++;
         }
@@ -97,11 +117,17 @@ export function RaceView({
     const unsubKey = localEngine.subscribe("keystroke", (idx, ch) => {
       onKeystroke?.(idx, ch);
       setCursorState({ ownIndex: idx + 1 });
+      const current = [...localEngine.getCharStates()];
+      setCharStates(current);
+      setRaceState({ ownCharStates: current });
     });
 
     const unsubCorr = localEngine.subscribe("correction", (count) => {
       onCorrection?.(count);
       setCursorState((s) => ({ ownIndex: Math.max(0, s.ownIndex - count) }));
+      const current = [...localEngine.getCharStates()];
+      setCharStates(current);
+      setRaceState({ ownCharStates: current });
     });
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -123,9 +149,14 @@ export function RaceView({
         typingEngine={localEngine}
         passageLength={passageText.length}
       />
-      <div ref={trackRef} className="passage-track relative text-lg leading-relaxed">
+      <div ref={trackRef} className="passage-track relative text-[16px] leading-[32px] font-mono select-none">
         {passageText.split("").map((ch, i) => {
-          const state: CharState = ownCharStates[i] ?? "pending";
+          const storeState = ownCharStates[i];
+          const localState = charStates[i];
+          const state: CharState =
+            storeState && storeState !== "pending"
+              ? storeState
+              : (localState ?? storeState ?? "pending");
           return (
             <span
               key={i}

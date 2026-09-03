@@ -54,6 +54,14 @@ export class CursorManager {
 
     if (this.container && !this.elements.has(playerId)) {
       this.createPlayerElement(playerId, nickname, color);
+    } else {
+      const existing = this.elements.get(playerId);
+      if (existing) {
+        existing.tag.textContent = nickname.slice(0, 16);
+        existing.tag.style.backgroundColor = color;
+        existing.caret.style.backgroundColor = color;
+        existing.caret.style.boxShadow = `0 0 8px ${color}`;
+      }
     }
   }
 
@@ -237,7 +245,8 @@ export class CursorManager {
     tag.style.color = "#12190b";
 
     const caret = document.createElement("div");
-    caret.className = "cursor-caret w-[2px] h-[1.3em] rounded-full transition-shadow duration-300";
+    caret.className = "cursor-caret w-[2px] h-[22px] rounded-full transition-shadow duration-300";
+    caret.style.marginTop = "5px";
     caret.style.backgroundColor = color;
     caret.style.boxShadow = `0 0 8px ${color}`;
 

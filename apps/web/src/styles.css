@@ -211,8 +211,11 @@ h1 {
   margin: 0 auto;
   position: relative;
   font-family: var(--font-mono);
-  line-height: 2rem;
+  font-size: 16px;
+  line-height: 32px;
   user-select: none;
+  white-space: pre-wrap;
+  word-break: normal;
 }
 
 .race-view {
@@ -227,8 +230,8 @@ h1 {
 
 .passage {
   font-family: var(--font-mono);
-  font-size: 1.25rem;
-  line-height: 2rem;
+  font-size: 16px;
+  line-height: 32px;
   word-spacing: 0.05em;
   position: relative;
 }
@@ -236,6 +239,7 @@ h1 {
 .char {
   position: relative;
   font-family: var(--font-mono);
+  display: inline;
 }
 
 .char-pending {
@@ -267,16 +271,15 @@ h1 {
 
 .local-cursor {
   position: absolute;
-  top: 0;
+  top: 5px;
   left: 0;
   width: 2px;
-  height: 1.3em;
+  height: 22px;
   background: #cc6722;
   box-shadow: 0 0 10px #cc6722;
   z-index: 20;
   pointer-events: none;
   border-radius: 9999px;
-  transition: transform 0.05s ease-out;
 }
 
 .cursor-overlay {

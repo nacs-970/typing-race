@@ -26,10 +26,13 @@ export interface OpponentCursorDom {
 }
 
 export class CursorManager {
+  public static readonly MAX_AHEAD_WORDS = 5;
+
   private buffers: Map<string, CursorSnapshot[]> = new Map();
   private playerColors: Map<string, string> = new Map();
   private playerNicknames: Map<string, string> = new Map();
   private localProgress: number = 0;
+  private passageText: string = "";
 
   // DOM overlay properties
   private container: HTMLElement | null = null;
@@ -218,7 +221,52 @@ export class CursorManager {
       } else {
         dom.caret.classList.remove("leader-glow");
       }
+
+      // Distance-based fading: slowly fade away as ahead player distance approaches 5 words
+      const wordsAhead = this.calculateWordsAhead(this.localProgress, renderIndex);
+      let opacity = 1.0;
+      if (wordsAhead > 0) {
+        opacity = Math.max(0, 1 - wordsAhead / CursorManager.MAX_AHEAD_WORDS);
+      }
+      dom.root.style.opacity = opacity.toFixed(2);
+      dom.root.style.visibility = opacity <= 0 ? "hidden" : "visible";
     }
+  }
+
+  public calculateWordsAhead(localIndex: number, targetIndex: number): number {
+    if (targetIndex <= localIndex) return 0;
+    if (!this.passageText || this.passageText.length === 0) {
+      return (targetIndex - localIndex) / 5;
+    }
+
+    const start = Math.max(0, Math.min(this.passageText.length, Math.floor(localIndex)));
+    const end = Math.max(0, Math.min(this.passageText.length, targetIndex));
+    if (end <= start) return 0;
+
+    let spaces = 0;
+    let lastSpaceIndex = start;
+    for (let i = start; i < Math.floor(end); i++) {
+      if (this.passageText[i] === " ") {
+        spaces++;
+        lastSpaceIndex = i;
+      }
+    }
+
+    // Measure fractional progress in the destination word
+    let nextSpaceIndex = this.passageText.indexOf(" ", Math.floor(end));
+    if (nextSpaceIndex === -1) nextSpaceIndex = this.passageText.length;
+    const wordLength = Math.max(1, nextSpaceIndex - lastSpaceIndex);
+    const fraction = (end - lastSpaceIndex) / wordLength;
+
+    return spaces + Math.min(0.99, Math.max(0, fraction));
+  }
+
+  public setPassageText(text: string): void {
+    this.passageText = text;
+  }
+
+  public getPassageText(): string {
+    return this.passageText;
   }
 
   private startLoop(): void {
@@ -233,7 +281,8 @@ export class CursorManager {
 
   private createPlayerElement(playerId: string, nickname: string, color: string): OpponentCursorDom {
     const root = document.createElement("div");
-    root.className = "opponent-cursor-root pointer-events-none absolute top-0 left-0 will-change-transform";
+    root.className =
+      "opponent-cursor-root pointer-events-none absolute top-0 left-0 will-change-transform transition-opacity duration-200 ease-out";
     root.style.zIndex = "10";
     root.dataset.player = playerId;
 

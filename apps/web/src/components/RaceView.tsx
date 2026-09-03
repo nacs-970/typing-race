@@ -44,7 +44,8 @@ export function RaceView({
     setCharStates([...localEngine.getCharStates()]);
     localLayout.init(passageText, '16px "JetBrains Mono", monospace', 32);
     localLayout.updateLayout(trackRef.current?.clientWidth || 800);
-  }, [passageText, localEngine, localLayout]);
+    localManager.setPassageText(passageText);
+  }, [passageText, localEngine, localLayout, localManager]);
 
   // Mount cursor overlay outside React tree
   useEffect(() => {
@@ -105,17 +106,20 @@ export function RaceView({
     return () => ro.disconnect();
   }, [localLayout]);
 
-  // Calculate local cursor coords on index change
+  // Update local cursor coordinates when ownIndex changes
   useEffect(() => {
     const coords = localLayout.getCoordinates(ownIndex);
     setLocalCoords(coords);
-  }, [ownIndex, localLayout]);
+    localManager.setLocalProgress(ownIndex);
+  }, [ownIndex, localLayout, localManager]);
 
   // Handle keyboard events via TypingEngine
   useEffect(() => {
     const unsubKey = localEngine.subscribe("keystroke", (idx, ch) => {
       onKeystroke?.(idx, ch);
-      setCursorState({ ownIndex: idx + 1 });
+      const nextIndex = idx + 1;
+      setCursorState({ ownIndex: nextIndex });
+      localManager.setLocalProgress(nextIndex);
       const current = [...localEngine.getCharStates()];
       setCharStates(current);
       setRaceState({ ownCharStates: current });
@@ -123,7 +127,9 @@ export function RaceView({
 
     const unsubCorr = localEngine.subscribe("correction", (count) => {
       onCorrection?.(count);
-      setCursorState((s) => ({ ownIndex: Math.max(0, s.ownIndex - count) }));
+      const nextIndex = Math.max(0, localEngine.getOwnIndex());
+      setCursorState((s) => ({ ownIndex: nextIndex }));
+      localManager.setLocalProgress(nextIndex);
       const current = [...localEngine.getCharStates()];
       setCharStates(current);
       setRaceState({ ownCharStates: current });

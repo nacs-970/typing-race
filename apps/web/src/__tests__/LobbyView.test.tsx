@@ -1,0 +1,156 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, fireEvent, cleanup } from "@testing-library/react";
+import { LobbyView } from "../components/LobbyView";
+import { useConnectionStore } from "../store/connection";
+import { useRaceStore } from "../store/race";
+import { filterPassages, PASSAGES } from "@typing-race/shared";
+
+afterEach(() => {
+  cleanup();
+});
+
+beforeEach(() => {
+  useConnectionStore.setState({ playerId: "host-1" });
+  useRaceStore.setState({ lobbyPlayers: [] });
+  window.confirm = vi.fn().mockReturnValue(true);
+});
+
+describe("LobbyView", () => {
+  it("renders empty state when solo in lobby", () => {
+    const { getByText } = render(
+      <LobbyView
+        roomCode="ABCDEF"
+        isHost={true}
+        players={[{ playerId: "host-1", nickname: "Host", isHost: true, progress: 0 }]}
+        onStartRace={() => {}}
+      />,
+    );
+
+    expect(getByText("Waiting for Competitors")).toBeDefined();
+    expect(getByText("Share the invite link or room code with friends to start racing.")).toBeDefined();
+  });
+
+  it("renders competitor list with ready and waiting indicators", () => {
+    const players = [
+      { playerId: "host-1", nickname: "Host", isHost: true, progress: 0 },
+      { playerId: "guest-1", nickname: "Alice", isHost: false, progress: 0, isReady: true },
+      { playerId: "guest-2", nickname: "Bob", isHost: false, progress: 0, isReady: false },
+    ];
+
+    const { getByText, getAllByText } = render(
+      <LobbyView
+        roomCode="ABCDEF"
+        isHost={true}
+        players={players}
+        onStartRace={() => {}}
+      />,
+    );
+
+    expect(getByText("Alice")).toBeDefined();
+    expect(getByText("Bob")).toBeDefined();
+    expect(getByText("✓ Ready")).toBeDefined();
+    expect(getAllByText("Waiting…").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("allows guest to toggle ready state", () => {
+    useConnectionStore.setState({ playerId: "guest-1" });
+    const onToggleReady = vi.fn();
+
+    const players = [
+      { playerId: "host-1", nickname: "Host", isHost: true, progress: 0 },
+      { playerId: "guest-1", nickname: "Alice", isHost: false, progress: 0, isReady: false },
+    ];
+
+    const { getByText, rerender } = render(
+      <LobbyView
+        roomCode="ABCDEF"
+        isHost={false}
+        players={players}
+        onStartRace={() => {}}
+        onToggleReady={onToggleReady}
+      />,
+    );
+
+    const readyBtn = getByText("Ready Up");
+    fireEvent.click(readyBtn);
+    expect(onToggleReady).toHaveBeenCalledWith(true);
+
+    // Now re-render with isReady: true
+    players[1]!.isReady = true;
+    rerender(
+      <LobbyView
+        roomCode="ABCDEF"
+        isHost={false}
+        players={players}
+        onStartRace={() => {}}
+        onToggleReady={onToggleReady}
+      />,
+    );
+
+    const cancelBtn = getByText("Cancel Ready");
+    fireEvent.click(cancelBtn);
+    expect(onToggleReady).toHaveBeenCalledWith(false);
+  });
+
+  it("displays Force Start Race when guests are not ready and Start Race when all ready", () => {
+    const onStartRace = vi.fn();
+    const players = [
+      { playerId: "host-1", nickname: "Host", isHost: true, progress: 0 },
+      { playerId: "guest-1", nickname: "Alice", isHost: false, progress: 0, isReady: false },
+    ];
+
+    const confirmSpy = vi.spyOn(window, "confirm");
+
+    const { getByText, rerender } = render(
+      <LobbyView
+        roomCode="ABCDEF"
+        isHost={true}
+        players={players}
+        onStartRace={onStartRace}
+      />,
+    );
+
+    const forceBtn = getByText("Force Start Race");
+    expect(forceBtn).toBeDefined();
+
+    fireEvent.click(forceBtn);
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(onStartRace).toHaveBeenCalled();
+
+    // Now make Alice ready
+    players[1]!.isReady = true;
+    rerender(
+      <LobbyView
+        roomCode="ABCDEF"
+        isHost={true}
+        players={players}
+        onStartRace={onStartRace}
+      />,
+    );
+
+    expect(getByText("Start Race")).toBeDefined();
+  });
+
+  it("filters passages correctly by length and punctuation", () => {
+    const shortPassages = filterPassages(PASSAGES, { length: "short" });
+    expect(shortPassages.length).toBeGreaterThan(0);
+    expect(shortPassages.every((p) => p.text.trim().split(/\s+/).length <= 45)).toBe(true);
+
+    const mediumPassages = filterPassages(PASSAGES, { length: "medium" });
+    expect(mediumPassages.length).toBeGreaterThan(0);
+    expect(
+      mediumPassages.every((p) => {
+        const w = p.text.trim().split(/\s+/).length;
+        return w >= 42 && w <= 50;
+      }),
+    ).toBe(true);
+
+    const longPassages = filterPassages(PASSAGES, { length: "long" });
+    expect(longPassages.length).toBeGreaterThan(0);
+    expect(longPassages.every((p) => p.text.trim().split(/\s+/).length > 50)).toBe(true);
+
+    const puncPassages = filterPassages(PASSAGES, { punctuation: true });
+    expect(puncPassages.length).toBeGreaterThan(0);
+    expect(puncPassages.every((p) => /[.,'"!?;:-]/.test(p.text))).toBe(true);
+  });
+});

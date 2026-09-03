@@ -19,6 +19,7 @@ import {
   removePlayer,
   MAX_PLAYERS_PER_ROOM,
 } from "../rooms/manager.ts";
+import { dispatch } from "../ws/dispatch.ts";
 import type { WsData } from "../ws/handlers.ts";
 
 type FakeWs = {
@@ -141,5 +142,27 @@ describe("removePlayer", () => {
 
   test("8. MAX_PLAYERS_PER_ROOM === 8 (constant lock)", () => {
     expect(MAX_PLAYERS_PER_ROOM).toBe(8);
+  });
+
+  test("9. dispatching set_ready updates player.isReady and broadcasts lobby_state", () => {
+    const h = fakeWs("h");
+    const { code, room } = createRoom(asWs(h), "Host");
+    const g = fakeWs("g");
+    addPlayer(code, "g", "Guest", asWs(g));
+
+    expect(room.players.get("g")?.isReady).toBeFalsy();
+
+    // Guest sends set_ready true
+    dispatch(asWs(g), JSON.stringify({ type: "set_ready", ready: true }));
+    expect(room.players.get("g")?.isReady).toBe(true);
+
+    const sawReadyInLobby = h.sent.some(
+      (s) => s.includes('"type":"lobby_state"') && s.includes('"isReady":true'),
+    );
+    expect(sawReadyInLobby).toBe(true);
+
+    // Guest unreadies
+    dispatch(asWs(g), JSON.stringify({ type: "set_ready", ready: false }));
+    expect(room.players.get("g")?.isReady).toBe(false);
   });
 });

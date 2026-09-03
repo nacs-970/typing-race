@@ -255,6 +255,7 @@ export class RaceClient {
       setClockState({ offsetMs: msg.clockOffsetMs });
       setRaceState({
         hostPickedPassagePreview: msg.hostPickedPassagePreview ?? null,
+        lobbyPlayers: msg.players,
       });
     } else if (msg.type === "rejoined_room") {
       setConnectionStore({ playerId: msg.you.playerId });
@@ -264,6 +265,7 @@ export class RaceClient {
 
       if (msg.roomState === "lobby") {
         resetRaceUi();
+        setRaceState({ lobbyPlayers: msg.players });
       } else {
         const rawCharStates = (msg.you.charStates ?? []) as CharStateType[];
         const ownCharStates = rawCharStates.map((st, i) =>
@@ -274,6 +276,7 @@ export class RaceClient {
           ownCharStates,
           ownWpm: msg.you.wpm,
           countdownStartsAtServerMs: msg.startsAtServerMs,
+          lobbyPlayers: msg.players,
           graceBanner:
             msg.roomState === "grace" &&
             msg.graceEndsAtServerMs !== null &&
@@ -307,6 +310,7 @@ export class RaceClient {
     } else if (msg.type === "lobby_state") {
       setRaceState({
         hostPickedPassagePreview: msg.hostPickedPassagePreview ?? null,
+        lobbyPlayers: msg.players,
       });
     }
 

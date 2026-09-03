@@ -51,6 +51,8 @@ export interface Player {
   disconnectedAt: number | null;
   /** Set on successful rejoin_room; used for 500ms anti-cheat grace period. */
   reconnectedAt: number | null;
+  /** Phase 5 Plan 03: Guest readiness status in lobby (D-13). */
+  isReady?: boolean;
 }
 
 export interface Room {

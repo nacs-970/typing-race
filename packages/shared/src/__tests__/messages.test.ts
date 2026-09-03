@@ -365,4 +365,49 @@ describe("Anti-cheat invariants baked into schemas", () => {
       }).success,
     ).toBe(true);
   });
+
+  test("14. set_ready C→S frame and isReady in PLAYER_SUMMARY round-trip (D-13)", () => {
+    expect(
+      clientToServerSchema.safeParse({
+        type: "set_ready",
+        ready: true,
+      }).success,
+    ).toBe(true);
+    expect(
+      clientToServerSchema.safeParse({
+        type: "set_ready",
+        ready: false,
+      }).success,
+    ).toBe(true);
+    expect(
+      clientToServerSchema.safeParse({
+        type: "set_ready",
+        ready: "not-a-bool",
+      }).success,
+    ).toBe(false);
+
+    // lobby_state with isReady true and false
+    expect(
+      serverToClientSchema.safeParse({
+        type: "lobby_state",
+        roomCode: "ABCDEF",
+        players: [
+          {
+            playerId: VALID_UUID,
+            nickname: "Alice",
+            isHost: true,
+            progress: 0,
+            isReady: true,
+          },
+          {
+            playerId: VALID_UUID_2,
+            nickname: "Bob",
+            isHost: false,
+            progress: 0,
+            isReady: false,
+          },
+        ],
+      }).success,
+    ).toBe(true);
+  });
 });

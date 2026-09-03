@@ -19,6 +19,7 @@ const PLAYER_SUMMARY = z.object({
   nickname: z.string(),
   isHost: z.boolean(),
   progress: z.number().int().nonnegative(),
+  isReady: z.boolean().optional(),
 });
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -105,6 +106,12 @@ export const rejoinRoomSchema = z.object({
   sessionToken: z.string().uuid(),
 });
 
+/** Guest toggles ready status in lobby. */
+export const setReadySchema = z.object({
+  type: z.literal("set_ready"),
+  ready: z.boolean(),
+});
+
 export const clientToServerSchema = z.discriminatedUnion("type", [
   clientPingSchema,
   joinRoomSchema,
@@ -117,6 +124,7 @@ export const clientToServerSchema = z.discriminatedUnion("type", [
   correctionSchema,
   returnToLobbySchema,
   rejoinRoomSchema,
+  setReadySchema,
 ]);
 
 export type ClientToServer = z.infer<typeof clientToServerSchema>;
@@ -130,6 +138,7 @@ export type Keystroke = z.infer<typeof keystrokeSchema>;
 export type CursorPosition = z.infer<typeof cursorPositionSchema>;
 export type Correction = z.infer<typeof correctionSchema>;
 export type RejoinRoom = z.infer<typeof rejoinRoomSchema>;
+export type SetReady = z.infer<typeof setReadySchema>;
 
 // ──────────────────────────────────────────────────────────────────────────
 // Server → Client

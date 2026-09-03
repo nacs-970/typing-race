@@ -34,6 +34,7 @@ export function broadcastLobbyState(room: Room): void {
     nickname: p.nickname,
     isHost: p.isHost,
     progress: p.progress,
+    isReady: p.isReady ?? false,
   }));
   const frame: LobbyState = {
     type: "lobby_state",
@@ -57,6 +58,7 @@ export function broadcastJoinedRoom(room: Room, playerId: string): void {
     nickname: p.nickname,
     isHost: p.isHost,
     progress: p.progress,
+    isReady: p.isReady ?? false,
   }));
   const frame: JoinedRoom = {
     type: "joined_room",

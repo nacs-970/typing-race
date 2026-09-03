@@ -199,6 +199,18 @@ export function dispatch(
       break;
     }
 
+    case "set_ready": {
+      const code = ws.data.roomCode;
+      if (!code) return;
+      const room = rooms.get(code);
+      if (!room || room.state !== "lobby") return;
+      const player = room.players.get(ws.data.playerId);
+      if (!player) return;
+      player.isReady = msg.ready;
+      broadcastLobbyState(room);
+      break;
+    }
+
     case "return_to_lobby": {
       const code = ws.data.roomCode;
       if (!code) return;
@@ -210,6 +222,10 @@ export function dispatch(
         transition(room, "lobby");
       } catch {
         return;
+      }
+
+      for (const p of room.players.values()) {
+        p.isReady = false;
       }
       
       broadcastToRoom(room, { type: "return_to_lobby" });

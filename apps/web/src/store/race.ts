@@ -19,6 +19,14 @@ export type GraceBanner = {
   remainingMs: number;
 };
 
+export type LobbyPlayer = {
+  playerId: string;
+  nickname: string;
+  isHost: boolean;
+  progress: number;
+  isReady?: boolean;
+};
+
 export type RaceUiState = {
   ownCharStates: CharState[];
   ownWpm: number;
@@ -30,6 +38,7 @@ export type RaceUiState = {
   passageText: string | null;
   /** Server timestamp when countdown began (ms). Null when not in countdown. */
   countdownStartsAtServerMs: number | null;
+  lobbyPlayers: LobbyPlayer[];
 };
 
 export const useRaceStore = create<RaceUiState>(() => ({
@@ -42,6 +51,7 @@ export const useRaceStore = create<RaceUiState>(() => ({
   hostGraceSeconds: 5,
   passageText: null,
   countdownStartsAtServerMs: null,
+  lobbyPlayers: [],
 }));
 
 export const setRaceState = (

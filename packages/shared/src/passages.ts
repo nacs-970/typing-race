@@ -85,3 +85,30 @@ export function hostPickedPreview(passage: Passage): string {
   if (passage.text.length <= 30) return passage.text;
   return passage.text.slice(0, 30) + "…";
 }
+
+export type PassageLengthFilter = "all" | "short" | "medium" | "long";
+
+export interface PassageFilterCriteria {
+  length?: PassageLengthFilter;
+  punctuation?: boolean | null;
+}
+
+export function filterPassages(
+  passages: readonly Passage[] = PASSAGES,
+  criteria: PassageFilterCriteria = {},
+): Passage[] {
+  return passages.filter((p) => {
+    if (criteria.length && criteria.length !== "all") {
+      const words = p.text.trim().split(/\s+/).length;
+      if (criteria.length === "short" && words > 45) return false;
+      if (criteria.length === "medium" && (words < 42 || words > 50)) return false;
+      if (criteria.length === "long" && words <= 50) return false;
+    }
+    if (criteria.punctuation !== undefined && criteria.punctuation !== null) {
+      const hasComplexPunctuation = /[.,'"!?;:-]/.test(p.text);
+      if (criteria.punctuation && !hasComplexPunctuation) return false;
+      if (!criteria.punctuation && hasComplexPunctuation) return false;
+    }
+    return true;
+  });
+}

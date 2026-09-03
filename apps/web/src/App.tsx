@@ -10,6 +10,8 @@ import { RaceView } from "./components/RaceView.tsx";
 import { LobbyView } from "./components/LobbyView.tsx";
 import { GraceBanner } from "./components/GraceBanner.tsx";
 import { ResultsBoard } from "./components/ResultsBoard.tsx";
+import { ToastQueue } from "./components/ToastQueue.tsx";
+import { addToast } from "./store/toast.ts";
 import type { ServerToClient } from "@typing-race/shared";
 
 /**
@@ -123,6 +125,12 @@ export function App(): React.ReactElement {
           ...prev.filter((t) => t.playerId !== msg.playerId),
           { playerId: msg.playerId, nickname: msg.nickname },
         ]);
+        addToast({
+          type: "warning",
+          title: "Player Disconnected",
+          body: `${msg.nickname} disconnected — waiting up to 60s for reconnect...`,
+          durationMs: msg.timeoutMs || 60000,
+        });
       }
       if (msg.type === "player_reconnected") {
         setDisconnectToasts((prev) =>
@@ -130,11 +138,34 @@ export function App(): React.ReactElement {
         );
         setReconnectedNotice(`${msg.nickname} reconnected!`);
         setTimeout(() => setReconnectedNotice(null), 3000);
+        addToast({
+          type: "success",
+          title: "Player Reconnected",
+          body: `${msg.nickname} reconnected!`,
+          durationMs: 3000,
+        });
       }
       if (msg.type === "player_left") {
         setDisconnectToasts((prev) =>
           prev.filter((t) => t.playerId !== msg.playerId),
         );
+      }
+      if (msg.type === "error") {
+        let title = "Error";
+        let body = msg.message;
+        if (msg.code === "ROOM_NOT_FOUND") {
+          title = "Room Lost";
+          body = "Room lost — connection expired. Return to lobby or create a new room.";
+        } else if (msg.code === "RATE_LIMITED") {
+          title = "Rate Limit";
+          body = "Rate limit reached (max 10 rooms/hr). Wait 15 minutes or join an existing room.";
+        }
+        addToast({
+          type: "error",
+          title,
+          body,
+          durationMs: 5000,
+        });
       }
     });
     return unsub;
@@ -205,7 +236,8 @@ export function App(): React.ReactElement {
   };
 
   return (
-    <main>
+    <main className="container">
+      <ToastQueue />
       <h1>Hello Typing Race</h1>
       <p className="subtitle">Realtime multiplayer typing — Phase 3 complete.</p>
 
@@ -338,6 +370,9 @@ export function App(): React.ReactElement {
           results={raceEndResults}
           isHost={isHost}
           onRematch={() => {
+            resetRaceUi();
+          }}
+          onReturnToLobby={() => {
             resetRaceUi();
           }}
         />

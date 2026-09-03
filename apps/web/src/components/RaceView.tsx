@@ -4,6 +4,8 @@ import { useCursorStore, setCursorState } from "../store/cursor.ts";
 import { CursorManager } from "../core/cursor-manager.ts";
 import { PassageLayout } from "../core/layout.ts";
 import { TypingEngine } from "../core/typing-engine.ts";
+import { RaceHud } from "./RaceHud.tsx";
+import { GraceBanner } from "./GraceBanner.tsx";
 
 export interface RaceViewProps {
   passageText: string;
@@ -116,6 +118,11 @@ export function RaceView({
 
   return (
     <div className="race-view relative mx-auto w-full max-w-[800px] select-none font-mono">
+      <GraceBanner />
+      <RaceHud
+        typingEngine={localEngine}
+        passageLength={passageText.length}
+      />
       <div ref={trackRef} className="passage-track relative text-lg leading-relaxed">
         {passageText.split("").map((ch, i) => {
           const state: CharState = ownCharStates[i] ?? "pending";

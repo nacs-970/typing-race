@@ -6,6 +6,7 @@ export interface TypingEngineStats {
   accuracy: number;
   uncorrectedErrors: number;
 }
+export type TypingStats = TypingEngineStats;
 
 export interface TypingEngineEvents {
   keystroke: (index: number, char: string, clientTs: number) => void;

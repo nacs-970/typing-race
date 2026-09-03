@@ -22,6 +22,8 @@ export class TypingEngine {
   private totalKeystrokes: number = 0;
   private startTimeMs: number | null = null;
   private isFinished: boolean = false;
+  public static readonly MAX_CONSECUTIVE_ERRORS = 5;
+  private consecutiveErrors: number = 0;
   private listeners: Map<keyof TypingEngineEvents, Set<Function>> = new Map();
 
   constructor() {
@@ -38,10 +40,16 @@ export class TypingEngine {
     this.totalKeystrokes = 0;
     this.startTimeMs = null;
     this.isFinished = false;
+    this.consecutiveErrors = 0;
   }
 
   public handleKeyDown(ev: KeyboardEvent): boolean {
     if (this.isFinished) {
+      return false;
+    }
+
+    // Anti-drag / hold grief prevention: reject auto-repeating keystrokes from held keys
+    if (ev.repeat) {
       return false;
     }
 
@@ -54,6 +62,9 @@ export class TypingEngine {
         return false;
       }
       this.ownIndex -= 1;
+      if (this.charStates[this.ownIndex] === "error") {
+        this.consecutiveErrors = Math.max(0, this.consecutiveErrors - 1);
+      }
       this.charStates[this.ownIndex] = "pending";
       const now = Date.now();
       this.emit("correction", 1, now);
@@ -70,21 +81,37 @@ export class TypingEngine {
       return false;
     }
 
+    const currentIndex = this.ownIndex;
+    const expected = this.passageText[currentIndex] ?? "";
+    const isCorrect = ch === expected;
+
+    // Gibberish spam prevention: cannot advance with more than MAX_CONSECUTIVE_ERRORS uncorrected errors
+    if (!isCorrect && this.consecutiveErrors >= TypingEngine.MAX_CONSECUTIVE_ERRORS) {
+      return false;
+    }
+
     const now = Date.now();
     if (this.startTimeMs === null) {
       this.startTimeMs = now;
     }
 
     this.totalKeystrokes += 1;
-    const currentIndex = this.ownIndex;
-    const expected = this.passageText[currentIndex] ?? "";
-    this.charStates[currentIndex] = ch === expected ? "correct" : "error";
+    this.charStates[currentIndex] = isCorrect ? "correct" : "error";
     this.ownIndex += 1;
+    if (isCorrect) {
+      this.consecutiveErrors = 0;
+    } else {
+      this.consecutiveErrors += 1;
+    }
 
     this.emit("keystroke", currentIndex, ch, now);
     this.updateStats(now);
 
     if (this.ownIndex === this.passageText.length) {
+      // Ending abuse guard: cannot finish with wrong final character or excessive uncorrected errors
+      if (!isCorrect || this.getUncorrectedErrors() > 3) {
+        return true;
+      }
       this.isFinished = true;
       const finishTimeMs = Math.max(0, now - (this.startTimeMs ?? now));
       this.emit("finished", finishTimeMs);
@@ -160,6 +187,18 @@ export class TypingEngine {
 
   public getIsFinished(): boolean {
     return this.isFinished;
+  }
+
+  public getUncorrectedErrors(): number {
+    let count = 0;
+    for (const s of this.charStates) {
+      if (s === "error") count++;
+    }
+    return count;
+  }
+
+  public getConsecutiveErrors(): number {
+    return this.consecutiveErrors;
   }
 
   public getStartTimeMs(): number | null {

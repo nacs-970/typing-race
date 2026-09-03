@@ -418,4 +418,59 @@ describe("validateKeystroke — Phase 3 char-state extension", () => {
     if (!r.ok) return;
     expect(r.playerPatch.currentWpm).toBe(player.currentWpm);
   });
+
+  test("18. anti-gibberish: 5 consecutive uncorrected errors reject 6th error frame", () => {
+    const now = 10_000;
+    const player = fakePlayer(0, 0);
+    const room = fakeRoom("racing", 0, PASSAGE);
+
+    // Populate 5 consecutive errors at positions 0..4
+    player.charStates = ["error", "error", "error", "error", "error"];
+    player.progress = 5;
+    player.lastKeystrokeAt = now - 100;
+
+    // 6th error at position 5 is rejected
+    const resBlocked = validateKeystroke({
+      room,
+      player,
+      frame: fakeFrame(5, "z"), // wrong char (PASSAGE[5] is ' ')
+      passageText: PASSAGE,
+      now,
+    });
+    expect(resBlocked.ok).toBe(false);
+    if (!resBlocked.ok) expect(resBlocked.reason).toBe("INVALID_FRAME");
+
+    // Correct char at position 5 is accepted!
+    const resAllowed = validateKeystroke({
+      room,
+      player,
+      frame: fakeFrame(5, " "), // correct char
+      passageText: PASSAGE,
+      now,
+    });
+    expect(resAllowed.ok).toBe(true);
+  });
+
+  test("19. ending abuse prevention: error on final character does not set finishedAtServerMs", () => {
+    const now = 10_000;
+    const player = fakePlayer(0, 0);
+    const room = fakeRoom("racing", 0, PASSAGE);
+    // 10 correct chars (positions 0..9)
+    player.charStates = new Array(10).fill("correct" as const);
+    player.progress = 10;
+    player.lastKeystrokeAt = now - 100;
+
+    // Submit wrong char for final index 10 (PASSAGE[10] is 'd')
+    const res = validateKeystroke({
+      room,
+      player,
+      frame: fakeFrame(10, "x"), // wrong!
+      passageText: PASSAGE,
+      now,
+    });
+
+    expect(res.ok).toBe(true);
+    // Did NOT set finishedAtServerMs because final char was an error!
+    expect(player.finishedAtServerMs).toBe(null);
+  });
 });

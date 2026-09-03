@@ -159,4 +159,56 @@ describe("TypingEngine", () => {
     engine.handleKeyDown(new KeyboardEvent("keydown", { key: "h" }));
     expect(keystrokeSpy).toHaveBeenCalledTimes(1);
   });
+
+  it("rejects auto-repeat keydown events from held keys (anti-dragging)", () => {
+    const testEngine = new TypingEngine();
+    testEngine.init("The quick");
+
+    // First physical keypress registers
+    expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "T", repeat: false }))).toBe(true);
+    expect(testEngine.getOwnIndex()).toBe(1);
+
+    // Held key repeats are discarded
+    expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "T", repeat: true }))).toBe(false);
+    expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: " ", repeat: true }))).toBe(false);
+    expect(testEngine.getOwnIndex()).toBe(1);
+  });
+
+  it("caps consecutive errors at 5 to prevent gibberish spamming, unlocking after backspace", () => {
+    const testEngine = new TypingEngine();
+    testEngine.init("abcdefghijklmn");
+
+    // Type 5 wrong characters in a row: 'z', 'z', 'z', 'z', 'z'
+    for (let i = 0; i < 5; i++) {
+      expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "z" }))).toBe(true);
+    }
+    expect(testEngine.getOwnIndex()).toBe(5);
+    expect(testEngine.getConsecutiveErrors()).toBe(5);
+
+    // 6th wrong key is blocked!
+    expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "z" }))).toBe(false);
+    expect(testEngine.getOwnIndex()).toBe(5);
+
+    // Backspace decrements error count
+    expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "Backspace" }))).toBe(true);
+    expect(testEngine.getOwnIndex()).toBe(4);
+    expect(testEngine.getConsecutiveErrors()).toBe(4);
+  });
+
+  it("prevents ending abuse when the final character is an error", () => {
+    const testEngine = new TypingEngine();
+    testEngine.init("abc");
+    const finishedSpy = vi.fn();
+    testEngine.subscribe("finished", finishedSpy);
+
+    testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "a" }));
+    testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "b" }));
+    // Type wrong char for 'c'
+    testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "x" }));
+
+    expect(testEngine.getOwnIndex()).toBe(3);
+    // Did NOT trigger finished because final char was wrong
+    expect(finishedSpy).not.toHaveBeenCalled();
+    expect(testEngine.getIsFinished()).toBe(false);
+  });
 });

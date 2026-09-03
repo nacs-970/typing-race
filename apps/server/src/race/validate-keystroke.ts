@@ -85,6 +85,21 @@ export function validateKeystroke(args: {
   const expected = passageText[frame.index];
   const charState: CharState = frame.char === expected ? "correct" : "error";
 
+  // Anti-gibberish spam prevention: cannot submit more than 5 consecutive uncorrected errors
+  if (charState === "error") {
+    let consecutiveErrors = 0;
+    for (let i = frame.index - 1; i >= 0; i--) {
+      if (player.charStates[i] === "error") {
+        consecutiveErrors++;
+      } else {
+        break;
+      }
+    }
+    if (consecutiveErrors >= 5) {
+      return { ok: false, reason: "INVALID_FRAME" };
+    }
+  }
+
   // All checks passed — compute char-state snapshot (immutable: don't mutate)
   const newCharStates: CharState[] = player.charStates.slice();
   // Grow array if first keystroke (or passage not yet initialised)
@@ -117,11 +132,13 @@ export function validateKeystroke(args: {
   if (frame.index + 1 > player.progress) {
     player.progress = frame.index + 1;
   }
-  // First-time finish detection
+  // First-time finish detection: final char must be correct and uncorrected errors <= 3
   let finishedAtServerMs = player.finishedAtServerMs;
   if (
     player.progress >= passageText.length &&
-    finishedAtServerMs === null
+    finishedAtServerMs === null &&
+    charState === "correct" &&
+    uncorrectedErrors <= 3
   ) {
     finishedAtServerMs = now;
     player.finishedAtServerMs = now;

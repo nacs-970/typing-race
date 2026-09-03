@@ -23,6 +23,7 @@ import { PORT } from "./env.ts";
  */
 const server = Bun.serve<WsData>({
   port: PORT,
+  hostname: process.env["HOST"] ?? "0.0.0.0",
 
   fetch(req, srv) {
     const url = new URL(req.url);

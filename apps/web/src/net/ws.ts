@@ -23,12 +23,9 @@ export {
 export class WsConnection extends RaceClient {}
 
 const wsUrl =
-  typeof window !== "undefined" &&
-  (import.meta.env.DEV || import.meta.env.MODE === "development")
-    ? "ws://localhost:5173/ws"
-    : typeof window !== "undefined"
-      ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws`
-      : "ws://localhost:5173/ws";
+  typeof window !== "undefined"
+    ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws`
+    : "ws://localhost:5173/ws";
 
 export const ws = new WsConnection(wsUrl);
 ws.connect();

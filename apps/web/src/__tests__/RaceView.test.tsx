@@ -1,27 +1,37 @@
-/**
- * RaceView char-state accent tests — Phase 3 Plan 04.
- *
- * 5 tests:
- *  1. char with no state in ownCharStates renders as data-state=pending
- *  2. char at index 2 with state correct renders data-state=correct
- *  3. char at index 5 with state error renders data-state=error
- *  4. passage text splits correctly per char (50-char passage → 50 spans)
- *  5. ResultsBoard renders ranked list (finishTimeMs asc, WPM desc tiebreaker)
- */
-import { describe, test, expect, beforeEach } from "vitest";
-import { render } from "@testing-library/react";
+import { describe, test, expect, beforeEach, vi } from "vitest";
+import { render, fireEvent, cleanup } from "@testing-library/react";
+import { afterEach } from "vitest";
 import { RaceView } from "../components/RaceView.tsx";
 import { ResultsBoard } from "../components/ResultsBoard.tsx";
 import { useRaceStore, resetRaceUi } from "../store/race.ts";
+import { TypingEngine } from "../core/typing-engine.ts";
+import { CursorManager } from "../core/cursor-manager.ts";
+import { PassageLayout } from "../core/layout.ts";
 import type { PlayerFinalStats } from "@typing-race/shared";
 
 const PASSAGE = "the quick brown fox jumps over the lazy dog"; // 43 chars
 
-beforeEach(() => {
-  resetRaceUi();
+afterEach(() => {
+  cleanup();
 });
 
-describe("RaceView — char-state accents", () => {
+beforeEach(() => {
+  resetRaceUi();
+  const mockCtx = {
+    font: "",
+    measureText: (text: string) => ({
+      width: text.length * 10,
+      actualBoundingBoxAscent: 10,
+      actualBoundingBoxDescent: 2,
+    }),
+  };
+  if (typeof OffscreenCanvas !== "undefined") {
+    OffscreenCanvas.prototype.getContext = () => mockCtx as any;
+  }
+  HTMLCanvasElement.prototype.getContext = () => mockCtx as any;
+});
+
+describe("RaceView — char-state accents & zero-commit overlay", () => {
   test("1. char with no state in ownCharStates renders as data-state=pending", () => {
     const { container } = render(
       <RaceView passageText="hi" playerId="me" onKeystroke={() => {}} onCorrection={() => {}} />,
@@ -29,7 +39,9 @@ describe("RaceView — char-state accents", () => {
     const spans = container.querySelectorAll(".char");
     expect(spans.length).toBe(2);
     expect(spans[0]?.classList.contains("char-pending")).toBe(true);
+    expect(spans[0]?.getAttribute("data-state")).toBe("pending");
     expect(spans[1]?.classList.contains("char-pending")).toBe(true);
+    expect(spans[1]?.getAttribute("data-state")).toBe("pending");
   });
 
   test("2. char at index 0 with state correct renders data-state=correct", () => {
@@ -39,6 +51,7 @@ describe("RaceView — char-state accents", () => {
     );
     const spans = container.querySelectorAll(".char");
     expect(spans[0]?.classList.contains("char-correct")).toBe(true);
+    expect(spans[0]?.getAttribute("data-state")).toBe("correct");
     expect(spans[1]?.classList.contains("char-pending")).toBe(true);
   });
 
@@ -50,6 +63,7 @@ describe("RaceView — char-state accents", () => {
     const spans = container.querySelectorAll(".char");
     expect(spans[0]?.classList.contains("char-pending")).toBe(true);
     expect(spans[1]?.classList.contains("char-error")).toBe(true);
+    expect(spans[1]?.getAttribute("data-state")).toBe("error");
   });
 
   test("4. passage text splits correctly per char (43-char passage → 43 spans)", () => {
@@ -63,10 +77,38 @@ describe("RaceView — char-state accents", () => {
     const spans = container.querySelectorAll(".char");
     expect(spans.length).toBe(PASSAGE.length);
   });
+
+  test("5. mounts isolated cursor overlay without inline opponent cursor children", () => {
+    const { container, getByTestId } = render(
+      <RaceView
+        passageText={PASSAGE}
+        playerId="me"
+      />,
+    );
+    const overlay = container.querySelector('[data-testid="cursor-overlay"]');
+    expect(overlay).not.toBeNull();
+    expect(overlay?.classList.contains("cursor-overlay")).toBe(true);
+    // React render tree does NOT render opponent cursor elements directly inside char spans
+    expect(container.querySelectorAll(".opponent-cursor").length).toBe(0);
+  });
+
+  test("6. typing keys trigger TypingEngine keystrokes", () => {
+    const onKeystroke = vi.fn();
+    render(
+      <RaceView
+        passageText={PASSAGE}
+        playerId="me"
+        onKeystroke={onKeystroke}
+      />,
+    );
+
+    fireEvent.keyDown(window, { key: "t" });
+    expect(onKeystroke).toHaveBeenCalledWith(0, "t");
+  });
 });
 
 describe("ResultsBoard — ranking", () => {
-  test("5. renders ranked list — finishTimeMs asc, WPM desc as tiebreaker", () => {
+  test("7. renders ranked list — finishTimeMs asc, WPM desc as tiebreaker", () => {
     const results: PlayerFinalStats[] = [
       { playerId: "a", finishTimeMs: 30000, wpm: 50, accuracy: 0.9 },
       { playerId: "b", finishTimeMs: 20000, wpm: 60, accuracy: 0.95 },
@@ -79,7 +121,6 @@ describe("ResultsBoard — ranking", () => {
         onRematch={() => {}}
       />,
     );
-    // Verify rows are in order: b (20s, 60wpm), c (25s, 40wpm), a (30s, 50wpm)
     const rows = container.querySelectorAll("tbody tr");
     expect(rows.length).toBe(3);
     expect(rows[0]?.textContent).toContain("b");

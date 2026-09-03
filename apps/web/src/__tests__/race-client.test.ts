@@ -64,7 +64,7 @@ describe("RaceClient", () => {
   beforeEach(() => {
     originalWebSocket = globalThis.WebSocket;
     (globalThis as any).WebSocket = MockWebSocket;
-    useConnectionStore.setState({ playerId: "p-local", status: "idle", serverTs: 0 });
+    useConnectionStore.setState({ playerId: "p-local", status: "closed", serverTs: 0 });
     useCursorStore.setState({ ownIndex: 0, cursors: new Map() });
     useRaceStore.setState({
       ownCharStates: [],
@@ -117,6 +117,15 @@ describe("RaceClient", () => {
       clockOffsetMs: 42,
       hostPickedPassagePreview: "Short preview...",
       sessionToken: "22222222-2222-4222-8222-222222222222",
+      you: { nickname: "LocalPlayer", isHost: true },
+      players: [
+        {
+          playerId: "p-local",
+          nickname: "LocalPlayer",
+          isHost: true,
+          progress: 0,
+        },
+      ],
     });
 
     expect(useConnectionStore.getState().playerId).toBe("p-local");
@@ -162,7 +171,6 @@ describe("RaceClient", () => {
   it("dispatches race_end resetting cursors and populating results", () => {
     const client = new RaceClient("ws://test/ws");
 
-    // Add opponent cursor
     useCursorStore.setState({
       ownIndex: 10,
       cursors: new Map([["p-opp", { playerId: "p-opp", index: 10, serverTs: 1000 }]]),
@@ -174,6 +182,7 @@ describe("RaceClient", () => {
         nickname: "Me",
         rank: 1,
         finishTimeMs: 15000,
+        wpm: 80,
         netWpm: 80,
         rawWpm: 85,
         accuracy: 0.98,
@@ -183,7 +192,8 @@ describe("RaceClient", () => {
 
     client.dispatch({
       type: "race_end",
-      reason: "all_finished",
+      reason: "finished",
+      finishedPlayerIds: ["11111111-1111-4111-8111-111111111111"],
       results,
     });
 
@@ -201,6 +211,8 @@ describe("RaceClient", () => {
 
     const msg = {
       type: "race_start" as const,
+      startsAtServerMs: 1000,
+      passageId: "11111111-1111-4111-8111-111111111111",
       passageText: "Ready, set, go!",
     };
 

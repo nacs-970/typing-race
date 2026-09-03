@@ -4,6 +4,7 @@ import compression from "vite-plugin-compression";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
+import tailwindcss from "@tailwindcss/vite";
 
 /**
  * Dev proxy: browser hits Vite on :5173; WS upgrades are forwarded to
@@ -83,6 +84,7 @@ export default defineConfig(({ command }) => {
   return {
     plugins: [
       react(),
+      tailwindcss(),
       brotliPlugin,
       compression({
         algorithm: "gzip",

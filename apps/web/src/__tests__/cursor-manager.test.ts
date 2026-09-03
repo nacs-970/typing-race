@@ -23,8 +23,8 @@ describe("CursorManager", () => {
     const buf = manager.getPlayerBuffer("p1");
     expect(buf).toBeDefined();
     expect(buf!.length).toBe(10);
-    expect(buf![0].index).toBe(5);
-    expect(buf![9].index).toBe(14);
+    expect(buf![0]?.index).toBe(5);
+    expect(buf![9]?.index).toBe(14);
   });
 
   it("handles 0 or 1 snapshot gracefully", () => {
@@ -36,9 +36,6 @@ describe("CursorManager", () => {
   });
 
   it("interpolates linearly between two snapshots (targetTime = s0 + 50ms)", () => {
-    // BUFFER_MS = 100
-    // s0 at t=1000, index=10
-    // s1 at t=1100, index=20
     manager.onCursorUpdate("p1", 10, 1000);
     manager.onCursorUpdate("p1", 20, 1100);
 
@@ -51,14 +48,9 @@ describe("CursorManager", () => {
   });
 
   it("extrapolates forward with constant velocity for dt <= 150ms", () => {
-    // s0: t=1000, index=10
-    // s1: t=1100, index=20 -> velocity = (20 - 10) / 100 = 0.1 char/ms
     manager.onCursorUpdate("p1", 10, 1000);
     manager.onCursorUpdate("p1", 20, 1100);
 
-    // targetTime = now - 100.
-    // Let dt = 50ms (now = 1250 -> targetTime = 1150, dt = 1150 - 1100 = 50ms <= 150ms)
-    // Extrapolated index = 20 + 0.1 * 50 = 25
     const index = manager.calculateInterpolatedIndex("p1", 1250);
     expect(index).toBeCloseTo(25, 5);
   });
@@ -67,7 +59,6 @@ describe("CursorManager", () => {
     manager.onCursorUpdate("p1", 10, 1000);
     manager.onCursorUpdate("p1", 20, 1100);
 
-    // now = 1400 -> targetTime = 1300 -> dt = 1300 - 1100 = 200ms > MAX_EXTRAPOLATE_MS (150ms)
     const index = manager.calculateInterpolatedIndex("p1", 1400);
     expect(index).toBe(20);
   });
@@ -81,8 +72,8 @@ describe("CursorManager", () => {
     manager.onCursorUpdate("p1", 18, 1150);
     const buf = manager.getPlayerBuffer("p1");
     expect(buf?.length).toBe(1);
-    expect(buf![0].index).toBe(18);
-    expect(buf![0].receivedAt).toBe(1150);
+    expect(buf![0]?.index).toBe(18);
+    expect(buf![0]?.receivedAt).toBe(1150);
 
     // Now calculate index: buffer has 1 item so it immediately returns 18
     expect(manager.calculateInterpolatedIndex("p1", 1200)).toBe(18);

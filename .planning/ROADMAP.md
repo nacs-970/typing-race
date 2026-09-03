@@ -144,7 +144,7 @@ Plans:
 **Wave 3** *(blocked on Wave 2 completion)*
 
 - [x] 05-03: Server-synced countdown UI, per-player "ready" lobby indicator, "Starting in 2s…" pause with synced timer, rematch flow polish
-- [ ] 05-04: Reconnect progress bar (5s grace), distinct error toasts (4 cases: lost connection / server restart / rate limit / version mismatch), WPM display polish (integer + raw/net hover tooltip), time-delta-to-winner
+- [x] 05-04: Reconnect progress bar (5s grace), distinct error toasts (4 cases: lost connection / server restart / rate limit / version mismatch), WPM display polish (integer + raw/net hover tooltip), time-delta-to-winner
 
 ### Phase 6: Deploy + Hardening
 
@@ -181,5 +181,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Race Engine | 4/4 | Complete    | 2026-08-30 |
 | 3. Race Track + WPM | 0/4 | Not started | - |
 | 4. Reconnect | 0/4 | Not started | - |
-| 5. Frontend Polish | 3/4 | In progress | - |
+| 5. Frontend Polish | 4/4 | Complete    | 2026-09-03 |
 | 6. Deploy + Hardening | 0/3 | Not started | - |

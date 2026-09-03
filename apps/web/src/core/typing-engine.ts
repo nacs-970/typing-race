@@ -21,6 +21,7 @@ export class TypingEngine {
   private charStates: CharState[] = [];
   private totalKeystrokes: number = 0;
   private startTimeMs: number | null = null;
+  private isFinished: boolean = false;
   private listeners: Map<keyof TypingEngineEvents, Set<Function>> = new Map();
 
   constructor() {
@@ -36,9 +37,14 @@ export class TypingEngine {
     this.charStates = Array.from({ length: passageText.length }, () => "pending");
     this.totalKeystrokes = 0;
     this.startTimeMs = null;
+    this.isFinished = false;
   }
 
   public handleKeyDown(ev: KeyboardEvent): boolean {
+    if (this.isFinished) {
+      return false;
+    }
+
     if (ev.ctrlKey || ev.metaKey || ev.altKey) {
       return false;
     }
@@ -79,6 +85,7 @@ export class TypingEngine {
     this.updateStats(now);
 
     if (this.ownIndex === this.passageText.length) {
+      this.isFinished = true;
       const finishTimeMs = Math.max(0, now - (this.startTimeMs ?? now));
       this.emit("finished", finishTimeMs);
     }
@@ -149,6 +156,10 @@ export class TypingEngine {
 
   public getTotalKeystrokes(): number {
     return this.totalKeystrokes;
+  }
+
+  public getIsFinished(): boolean {
+    return this.isFinished;
   }
 
   public getStartTimeMs(): number | null {

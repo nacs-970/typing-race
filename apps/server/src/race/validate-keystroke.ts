@@ -57,6 +57,10 @@ export function validateKeystroke(args: {
     return { ok: false, reason: "NOT_IN_ROOM" };
   }
   if (room.startsAtServerMs === null) return { ok: false, reason: "NOT_IN_ROOM" };
+  // Check 2a: finished players cannot submit further keystrokes
+  if (player.finishedAtServerMs !== null) {
+    return { ok: false, reason: "INVALID_FRAME" };
+  }
   if (now < room.startsAtServerMs + PRE_START_GRACE_MS) {
     return { ok: false, reason: "RATE_LIMITED" };
   }

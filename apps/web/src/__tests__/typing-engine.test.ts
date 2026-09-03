@@ -141,8 +141,11 @@ describe("TypingEngine", () => {
     expect(finishedSpy).toHaveBeenCalledWith(expect.any(Number));
     expect(shortEngine.getOwnIndex()).toBe(2);
 
-    // Further keys after finish return false
+    // Further keys (characters or Backspace) after finish return false and do not mutate state
+    expect(shortEngine.getIsFinished()).toBe(true);
     expect(shortEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "!" }))).toBe(false);
+    expect(shortEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "Backspace" }))).toBe(false);
+    expect(shortEngine.getOwnIndex()).toBe(2);
   });
 
   it("unsubscribes listeners correctly", () => {

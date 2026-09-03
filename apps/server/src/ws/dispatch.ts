@@ -442,6 +442,8 @@ export function dispatch(
       const player = room.players.get(ws.data.playerId);
       if (!player) return;
       if (!room.passageText) return;
+      // D-06: Finished players are locked and cannot delete or send corrections
+      if (player.finishedAtServerMs !== null) return;
       // Clamp to [0, progress]. Decrement by backspaces; cap to 0.
       const newProgress = Math.max(0, player.progress - msg.backspaces);
       // Revert char-states for the reverted range

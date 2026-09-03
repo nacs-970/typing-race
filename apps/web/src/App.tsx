@@ -19,22 +19,14 @@ import type { ServerToClient } from "@typing-race/shared";
  * + grace banner + results board + rematch.
  */
 export function App(): React.ReactElement {
-  const status = useConnectionStore((s) => s.status);
   const playerId = useConnectionStore((s) => s.playerId);
-  const serverTs = useConnectionStore((s) => s.serverTs);
-  const offsetMs = useClockStore((s) => s.offsetMs);
-  const roundtripMs = useClockStore((s) => s.roundtripMs);
-
-  const ownWpm = useRaceStore((s) => s.ownWpm);
   const passageText = useRaceStore((s) => s.passageText);
   const raceEndResults = useRaceStore((s) => s.raceEndResults);
-  const hostPickedPassagePreview = useRaceStore((s) => s.hostPickedPassagePreview);
   const countdownStartsAtServerMs = useRaceStore((s) => s.countdownStartsAtServerMs);
   const raceStart = passageText !== null;
   const inCountdown = countdownStartsAtServerMs !== null;
   const inResults = raceEndResults !== null;
 
-  const [clockErr, setClockErr] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [isHost, setIsHost] = useState<boolean>(false);
   const [sessionTakenOver, setSessionTakenOver] = useState<boolean>(false);
@@ -42,6 +34,21 @@ export function App(): React.ReactElement {
     Array<{ playerId: string; nickname: string }>
   >([]);
   const [reconnectedNotice, setReconnectedNotice] = useState<string | null>(null);
+  const [nickname, setNickname] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("typing_race_nickname") || "";
+    }
+    return "";
+  });
+  const [joinCode, setJoinCode] = useState<string>("");
+
+  const handleNicknameChange = (val: string) => {
+    setNickname(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("typing_race_nickname", val);
+      (window as unknown as { __nickname?: string }).__nickname = val;
+    }
+  };
 
   // 1. syncClock on mount
   useEffect(() => {
@@ -53,7 +60,7 @@ export function App(): React.ReactElement {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        setClockErr(err instanceof Error ? err.message : String(err));
+        console.warn("Clock sync failed:", err);
       });
     return () => {
       cancelled = true;
@@ -250,27 +257,6 @@ export function App(): React.ReactElement {
   return (
     <main className="container">
       <ToastQueue />
-      <h1>Hello Typing Race</h1>
-      <p className="subtitle">Realtime multiplayer typing — Phase 3 complete.</p>
-
-      <span className={`status-pill ${status}`}>Status: {status}</span>
-
-      <div className="card">
-        <dl>
-          <dt>Player ID</dt>
-          <dd>{playerId ? `${playerId.slice(0, 8)}…` : "—"}</dd>
-          <dt>Server timestamp</dt>
-          <dd>{serverTs ? new Date(serverTs).toISOString() : "—"}</dd>
-          <dt>Clock offset</dt>
-          <dd>
-            {clockErr
-              ? `error: ${clockErr}`
-              : `${offsetMs.toFixed(1)}ms (roundtrip ${roundtripMs}ms)`}
-          </dd>
-          <dt>Own WPM (live)</dt>
-          <dd>{ownWpm > 0 ? ownWpm.toFixed(1) : "—"}</dd>
-        </dl>
-      </div>
 
       {sessionTakenOver && (
         <div
@@ -352,10 +338,89 @@ export function App(): React.ReactElement {
         </div>
       )}
 
+      {!roomCode && !raceStart && !inCountdown && !inResults && (
+        <div className="landing-view max-w-sm mx-auto w-full py-12 flex flex-col items-center">
+          <h1 className="text-4xl font-extrabold tracking-tight text-[#fefbe6] mb-8 font-mono">
+            Typing Race
+          </h1>
+
+          <div className="w-full flex flex-col gap-4">
+            <div className="flex flex-col text-left gap-1.5">
+              <label
+                htmlFor="nickname-input"
+                className="text-xs font-semibold text-[#b5c48b] uppercase tracking-wider font-mono"
+              >
+                Nickname
+              </label>
+              <input
+                id="nickname-input"
+                type="text"
+                className="w-full px-4 py-3 bg-[#15180c] border border-[#3c4626] rounded-xl text-[#fefbe6] placeholder-[#b5c48b]/50 focus:outline-none focus:border-[#cc6722] font-mono text-base transition-colors"
+                placeholder="Enter your nickname"
+                maxLength={20}
+                value={nickname}
+                onChange={(e) => handleNicknameChange(e.target.value)}
+              />
+            </div>
+
+            <button
+              type="button"
+              className="w-full py-3.5 px-4 bg-[#cc6722] hover:bg-[#bd5119] text-[#fefbe6] font-bold rounded-xl transition-all shadow-lg hover:shadow-[#cc6722]/20 cursor-pointer text-base font-mono mt-1"
+              onClick={() => {
+                const nick = nickname.trim() || "Racer";
+                ws.send({ type: "create_room", nickname: nick });
+              }}
+            >
+              Create Room
+            </button>
+
+            <div className="flex items-center gap-3 my-2">
+              <div className="flex-1 h-px bg-[#3c4626]/60" />
+              <span className="text-xs text-[#b5c48b]/80 uppercase tracking-widest font-mono">
+                or join room
+              </span>
+              <div className="flex-1 h-px bg-[#3c4626]/60" />
+            </div>
+
+            <div className="flex flex-col text-left gap-1.5">
+              <label
+                htmlFor="room-code-input"
+                className="text-xs font-semibold text-[#b5c48b] uppercase tracking-wider font-mono"
+              >
+                Room Code
+              </label>
+              <input
+                id="room-code-input"
+                type="text"
+                className="w-full px-4 py-3 bg-[#15180c] border border-[#3c4626] rounded-xl text-[#fefbe6] placeholder-[#b5c48b]/50 uppercase tracking-widest text-center font-mono text-base focus:outline-none focus:border-[#cc6722] transition-colors"
+                placeholder="ABCDEF"
+                maxLength={6}
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              />
+            </div>
+
+            <button
+              type="button"
+              className="w-full py-3.5 px-4 bg-[#15180c] hover:bg-[#3c4626] border border-[#3c4626] text-[#fefbe6] font-bold rounded-xl transition-colors cursor-pointer text-base font-mono disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={joinCode.trim().length !== 6}
+              onClick={() => {
+                const nick = nickname.trim() || "Racer";
+                ws.send({
+                  type: "join_room",
+                  code: joinCode.trim(),
+                  nickname: nick,
+                });
+              }}
+            >
+              Join Room
+            </button>
+          </div>
+        </div>
+      )}
+
       {inCountdown && !raceStart && countdownStartsAtServerMs !== null && (
-        <CountdownView
-          startsAtServerMs={countdownStartsAtServerMs}
-        />
+        <CountdownView startsAtServerMs={countdownStartsAtServerMs} />
       )}
 
       {roomCode && !raceStart && !inResults && !inCountdown && (
@@ -389,74 +454,6 @@ export function App(): React.ReactElement {
           }}
         />
       )}
-
-      {!roomCode && !raceStart && <DevTools />}
-
-      {hostPickedPassagePreview && !raceStart && (
-        <p className="host-preview-debug">host preview: {hostPickedPassagePreview}</p>
-      )}
-
-      {roomCode && !raceStart && !inResults && (
-        <p className="room-code-display">Room code: <code>{roomCode}</code></p>
-      )}
     </main>
-  );
-}
-
-function DevTools(): React.ReactElement {
-  const [joinCode, setJoinCode] = useState<string>("");
-  return (
-    <div className="dev-tools">
-      <div className="dev-row">
-        <span>Nickname:</span>
-        <input
-          type="text"
-          className="nickname-input"
-          placeholder="Your name"
-          maxLength={20}
-          onChange={(e) => {
-            const v = e.target.value;
-            // stash for next action
-            (window as unknown as { __nickname?: string }).__nickname = v;
-          }}
-        />
-      </div>
-      <div className="dev-row">
-        <button
-          type="button"
-          onClick={() => {
-            const nick =
-              (window as unknown as { __nickname?: string }).__nickname ??
-              "DevHost";
-            ws.send({ type: "create_room", nickname: nick });
-          }}
-        >
-          Create room
-        </button>
-        <input
-          type="text"
-          className="room-code-input"
-          placeholder="ABCDEF"
-          maxLength={6}
-          value={joinCode}
-          onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-        />
-        <button
-          type="button"
-          onClick={() => {
-            const nick =
-              (window as unknown as { __nickname?: string }).__nickname ??
-              "DevGuest";
-            ws.send({
-              type: "join_room",
-              code: joinCode,
-              nickname: nick,
-            });
-          }}
-        >
-          Join room
-        </button>
-      </div>
-    </div>
   );
 }

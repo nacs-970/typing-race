@@ -306,40 +306,17 @@ export function App(): React.ReactElement {
       <ToastQueue />
 
       {sessionTakenOver && (
-        <div
-          className="session-taken-over-banner"
-          style={{
-            background: "#fee2e2",
-            border: "1px solid #ef4444",
-            padding: "1rem",
-            borderRadius: "8px",
-            margin: "1rem 0",
-            color: "#991b1b",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+        <div className="session-taken-over-banner">
           <div>
             <strong>Session active in another tab</strong>
-            <p style={{ margin: "0.25rem 0 0" }}>
+            <p className="m-0 mt-1 text-sm">
               This room is open in another tab. Click anywhere or press the button to resume here.
             </p>
           </div>
           <button
             type="button"
             onClick={reclaimSession}
-            style={{
-              background: "#ef4444",
-              color: "#ffffff",
-              border: "none",
-              padding: "0.5rem 1rem",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontWeight: 600,
-              marginLeft: "1rem",
-              whiteSpace: "nowrap",
-            }}
+            className="session-taken-over-button"
           >
             Resume in this tab
           </button>
@@ -349,19 +326,11 @@ export function App(): React.ReactElement {
       <GraceBanner />
 
       {disconnectToasts.length > 0 && (
-        <div className="disconnect-toasts" style={{ margin: "0.5rem 0" }}>
+        <div className="disconnect-toasts my-2">
           {disconnectToasts.map((t) => (
             <div
               key={t.playerId}
               className="toast-disconnect"
-              style={{
-                background: "#fef3c7",
-                border: "1px solid #f59e0b",
-                color: "#92400e",
-                padding: "0.5rem 1rem",
-                borderRadius: "6px",
-                marginBottom: "0.5rem",
-              }}
             >
               ⚠️ <strong>{t.nickname}</strong> disconnected — waiting up to 60s for reconnect...
             </div>
@@ -370,24 +339,14 @@ export function App(): React.ReactElement {
       )}
 
       {reconnectedNotice && (
-        <div
-          className="toast-reconnected"
-          style={{
-            background: "#d1fae5",
-            border: "1px solid #10b981",
-            color: "#065f46",
-            padding: "0.5rem 1rem",
-            borderRadius: "6px",
-            margin: "0.5rem 0",
-          }}
-        >
+        <div className="toast-reconnected">
           ✓ {reconnectedNotice}
         </div>
       )}
 
       {!roomCode && !raceStart && !inCountdown && !inResults && (
         <div className="landing-view max-w-sm mx-auto w-full py-12 flex flex-col items-center">
-          <h1 className="text-4xl font-extrabold tracking-tight text-[#fefbe6] mb-8 font-mono">
+          <h1 className="text-4xl font-extrabold tracking-tight text-[var(--color-text-bright)] mb-8 font-mono">
             Typing Race
           </h1>
 
@@ -395,14 +354,14 @@ export function App(): React.ReactElement {
             <div className="flex flex-col text-left gap-1.5">
               <label
                 htmlFor="nickname-input"
-                className="text-xs font-semibold text-[#b5c48b] uppercase tracking-wider font-mono"
+                className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider font-mono"
               >
                 Nickname
               </label>
               <input
                 id="nickname-input"
                 type="text"
-                className="w-full px-4 py-3 bg-[#15180c] border border-[#3c4626] rounded-xl text-[#fefbe6] placeholder-[#b5c48b]/50 focus:outline-none focus:border-[#cc6722] font-mono text-base transition-colors"
+                className="w-full px-4 py-3 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-xl text-[var(--color-text-bright)] placeholder-[var(--color-text-muted)]/50 focus:outline-none focus:border-[var(--color-accent-clay)] font-mono text-base transition-colors"
                 placeholder="Enter your nickname"
                 maxLength={20}
                 value={nickname}
@@ -412,7 +371,7 @@ export function App(): React.ReactElement {
 
             <button
               type="button"
-              className="w-full py-3.5 px-4 bg-[#cc6722] hover:bg-[#bd5119] text-[#fefbe6] font-bold rounded-xl transition-all shadow-lg hover:shadow-[#cc6722]/20 cursor-pointer text-base font-mono mt-1"
+              className="w-full py-3.5 px-4 bg-[var(--color-accent-clay)] hover:bg-[var(--color-accent-hover)] text-[var(--color-text-bright)] font-bold rounded-xl transition-all shadow-lg hover:shadow-[var(--color-accent-clay)]/20 cursor-pointer text-base font-mono mt-1"
               onClick={() => {
                 const nick = nickname.trim() || "Racer";
                 ws.send({ type: "create_room", nickname: nick });
@@ -422,24 +381,24 @@ export function App(): React.ReactElement {
             </button>
 
             <div className="flex items-center gap-3 my-2">
-              <div className="flex-1 h-px bg-[#3c4626]/60" />
-              <span className="text-xs text-[#b5c48b]/80 uppercase tracking-widest font-mono">
+              <div className="flex-1 h-px bg-[var(--color-border-subtle)]/60" />
+              <span className="text-xs text-[var(--color-text-muted)]/80 uppercase tracking-widest font-mono">
                 or join room
               </span>
-              <div className="flex-1 h-px bg-[#3c4626]/60" />
+              <div className="flex-1 h-px bg-[var(--color-border-subtle)]/60" />
             </div>
 
             <div className="flex flex-col text-left gap-1.5">
               <label
                 htmlFor="room-code-input"
-                className="text-xs font-semibold text-[#b5c48b] uppercase tracking-wider font-mono"
+                className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider font-mono"
               >
                 Room Code
               </label>
               <input
                 id="room-code-input"
                 type="text"
-                className="w-full px-4 py-3 bg-[#15180c] border border-[#3c4626] rounded-xl text-[#fefbe6] placeholder-[#b5c48b]/50 uppercase tracking-widest text-center font-mono text-base focus:outline-none focus:border-[#cc6722] transition-colors"
+                className="w-full px-4 py-3 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-xl text-[var(--color-text-bright)] placeholder-[var(--color-text-muted)]/50 uppercase tracking-widest text-center font-mono text-base focus:outline-none focus:border-[var(--color-accent-clay)] transition-colors"
                 placeholder="ABCDEF"
                 maxLength={6}
                 value={joinCode}
@@ -449,7 +408,7 @@ export function App(): React.ReactElement {
 
             <button
               type="button"
-              className="w-full py-3.5 px-4 bg-[#15180c] hover:bg-[#3c4626] border border-[#3c4626] text-[#fefbe6] font-bold rounded-xl transition-colors cursor-pointer text-base font-mono disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full py-3.5 px-4 bg-[var(--color-bg-surface)] hover:bg-[var(--color-bg-surface-hover)] border border-[var(--color-border-subtle)] text-[var(--color-text-bright)] font-bold rounded-xl transition-colors cursor-pointer text-base font-mono disabled:opacity-40 disabled:cursor-not-allowed"
               disabled={joinCode.trim().length !== 6}
               onClick={() => {
                 const nick = nickname.trim() || "Racer";

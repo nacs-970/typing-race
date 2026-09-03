@@ -4,14 +4,14 @@ export const BUFFER_MS = 100;
 export const MAX_EXTRAPOLATE_MS = 150;
 
 export const PASTEL_RAINBOW_COLORS = [
-  "#DA2C38", // Slot 1: Red
-  "#DF6873", // Slot 2: Coral / Rose
-  "#EE7B30", // Slot 3: Orange
-  "#FBD24B", // Slot 4: Amber
-  "#F8F862", // Slot 5: Bright Yellow
-  "#87C38F", // Slot 6: Pastel Green
-  "#99FFFC", // Slot 7: Cyan
-  "#BE98D7", // Slot 8: Lavender / Purple
+  "var(--color-cursor-slot-1)",
+  "var(--color-cursor-slot-2)",
+  "var(--color-cursor-slot-3)",
+  "var(--color-cursor-slot-4)",
+  "var(--color-cursor-slot-5)",
+  "var(--color-cursor-slot-6)",
+  "var(--color-cursor-slot-7)",
+  "var(--color-cursor-slot-8)",
 ] as const;
 
 export interface CursorSnapshot {
@@ -50,7 +50,7 @@ export class CursorManager {
 
     let color: string;
     if (typeof colorOrSlot === "number") {
-      color = PASTEL_RAINBOW_COLORS[colorOrSlot % PASTEL_RAINBOW_COLORS.length] ?? "#87C38F";
+      color = PASTEL_RAINBOW_COLORS[colorOrSlot % PASTEL_RAINBOW_COLORS.length] ?? "var(--color-cursor-slot-6)";
     } else {
       color = colorOrSlot;
     }
@@ -161,7 +161,7 @@ export class CursorManager {
     // Create DOM elements for players already registered
     for (const [playerId, nickname] of this.playerNicknames.entries()) {
       if (!this.elements.has(playerId)) {
-        const color = this.playerColors.get(playerId) ?? "#87C38F";
+        const color = this.playerColors.get(playerId) ?? "var(--color-cursor-slot-6)";
         this.createPlayerElement(playerId, nickname, color);
       }
     }
@@ -204,7 +204,7 @@ export class CursorManager {
       let dom = this.elements.get(playerId);
       if (!dom) {
         const nickname = this.playerNicknames.get(playerId) ?? "Player";
-        const color = this.playerColors.get(playerId) ?? "#87C38F";
+        const color = this.playerColors.get(playerId) ?? "var(--color-cursor-slot-6)";
         dom = this.createPlayerElement(playerId, nickname, color);
       }
 
@@ -297,7 +297,7 @@ export class CursorManager {
       "cursor-micro-tag absolute bottom-full left-0 mb-1 px-1.5 py-0.5 rounded text-[10px] font-bold shadow-md whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]";
     tag.textContent = nickname.slice(0, 16);
     tag.style.backgroundColor = color;
-    tag.style.color = "#12190b";
+    tag.style.color = "var(--color-text-dark)";
 
     const caret = document.createElement("div");
     caret.className = "cursor-caret w-[2px] h-[22px] rounded-full transition-shadow duration-300";

@@ -85,11 +85,11 @@ export function LobbyView({
   };
 
   return (
-    <div className="lobby-view max-w-[800px] mx-auto p-6 rounded-xl border border-[#3c4626] bg-[#15180c] text-[#fefbe6] font-mono">
-      <div className="flex items-center justify-between border-b border-[#3c4626] pb-4 mb-6">
+    <div className="lobby-view max-w-[800px] mx-auto p-6 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] text-[var(--color-text-bright)] font-mono">
+      <div className="flex items-center justify-between border-b border-[var(--color-border-subtle)] pb-4 mb-6">
         <div>
           <h2 className="text-2xl font-bold m-0">Room {roomCode} {isHost ? "(Host)" : ""}</h2>
-          <p className="text-sm text-[#b5c48b] mt-1 mb-0">
+          <p className="text-sm text-[var(--color-text-muted)] mt-1 mb-0">
             {isHost ? "Configure passage and start when racers are ready" : "Waiting for host to start the race…"}
           </p>
         </div>
@@ -97,7 +97,7 @@ export function LobbyView({
           <button
             type="button"
             aria-label="Copy room invite link"
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#12190b] border border-[#3c4626] hover:bg-[#3c4626] transition-colors text-[#fefbe6] cursor-pointer"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--color-bg-base)] border border-[var(--color-border-subtle)] hover:bg-[var(--color-bg-surface-hover)] transition-colors text-[var(--color-text-bright)] cursor-pointer"
             onClick={handleCopyLink}
           >
             {copySuccess ? "✓ Copied Link" : "📋 Copy Room Link"}
@@ -106,7 +106,7 @@ export function LobbyView({
             <button
               type="button"
               aria-label="Leave room"
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#2a1315] border border-[#7f1d1d] hover:bg-[#7f1d1d] transition-colors text-[#fca5a5] cursor-pointer"
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] hover:bg-[var(--color-danger-hover)] transition-colors text-[var(--color-danger-text)] cursor-pointer"
               onClick={onLeaveRoom}
             >
               🚪 Leave Room
@@ -117,15 +117,15 @@ export function LobbyView({
 
       {/* Empty State when solo in room */}
       {players.length <= 1 && (
-        <div className="lobby-empty-state text-center p-6 my-4 border border-dashed border-[#3c4626] rounded-lg bg-[#12190b]/50">
-          <h3 className="text-lg font-bold text-[#fefbe6] mb-1">Waiting for Competitors</h3>
-          <p className="text-sm text-[#b5c48b] mb-4">
+        <div className="lobby-empty-state text-center p-6 my-4 border border-dashed border-[var(--color-border-subtle)] rounded-lg bg-[var(--color-bg-base)]/50">
+          <h3 className="text-lg font-bold text-[var(--color-text-bright)] mb-1">Waiting for Competitors</h3>
+          <p className="text-sm text-[var(--color-text-muted)] mb-4">
             Share the invite link or room code with friends to start racing.
           </p>
           <button
             type="button"
             aria-label="Copy room invite link"
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#cc6722] text-[#12190b] hover:opacity-90 transition-opacity"
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-[var(--color-accent-clay)] text-[var(--color-text-dark)] hover:opacity-90 transition-opacity"
             onClick={handleCopyLink}
           >
             {copySuccess ? "✓ Copied Invite Link" : "Copy Room Link"}
@@ -135,7 +135,7 @@ export function LobbyView({
 
       {/* Competitors List */}
       <div className="players-list mb-6">
-        <h4 className="text-xs uppercase tracking-wider text-[#b5c48b] font-bold mb-2">
+        <h4 className="text-xs uppercase tracking-wider text-[var(--color-text-muted)] font-bold mb-2">
           Competitors ({players.length})
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -145,25 +145,25 @@ export function LobbyView({
               <div
                 key={p.playerId}
                 className={`flex items-center justify-between p-2.5 rounded-lg border ${
-                  isMe ? "border-[#cc6722]/50 bg-[#12190b]" : "border-[#3c4626] bg-[#12190b]/40"
+                  isMe ? "border-[var(--color-accent-clay)]/50 bg-[var(--color-bg-base)]" : "border-[var(--color-border-subtle)] bg-[var(--color-bg-base)]/40"
                 }`}
               >
                 <div className="flex items-center gap-2 overflow-hidden">
                   <span className="font-medium text-sm truncate">{p.nickname}</span>
                   {p.isHost && (
-                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-[#3c4626] text-[#b5c48b]">
+                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-[var(--color-bg-surface-hover)] text-[var(--color-text-muted)]">
                       Host
                     </span>
                   )}
-                  {isMe && <span className="text-[10px] text-[#cc6722] font-semibold">(You)</span>}
+                  {isMe && <span className="text-[10px] text-[var(--color-accent-clay)] font-semibold">(You)</span>}
                 </div>
                 <div>
                   {p.isReady ? (
-                    <span className="text-xs font-bold text-[#87c38f] bg-[#87c38f]/10 px-2 py-0.5 rounded">
+                    <span className="text-xs font-bold text-[var(--color-status-success)] bg-[var(--color-status-success)]/10 px-2 py-0.5 rounded">
                       ✓ Ready
                     </span>
                   ) : (
-                    <span className="text-xs text-[#7d4d0f] bg-[#7d4d0f]/10 px-2 py-0.5 rounded">
+                    <span className="text-xs text-[var(--color-text-faint)] bg-[var(--color-text-faint)]/10 px-2 py-0.5 rounded">
                       Waiting…
                     </span>
                   )}
@@ -181,20 +181,20 @@ export function LobbyView({
             type="button"
             className={`w-full py-3 rounded-lg text-base font-bold transition-colors ${
               me?.isReady
-                ? "bg-[#7e2a19] hover:bg-[#9d3117] text-[#fefbe6]"
-                : "bg-[#7e914a] hover:bg-[#9bad67] text-[#12190b]"
+                ? "bg-[var(--color-copperwood-800)] hover:bg-[var(--color-copperwood-700)] text-[var(--color-text-bright)]"
+                : "bg-[var(--color-olive-leaf-500)] hover:bg-[var(--color-olive-leaf-400)] text-[var(--color-text-dark)]"
             }`}
             onClick={handleToggleReady}
           >
             {me?.isReady ? "Cancel Ready" : "Ready Up"}
           </button>
           {preview && (
-            <div className="host-choice mt-4 text-sm text-[#b5c48b]">
-              <span className="font-semibold text-[#fefbe6]">Host chose:</span>{" "}
+            <div className="host-choice mt-4 text-sm text-[var(--color-text-muted)]">
+              <span className="font-semibold text-[var(--color-text-bright)]">Host chose:</span>{" "}
               <span className="preview italic">{preview}</span>
             </div>
           )}
-          {passageText && <p className="passage-preview text-xs text-[#b5c48b] mt-2 italic">{passageText}</p>}
+          {passageText && <p className="passage-preview text-xs text-[var(--color-text-muted)] mt-2 italic">{passageText}</p>}
         </div>
       )}
 
@@ -202,9 +202,9 @@ export function LobbyView({
       {isHost && (
         <div className="host-controls space-y-4">
           {/* Passage Filter Controls */}
-          <div className="filter-controls bg-[#12190b] p-3 rounded-lg border border-[#3c4626]">
+          <div className="filter-controls bg-[var(--color-bg-base)] p-3 rounded-lg border border-[var(--color-border-subtle)]">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-              <span className="text-xs uppercase font-bold text-[#b5c48b]">Passage Length:</span>
+              <span className="text-xs uppercase font-bold text-[var(--color-text-muted)]">Passage Length:</span>
               <div className="flex gap-1.5">
                 {(["all", "short", "medium", "long"] as const).map((len) => (
                   <button
@@ -212,8 +212,8 @@ export function LobbyView({
                     type="button"
                     className={`px-2.5 py-1 text-xs rounded font-medium transition-colors capitalize ${
                       lengthFilter === len
-                        ? "bg-[#cc6722] text-[#12190b] font-bold"
-                        : "bg-[#15180c] text-[#b5c48b] hover:text-[#fefbe6] border border-[#3c4626]"
+                        ? "bg-[var(--color-accent-clay)] text-[var(--color-text-dark)] font-bold"
+                        : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] border border-[var(--color-border-subtle)]"
                     }`}
                     onClick={() => {
                       setLengthFilter(len);
@@ -230,14 +230,14 @@ export function LobbyView({
               </div>
             </div>
 
-            <div className="flex items-center justify-between border-t border-[#3c4626]/50 pt-2">
-              <span className="text-xs uppercase font-bold text-[#b5c48b]">Punctuation:</span>
+            <div className="flex items-center justify-between border-t border-[var(--color-border-subtle)]/50 pt-2">
+              <span className="text-xs uppercase font-bold text-[var(--color-text-muted)]">Punctuation:</span>
               <button
                 type="button"
                 className={`px-2.5 py-1 text-xs rounded font-medium transition-colors ${
                   punctuationFilter === true
-                    ? "bg-[#cc6722] text-[#12190b] font-bold"
-                    : "bg-[#15180c] text-[#b5c48b] border border-[#3c4626]"
+                    ? "bg-[var(--color-accent-clay)] text-[var(--color-text-dark)] font-bold"
+                    : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-subtle)]"
                 }`}
                 onClick={() => {
                   const nextPunc = punctuationFilter === true ? null : true;
@@ -257,12 +257,12 @@ export function LobbyView({
           {/* Passage Dropdown & Random */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-bold text-[#b5c48b] uppercase">
+              <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase">
                 Choose Passage ({filteredPassages.length} available)
               </label>
               <button
                 type="button"
-                className="text-xs text-[#cc6722] hover:underline font-semibold"
+                className="text-xs text-[var(--color-accent-clay)] hover:underline font-semibold"
                 onClick={() => {
                   if (filteredPassages.length > 0) {
                     const idx = Math.floor(Math.random() * filteredPassages.length);
@@ -275,7 +275,7 @@ export function LobbyView({
               </button>
             </div>
             <select
-              className="passage-select w-full bg-[#12190b] border border-[#3c4626] rounded-lg p-2 text-sm text-[#fefbe6]"
+              className="passage-select w-full bg-[var(--color-bg-base)] border border-[var(--color-border-subtle)] rounded-lg p-2 text-sm text-[var(--color-text-bright)]"
               value={pickedId}
               onChange={(e) => setPickedId(e.target.value)}
               size={5}
@@ -289,8 +289,8 @@ export function LobbyView({
           </div>
 
           {/* Grace Picker */}
-          <div className="flex items-center justify-between bg-[#12190b] p-3 rounded-lg border border-[#3c4626]">
-            <span className="text-xs font-bold text-[#b5c48b] uppercase">Grace Period:</span>
+          <div className="flex items-center justify-between bg-[var(--color-bg-base)] p-3 rounded-lg border border-[var(--color-border-subtle)]">
+            <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase">Grace Period:</span>
             <div className="flex gap-2">
               {[3, 5, 10].map((g) => (
                 <button
@@ -298,8 +298,8 @@ export function LobbyView({
                   type="button"
                   className={`px-3 py-1 text-xs rounded font-bold transition-colors ${
                     grace === g
-                      ? "bg-[#cc6722] text-[#12190b]"
-                      : "bg-[#15180c] text-[#b5c48b] border border-[#3c4626]"
+                      ? "bg-[var(--color-accent-clay)] text-[var(--color-text-dark)]"
+                      : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-subtle)]"
                   }`}
                   onClick={() => setGrace(g)}
                 >
@@ -314,8 +314,8 @@ export function LobbyView({
             type="button"
             className={`w-full py-3.5 rounded-lg text-base font-bold transition-all shadow-md ${
               guests.length === 0 || allGuestsReady
-                ? "bg-[#cc6722] hover:bg-[#d3813e] text-[#12190b]"
-                : "bg-[#3c4626] hover:bg-[#4a572c] text-[#fefbe6]"
+                ? "bg-[var(--color-accent-clay)] hover:bg-[var(--color-accent-hover)] text-[var(--color-text-dark)]"
+                : "bg-[var(--color-bg-surface-hover)] hover:bg-[var(--color-olive-leaf-700)] text-[var(--color-text-bright)]"
             }`}
             onClick={handleStartRace}
           >

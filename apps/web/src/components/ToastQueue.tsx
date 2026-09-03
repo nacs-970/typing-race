@@ -28,10 +28,10 @@ function ToastCard({
   onDismiss: () => void;
 }): React.ReactElement {
   const borderAndAccentClass = {
-    error: "border-[#da2c38] text-[#fefbe6]",
-    warning: "border-[#ee7b30] text-[#fefbe6]",
-    success: "border-[#87c38f] text-[#fefbe6]",
-    info: "border-[#3c4626] text-[#fefbe6]",
+    error: "toast-error",
+    warning: "toast-warning",
+    success: "toast-success",
+    info: "toast-info",
   }[toast.type];
 
   const icon = {
@@ -43,7 +43,7 @@ function ToastCard({
 
   return (
     <div
-      className={`pointer-events-auto relative overflow-hidden rounded-lg p-3.5 bg-[#12190b]/95 border shadow-2xl backdrop-blur-md transition-all duration-300 ${borderAndAccentClass}`}
+      className={`pointer-events-auto relative overflow-hidden rounded-lg p-3.5 bg-[var(--color-bg-base)]/95 border shadow-2xl backdrop-blur-md transition-all duration-300 ${borderAndAccentClass}`}
       data-testid={`toast-${toast.type}`}
       data-toast-id={toast.id}
       role="alert"
@@ -54,7 +54,7 @@ function ToastCard({
           <div>
             <h5 className="font-bold text-sm m-0 leading-tight">{toast.title}</h5>
             {toast.body && (
-              <p className="text-xs text-[#b5c48b] mt-1 m-0 leading-relaxed">
+              <p className="text-xs text-[var(--color-text-muted)] mt-1 m-0 leading-relaxed">
                 {toast.body}
               </p>
             )}
@@ -64,7 +64,7 @@ function ToastCard({
         <button
           type="button"
           aria-label="Dismiss notification"
-          className="text-xs text-[#b5c48b] hover:text-[#fefbe6] transition-colors p-1 rounded hover:bg-[#3c4626]"
+          className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] transition-colors p-1 rounded hover:bg-[var(--color-bg-surface-hover)]"
           onClick={onDismiss}
         >
           ✕
@@ -72,7 +72,7 @@ function ToastCard({
       </div>
 
       {toast.showProgress && toast.durationMs && (
-        <div className="w-full h-1 bg-[#15180c] rounded-full overflow-hidden mt-2.5">
+        <div className="w-full h-1 bg-[var(--color-bg-surface)] rounded-full overflow-hidden mt-2.5">
           <div
             className="h-full bg-current rounded-full animate-[shrink_linear_forwards]"
             style={{

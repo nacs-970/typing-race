@@ -211,4 +211,30 @@ describe("TypingEngine", () => {
     expect(finishedSpy).not.toHaveBeenCalled();
     expect(testEngine.getIsFinished()).toBe(false);
   });
+
+  it("allows holding Backspace or Delete to repeat (ev.repeat === true)", () => {
+    const testEngine = new TypingEngine();
+    testEngine.init("Hello world");
+
+    testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "H" }));
+    testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "e" }));
+    testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "l" }));
+    expect(testEngine.getOwnIndex()).toBe(3);
+
+    // Repeated Backspace (held down) is accepted!
+    expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "Backspace", repeat: true }))).toBe(true);
+    expect(testEngine.getOwnIndex()).toBe(2);
+
+    expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "Backspace", repeat: true }))).toBe(true);
+    expect(testEngine.getOwnIndex()).toBe(1);
+  });
+
+  it("rejects Spacebar when expected character is not a space (anti-space-drag)", () => {
+    const testEngine = new TypingEngine();
+    testEngine.init("Hello world");
+
+    // Expected char at index 0 is 'H' — pressing Space is rejected!
+    expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: " " }))).toBe(false);
+    expect(testEngine.getOwnIndex()).toBe(0);
+  });
 });

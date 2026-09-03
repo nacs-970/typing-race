@@ -85,6 +85,11 @@ export function validateKeystroke(args: {
   const expected = passageText[frame.index];
   const charState: CharState = frame.char === expected ? "correct" : "error";
 
+  // Anti-space-drag: space cannot be submitted over non-space characters
+  if (frame.char === " " && charState === "error") {
+    return { ok: false, reason: "INVALID_FRAME" };
+  }
+
   // Anti-gibberish spam prevention: cannot submit more than 5 consecutive uncorrected errors
   if (charState === "error") {
     let consecutiveErrors = 0;
@@ -132,13 +137,15 @@ export function validateKeystroke(args: {
   if (frame.index + 1 > player.progress) {
     player.progress = frame.index + 1;
   }
-  // First-time finish detection: final char must be correct and uncorrected errors <= 3
+  // First-time finish detection: final char must be correct and accuracy >= 50% (anti-gibberish ending abuse)
+  const typedCount = correctChars + uncorrectedErrors;
+  const isAccurateEnough = typedCount > 0 && correctChars / typedCount >= 0.5;
   let finishedAtServerMs = player.finishedAtServerMs;
   if (
     player.progress >= passageText.length &&
     finishedAtServerMs === null &&
     charState === "correct" &&
-    uncorrectedErrors <= 3
+    isAccurateEnough
   ) {
     finishedAtServerMs = now;
     player.finishedAtServerMs = now;

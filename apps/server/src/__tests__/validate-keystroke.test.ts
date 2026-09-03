@@ -473,4 +473,45 @@ describe("validateKeystroke — Phase 3 char-state extension", () => {
     // Did NOT set finishedAtServerMs because final char was an error!
     expect(player.finishedAtServerMs).toBe(null);
   });
+
+  test("20. anti-space-drag: space submitted on a letter is rejected with INVALID_FRAME", () => {
+    const now = 10_000;
+    const player = fakePlayer(0, 0);
+    const room = fakeRoom("racing", 0, PASSAGE);
+
+    // PASSAGE[0] is 'h' — submitting space is rejected
+    const res = validateKeystroke({
+      room,
+      player,
+      frame: fakeFrame(0, " "),
+      passageText: PASSAGE,
+      now,
+    });
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.reason).toBe("INVALID_FRAME");
+  });
+
+  test("21. ending abuse prevention: reaching end with < 50% accuracy does not set finishedAtServerMs", () => {
+    const now = 10_000;
+    const player = fakePlayer(0, 0);
+    const room = fakeRoom("racing", 0, PASSAGE);
+    // PASSAGE is 11 chars. Suppose player had 8 errors and only 2 correct
+    player.charStates = ["error", "error", "error", "error", "correct", " ", "error", "error", "error", "correct", "pending"];
+    player.progress = 10;
+    player.lastKeystrokeAt = now - 100;
+
+    // Submit correct char for final index 10 (PASSAGE[10] is 'd')
+    const res = validateKeystroke({
+      room,
+      player,
+      frame: fakeFrame(10, "d"), // correct final char, but overall correctChars = 3 / 11 < 50%
+      passageText: PASSAGE,
+      now,
+    });
+
+    expect(res.ok).toBe(true);
+    // Did NOT set finishedAtServerMs because accuracy ratio < 50%!
+    expect(player.finishedAtServerMs).toBe(null);
+  });
 });

@@ -184,6 +184,20 @@ export function RaceView({
           data-testid="cursor-overlay"
         />
       </div>
+
+      {ownIndex >= passageText.length && !localEngine.getIsFinished() && (
+        <div
+          data-testid="finish-blocked-banner"
+          className="mt-4 p-3 bg-amber-950/60 border border-amber-500/60 rounded-lg text-amber-200 text-sm flex items-center justify-between gap-3 animate-pulse shadow-lg"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-lg">⚠️</span>
+            <span>
+              <strong>Finish blocked:</strong> Passage contains uncorrected errors or low accuracy (&lt;50%). Hold <strong>Backspace</strong> to delete mistakes and correct them.
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

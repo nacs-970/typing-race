@@ -48,16 +48,12 @@ export class TypingEngine {
       return false;
     }
 
-    // Anti-drag / hold grief prevention: reject auto-repeating keystrokes from held keys
-    if (ev.repeat) {
-      return false;
-    }
-
     if (ev.ctrlKey || ev.metaKey || ev.altKey) {
       return false;
     }
 
-    if (ev.key === "Backspace") {
+    // Allow Backspace / Delete even when holding down (ev.repeat === true)
+    if (ev.key === "Backspace" || ev.key === "Delete") {
       if (this.ownIndex <= 0) {
         return false;
       }
@@ -72,6 +68,11 @@ export class TypingEngine {
       return true;
     }
 
+    // Anti-drag / hold grief prevention: reject auto-repeating character inputs
+    if (ev.repeat) {
+      return false;
+    }
+
     const ch = ev.key === "Spacebar" ? " " : ev.key;
     if (ch.length !== 1) {
       return false;
@@ -84,6 +85,11 @@ export class TypingEngine {
     const currentIndex = this.ownIndex;
     const expected = this.passageText[currentIndex] ?? "";
     const isCorrect = ch === expected;
+
+    // Space dragging prevention: Space is ONLY allowed when the expected character is a space
+    if (ch === " " && !isCorrect) {
+      return false;
+    }
 
     // Gibberish spam prevention: cannot advance with more than MAX_CONSECUTIVE_ERRORS uncorrected errors
     if (!isCorrect && this.consecutiveErrors >= TypingEngine.MAX_CONSECUTIVE_ERRORS) {
@@ -108,8 +114,12 @@ export class TypingEngine {
     this.updateStats(now);
 
     if (this.ownIndex === this.passageText.length) {
-      // Ending abuse guard: cannot finish with wrong final character or excessive uncorrected errors
-      if (!isCorrect || this.getUncorrectedErrors() > 3) {
+      // Ending abuse guard: cannot finish with wrong final character or < 50% accuracy
+      const correctChars = this.getCorrectChars();
+      const uncorrectedErrors = this.getUncorrectedErrors();
+      const typedCount = correctChars + uncorrectedErrors;
+      const isAccurateEnough = typedCount > 0 && correctChars / typedCount >= 0.5;
+      if (!isCorrect || !isAccurateEnough) {
         return true;
       }
       this.isFinished = true;
@@ -193,6 +203,14 @@ export class TypingEngine {
     let count = 0;
     for (const s of this.charStates) {
       if (s === "error") count++;
+    }
+    return count;
+  }
+
+  public getCorrectChars(): number {
+    let count = 0;
+    for (const s of this.charStates) {
+      if (s === "correct") count++;
     }
     return count;
   }

@@ -9,6 +9,7 @@ export interface ResultsBoardProps {
   isHost: boolean;
   onRematch?: () => void;
   onReturnToLobby?: () => void;
+  onLeaveRoom?: () => void;
   players?: Array<{ playerId: string; nickname: string }>;
 }
 
@@ -17,6 +18,7 @@ export function ResultsBoard({
   isHost,
   onRematch,
   onReturnToLobby,
+  onLeaveRoom,
   players: propPlayers,
 }: ResultsBoardProps): React.ReactElement {
   const myId = useConnectionStore((s) => s.playerId);
@@ -192,7 +194,7 @@ export function ResultsBoard({
         <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t border-[#3c4626]">
           <button
             type="button"
-            className="flex-1 py-3 px-4 rounded-lg text-sm font-bold bg-[#cc6722] text-[#12190b] hover:bg-[#d3813e] transition-colors shadow-md text-center"
+            className="flex-1 py-3 px-4 rounded-lg text-sm font-bold bg-[#cc6722] text-[#12190b] hover:bg-[#d3813e] transition-colors shadow-md text-center cursor-pointer"
             data-testid="rematch-button"
             onClick={handleRematch}
           >
@@ -200,15 +202,35 @@ export function ResultsBoard({
           </button>
           <button
             type="button"
-            className="py-3 px-4 rounded-lg text-sm font-semibold bg-[#12190b] border border-[#3c4626] text-[#fefbe6] hover:bg-[#3c4626] transition-colors text-center"
+            className="py-3 px-4 rounded-lg text-sm font-semibold bg-[#12190b] border border-[#3c4626] text-[#fefbe6] hover:bg-[#3c4626] transition-colors text-center cursor-pointer"
             onClick={handleReturnToLobby}
           >
             Return to Lobby
           </button>
+          {onLeaveRoom && (
+            <button
+              type="button"
+              className="py-3 px-4 rounded-lg text-sm font-semibold bg-[#2a1315] border border-[#7f1d1d] text-[#fca5a5] hover:bg-[#7f1d1d] transition-colors text-center cursor-pointer"
+              onClick={onLeaveRoom}
+            >
+              🚪 Leave Room
+            </button>
+          )}
         </div>
       ) : (
-        <div className="mt-6 pt-4 border-t border-[#3c4626] text-center text-xs text-[#b5c48b] italic">
-          Waiting for host to start rematch or return to lobby…
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 pt-4 border-t border-[#3c4626]">
+          <span className="text-xs text-[#b5c48b] italic">
+            Waiting for host to start rematch or return to lobby…
+          </span>
+          {onLeaveRoom && (
+            <button
+              type="button"
+              className="py-2.5 px-4 rounded-lg text-sm font-semibold bg-[#2a1315] border border-[#7f1d1d] text-[#fca5a5] hover:bg-[#7f1d1d] transition-colors text-center cursor-pointer"
+              onClick={onLeaveRoom}
+            >
+              🚪 Leave Room
+            </button>
+          )}
         </div>
       )}
     </div>

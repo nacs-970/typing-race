@@ -14,6 +14,7 @@ export interface RaceViewProps {
   passageLayout?: PassageLayout;
   onKeystroke?: (index: number, char: string) => void;
   onCorrection?: (count: number) => void;
+  onLeaveRoom?: () => void;
 }
 
 export function RaceView({
@@ -24,6 +25,7 @@ export function RaceView({
   passageLayout,
   onKeystroke,
   onCorrection,
+  onLeaveRoom,
 }: RaceViewProps): React.ReactElement {
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -155,6 +157,7 @@ export function RaceView({
       <RaceHud
         typingEngine={localEngine}
         passageLength={passageText.length}
+        onLeaveRoom={onLeaveRoom}
       />
       <div ref={trackRef} className="passage-track relative text-[16px] leading-[32px] font-mono select-none">
         {passageText.split("").map((ch, i) => {

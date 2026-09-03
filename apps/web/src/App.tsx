@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useConnectionStore } from "./store/connection.ts";
 import { useClockStore } from "./store/clock.ts";
-import { ws, getSessionCookie } from "./net/ws.ts";
+import { ws, getSessionCookie, clearSessionCookie } from "./net/ws.ts";
 import { useRaceStore, resetRaceUi } from "./store/race.ts";
-import { setCursorState } from "./store/cursor.ts";
+import { setCursorState, useCursorStore } from "./store/cursor.ts";
 import { syncClock } from "./net/clock.ts";
 import { CountdownView } from "./components/CountdownView.tsx";
 import { RaceView } from "./components/RaceView.tsx";
@@ -123,7 +123,17 @@ export function App(): React.ReactElement {
         if (myId) {
           const me = msg.players.find((p) => p.playerId === myId);
           if (me) {
-            setIsHost(me.isHost);
+            setIsHost((prevHost) => {
+              if (!prevHost && me.isHost) {
+                addToast({
+                  type: "success",
+                  title: "Host Promoted",
+                  body: "You are now the room host!",
+                  durationMs: 4000,
+                });
+              }
+              return me.isHost;
+            });
           }
         }
       }
@@ -156,6 +166,14 @@ export function App(): React.ReactElement {
         setDisconnectToasts((prev) =>
           prev.filter((t) => t.playerId !== msg.playerId),
         );
+        useRaceStore.setState((s) => ({
+          lobbyPlayers: s.lobbyPlayers.filter((p) => p.playerId !== msg.playerId),
+        }));
+        useCursorStore.setState((s) => {
+          const next = new Map(s.cursors);
+          next.delete(msg.playerId);
+          return { cursors: next };
+        });
       }
       if (msg.type === "error") {
         let title = "Error";
@@ -253,6 +271,35 @@ export function App(): React.ReactElement {
     }
     ws.send({ type: "correction", backspaces, clientTs: Date.now() });
   };
+
+  const handleLeaveRoom = useCallback(() => {
+    if (roomCode) {
+      clearSessionCookie(roomCode);
+    }
+    ws.send({ type: "leave_room" });
+    if (typeof window !== "undefined") {
+      window.location.hash = "";
+    }
+    setRoomCode(null);
+    setIsHost(false);
+    resetRaceUi();
+    useRaceStore.setState({
+      lobbyPlayers: [],
+      passageText: null,
+      raceEndResults: null,
+      countdownStartsAtServerMs: null,
+      hostPickedPassagePreview: null,
+      ownCharStates: [],
+      ownWpm: 0,
+    });
+    useCursorStore.setState({ ownIndex: 0, cursors: new Map() });
+    addToast({
+      type: "info",
+      title: "Left Room",
+      body: "You have left the race room.",
+      durationMs: 3000,
+    });
+  }, [roomCode]);
 
   return (
     <main className="container">
@@ -430,6 +477,7 @@ export function App(): React.ReactElement {
           onStartRace={(passageId, graceSeconds) => {
             ws.send({ type: "start_race", passageId, graceSeconds });
           }}
+          onLeaveRoom={handleLeaveRoom}
         />
       )}
 
@@ -439,6 +487,7 @@ export function App(): React.ReactElement {
           playerId={playerId}
           onKeystroke={onKeystroke}
           onCorrection={onCorrection}
+          onLeaveRoom={handleLeaveRoom}
         />
       )}
 
@@ -452,6 +501,7 @@ export function App(): React.ReactElement {
           onReturnToLobby={() => {
             resetRaceUi();
           }}
+          onLeaveRoom={handleLeaveRoom}
         />
       )}
     </main>

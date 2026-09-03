@@ -91,4 +91,26 @@ describe("ResultsBoard", () => {
     fireEvent.click(playAgainBtn);
     expect(onRematch).toHaveBeenCalled();
   });
+
+  it("triggers onLeaveRoom when host clicks Leave Room", () => {
+    const onLeaveRoom = vi.fn();
+    const { getByText } = render(
+      <ResultsBoard results={sampleResults} isHost={true} onLeaveRoom={onLeaveRoom} />,
+    );
+
+    const leaveBtn = getByText("🚪 Leave Room");
+    fireEvent.click(leaveBtn);
+    expect(onLeaveRoom).toHaveBeenCalled();
+  });
+
+  it("triggers onLeaveRoom when guest clicks Leave Room", () => {
+    const onLeaveRoom = vi.fn();
+    const { getByText } = render(
+      <ResultsBoard results={sampleResults} isHost={false} onLeaveRoom={onLeaveRoom} />,
+    );
+
+    const leaveBtn = getByText("🚪 Leave Room");
+    fireEvent.click(leaveBtn);
+    expect(onLeaveRoom).toHaveBeenCalled();
+  });
 });

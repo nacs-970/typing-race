@@ -165,4 +165,47 @@ describe("removePlayer", () => {
     dispatch(asWs(g), JSON.stringify({ type: "set_ready", ready: false }));
     expect(room.players.get("g")?.isReady).toBe(false);
   });
+
+  test("10. dispatching leave_room removes guest and broadcasts player_left", () => {
+    const h = fakeWs("h");
+    const { code, room } = createRoom(asWs(h), "Host");
+    const g = fakeWs("g");
+    addPlayer(code, "g", "Guest", asWs(g));
+
+    expect(room.players.has("g")).toBe(true);
+    dispatch(asWs(g), JSON.stringify({ type: "leave_room" }));
+
+    expect(room.players.has("g")).toBe(false);
+    expect(h.sent.some((s) => s.includes('"type":"player_left"') && s.includes('"playerId":"g"'))).toBe(true);
+  });
+
+  test("11. when host dispatches leave_room, earliest guest is promoted to host", () => {
+    const h = fakeWs("h");
+    const { code, room } = createRoom(asWs(h), "Host");
+
+    const g1 = fakeWs("g1");
+    addPlayer(code, "g1", "EarliestGuest", asWs(g1));
+    const g2 = fakeWs("g2");
+    addPlayer(code, "g2", "LaterGuest", asWs(g2));
+
+    expect(room.hostId).toBe("h");
+    expect(room.players.get("g1")?.isHost).toBe(false);
+
+    // Host sends leave_room
+    dispatch(asWs(h), JSON.stringify({ type: "leave_room" }));
+
+    expect(room.players.has("h")).toBe(false);
+    expect(room.hostId).toBe("g1");
+    expect(room.players.get("g1")?.isHost).toBe(true);
+    expect(room.players.get("g2")?.isHost).toBe(false);
+
+    // g1 should receive lobby_state indicating they are now host
+    const g1SawNewLobby = g1.sent.some(
+      (s) =>
+        s.includes('"type":"lobby_state"') &&
+        s.includes('"playerId":"g1"') &&
+        s.includes('"isHost":true'),
+    );
+    expect(g1SawNewLobby).toBe(true);
+  });
 });

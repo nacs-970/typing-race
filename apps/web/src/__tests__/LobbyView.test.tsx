@@ -153,4 +153,22 @@ describe("LobbyView", () => {
     expect(puncPassages.length).toBeGreaterThan(0);
     expect(puncPassages.every((p) => /[.,'"!?;:-]/.test(p.text))).toBe(true);
   });
+
+  it("renders Leave Room button and triggers onLeaveRoom when clicked", () => {
+    const onLeaveRoom = vi.fn();
+    const { getByText } = render(
+      <LobbyView
+        roomCode="ABCDEF"
+        isHost={false}
+        players={[{ playerId: "p1", nickname: "Racer", isHost: false, progress: 0 }]}
+        onStartRace={() => {}}
+        onLeaveRoom={onLeaveRoom}
+      />,
+    );
+
+    const leaveBtn = getByText("🚪 Leave Room");
+    expect(leaveBtn).toBeDefined();
+    fireEvent.click(leaveBtn);
+    expect(onLeaveRoom).toHaveBeenCalledTimes(1);
+  });
 });

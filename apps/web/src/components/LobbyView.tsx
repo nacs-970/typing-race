@@ -15,6 +15,7 @@ export interface LobbyViewProps {
   players?: LobbyPlayer[];
   onStartRace: (passageId: string, graceSeconds: number) => void;
   onToggleReady?: (ready: boolean) => void;
+  onLeaveRoom?: () => void;
 }
 
 export function LobbyView({
@@ -23,6 +24,7 @@ export function LobbyView({
   players: propPlayers,
   onStartRace,
   onToggleReady,
+  onLeaveRoom,
 }: LobbyViewProps): React.ReactElement {
   const storePlayers = useRaceStore((s) => s.lobbyPlayers);
   const players = propPlayers ?? storePlayers;
@@ -91,14 +93,26 @@ export function LobbyView({
             {isHost ? "Configure passage and start when racers are ready" : "Waiting for host to start the race…"}
           </p>
         </div>
-        <button
-          type="button"
-          aria-label="Copy room invite link"
-          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#12190b] border border-[#3c4626] hover:bg-[#3c4626] transition-colors text-[#fefbe6]"
-          onClick={handleCopyLink}
-        >
-          {copySuccess ? "✓ Copied Link" : "📋 Copy Room Link"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Copy room invite link"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#12190b] border border-[#3c4626] hover:bg-[#3c4626] transition-colors text-[#fefbe6] cursor-pointer"
+            onClick={handleCopyLink}
+          >
+            {copySuccess ? "✓ Copied Link" : "📋 Copy Room Link"}
+          </button>
+          {onLeaveRoom && (
+            <button
+              type="button"
+              aria-label="Leave room"
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#2a1315] border border-[#7f1d1d] hover:bg-[#7f1d1d] transition-colors text-[#fca5a5] cursor-pointer"
+              onClick={onLeaveRoom}
+            >
+              🚪 Leave Room
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Empty State when solo in room */}

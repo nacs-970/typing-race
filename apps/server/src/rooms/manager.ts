@@ -171,12 +171,18 @@ export function removePlayer(code: string, playerId: PlayerId): void {
 
   // If the host left, promote the next-joined player
   if (room.hostId === playerId) {
-    const next = [...room.players.values()].sort(
-      (a, b) => a.joinedAt - b.joinedAt,
-    )[0];
+    const activeCandidates = [...room.players.values()].filter(
+      (p) => p.disconnectedAt === null,
+    );
+    const pool = activeCandidates.length > 0 ? activeCandidates : [...room.players.values()];
+    const next = pool.sort((a, b) => a.joinedAt - b.joinedAt)[0];
     if (next) {
       next.isHost = true;
       room.hostId = next.playerId;
+      logger.info(
+        { roomCode: code, oldHostId: playerId, newHostId: next.playerId, nickname: next.nickname },
+        "[rooms] host left — promoted earliest guest to host",
+      );
     }
   }
   broadcastPlayerLeft(room, playerId);

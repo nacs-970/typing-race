@@ -6,12 +6,14 @@ export interface RaceHudProps {
   typingEngine?: TypingEngine;
   passageLength: number;
   players?: Array<{ playerId: string; progress: number }>;
+  onLeaveRoom?: () => void;
 }
 
 export function RaceHud({
   typingEngine,
   passageLength,
   players: propPlayers,
+  onLeaveRoom,
 }: RaceHudProps): React.ReactElement {
   const [stats, setStats] = useState<TypingStats>({
     rawWpm: 0,
@@ -145,8 +147,8 @@ export function RaceHud({
         </div>
       </div>
 
-      {/* Rank Badge Indicator */}
-      <div className="flex items-center gap-1.5">
+      {/* Rank Badge Indicator & Leave Room */}
+      <div className="flex items-center gap-2">
         <span
           className={`px-2.5 py-1 rounded text-xs font-bold transition-all shadow-sm ${
             rank === 1
@@ -157,6 +159,16 @@ export function RaceHud({
         >
           #{rank}
         </span>
+        {onLeaveRoom && (
+          <button
+            type="button"
+            className="px-2.5 py-1 rounded text-xs font-semibold bg-[#2a1315] border border-[#7f1d1d] hover:bg-[#7f1d1d] transition-colors text-[#fca5a5] cursor-pointer"
+            onClick={onLeaveRoom}
+            title="Leave Race Room"
+          >
+            Leave
+          </button>
+        )}
       </div>
     </div>
   );

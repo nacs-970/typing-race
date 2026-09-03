@@ -82,11 +82,14 @@ export function broadcastJoinedRoom(room: Room, playerId: string): void {
  *  so they still appear in the results — D-08 grace gives them a fair shot.
  */
 export function buildRaceEndFrame(room: Room, now: number = Date.now()): RaceEnd {
+  const raceStartMs = room.startsAtServerMs ?? now;
   const results: PlayerFinalStats[] = [...room.players.values()].map((p) => {
     const correctChars = countCorrectChars(p.charStates);
+    const rawFinishMs = p.finishedAtServerMs ?? now;
+    const finishTimeMs = Math.max(0, rawFinishMs - raceStartMs);
     return {
       playerId: p.playerId,
-      finishTimeMs: p.finishedAtServerMs ?? now,
+      finishTimeMs,
       wpm: p.currentWpm,
       accuracy: computeAccuracy({
         correctChars,

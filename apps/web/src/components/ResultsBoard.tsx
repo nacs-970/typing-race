@@ -52,6 +52,28 @@ export function ResultsBoard({
   }
 
   const winnerTimeMs = ranked[0]?.finishTimeMs ?? 0;
+  const countdownStartsAtServerMs = useRaceStore((s) => s.countdownStartsAtServerMs);
+
+  const getElapsedMs = (rawMs: number): number => {
+    if (rawMs > 1_000_000_000) {
+      if (countdownStartsAtServerMs && countdownStartsAtServerMs > 0) {
+        return Math.max(0, rawMs - countdownStartsAtServerMs);
+      }
+      return Math.max(0, rawMs - winnerTimeMs);
+    }
+    return rawMs;
+  };
+
+  const formatTime = (rawMs: number): string => {
+    const ms = getElapsedMs(rawMs);
+    const totalSeconds = ms / 1000;
+    if (totalSeconds < 60) {
+      return `${totalSeconds.toFixed(1)}s`;
+    }
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = (totalSeconds % 60).toFixed(1).padStart(4, "0");
+    return `${mins}:${secs}`;
+  };
 
   const handleRematch = () => {
     ws.send({ type: "start_race", graceSeconds: 5 });
@@ -144,7 +166,7 @@ export function ResultsBoard({
                     </div>
                   </td>
                   <td className="py-3 px-3 text-sm text-[#fefbe6]">
-                    {(r.finishTimeMs / 1000).toFixed(1)}s
+                    {formatTime(r.finishTimeMs)}
                   </td>
                   <td className="py-3 px-3 text-sm font-semibold">
                     {i === 0 ? (

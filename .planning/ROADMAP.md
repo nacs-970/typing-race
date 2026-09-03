@@ -139,7 +139,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 05-02: CSS `transform: translate3d()` cursor positioning outside React tree, GPU-accelerated layer, React DevTools profile verification (no per-frame React renders)
+- [x] 05-02: CSS `transform: translate3d()` cursor positioning outside React tree, GPU-accelerated layer, React DevTools profile verification (no per-frame React renders)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -181,5 +181,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Race Engine | 4/4 | Complete    | 2026-08-30 |
 | 3. Race Track + WPM | 0/4 | Not started | - |
 | 4. Reconnect | 0/4 | Not started | - |
-| 5. Frontend Polish | 1/4 | In progress | - |
+| 5. Frontend Polish | 2/4 | In progress | - |
 | 6. Deploy + Hardening | 0/3 | Not started | - |

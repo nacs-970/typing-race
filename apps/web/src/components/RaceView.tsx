@@ -131,6 +131,9 @@ export function RaceView({
     });
 
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === " " || e.key === "Spacebar") {
+        e.preventDefault();
+      }
       localEngine.handleKeyDown(e);
     };
 

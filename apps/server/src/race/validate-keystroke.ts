@@ -85,8 +85,13 @@ export function validateKeystroke(args: {
   const expected = passageText[frame.index];
   const charState: CharState = frame.char === expected ? "correct" : "error";
 
-  // Anti-space-drag: space cannot be submitted over non-space characters
-  if (frame.char === " " && charState === "error") {
+  // Strict space boundary:
+  // 1. Space cannot be submitted over non-space characters (anti-space-drag)
+  // 2. Non-space characters cannot be submitted over space characters
+  if (frame.char === " " && expected !== " ") {
+    return { ok: false, reason: "INVALID_FRAME" };
+  }
+  if (expected === " " && frame.char !== " ") {
     return { ok: false, reason: "INVALID_FRAME" };
   }
 

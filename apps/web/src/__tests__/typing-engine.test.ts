@@ -237,4 +237,21 @@ describe("TypingEngine", () => {
     expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: " " }))).toBe(false);
     expect(testEngine.getOwnIndex()).toBe(0);
   });
+
+  it("rejects non-space characters when expected character is a space (anti-space-skip)", () => {
+    const testEngine = new TypingEngine();
+    testEngine.init("a b");
+
+    // Type 'a'
+    expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "a" }))).toBe(true);
+    expect(testEngine.getOwnIndex()).toBe(1);
+
+    // Expected char at index 1 is ' ' — typing a letter like 'b' is rejected!
+    expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "b" }))).toBe(false);
+    expect(testEngine.getOwnIndex()).toBe(1);
+
+    // Typing Space is accepted
+    expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: " " }))).toBe(true);
+    expect(testEngine.getOwnIndex()).toBe(2);
+  });
 });

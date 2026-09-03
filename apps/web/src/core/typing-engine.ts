@@ -86,8 +86,13 @@ export class TypingEngine {
     const expected = this.passageText[currentIndex] ?? "";
     const isCorrect = ch === expected;
 
-    // Space dragging prevention: Space is ONLY allowed when the expected character is a space
-    if (ch === " " && !isCorrect) {
+    // Space boundary prevention:
+    // 1. Cannot type Space if expected character is other char (no space dragging or skipping)
+    // 2. Cannot type other char if expected character is a Space (must press space between words)
+    if (ch === " " && expected !== " ") {
+      return false;
+    }
+    if (expected === " " && ch !== " ") {
       return false;
     }
 

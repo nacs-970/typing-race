@@ -514,4 +514,22 @@ describe("validateKeystroke — Phase 3 char-state extension", () => {
     // Did NOT set finishedAtServerMs because accuracy ratio < 50%!
     expect(player.finishedAtServerMs).toBe(null);
   });
+
+  test("22. anti-space-skip: non-space submitted on a space is rejected with INVALID_FRAME", () => {
+    const now = 10_000;
+    const player = fakePlayer(0, 0);
+    const room = fakeRoom("racing", 0, PASSAGE);
+
+    // PASSAGE[5] is ' ' — submitting 'a' is rejected
+    const res = validateKeystroke({
+      room,
+      player,
+      frame: fakeFrame(5, "a"),
+      passageText: PASSAGE,
+      now,
+    });
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.reason).toBe("INVALID_FRAME");
+  });
 });

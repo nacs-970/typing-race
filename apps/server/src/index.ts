@@ -6,7 +6,7 @@ import { dispatch } from "./ws/dispatch.ts";
 import { type WsData, sendHello } from "./ws/handlers.ts";
 import { tick } from "./race/controller.ts";
 import { removePlayer, handlePlayerDisconnect } from "./rooms/manager.ts";
-import { PORT } from "./env.ts";
+import { HOST, PORT } from "./env.ts";
 
 /**
  * Bun-native WS upgrade (NOT Hono's upgradeWebSocket — that wraps an EventTarget
@@ -23,7 +23,7 @@ import { PORT } from "./env.ts";
  */
 const server = Bun.serve<WsData>({
   port: PORT,
-  hostname: process.env["HOST"] ?? "0.0.0.0",
+  hostname: HOST,
 
   fetch(req, srv) {
     const url = new URL(req.url);

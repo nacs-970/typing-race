@@ -22,10 +22,13 @@ export {
  */
 export class WsConnection extends RaceClient {}
 
-const wsUrl =
+const envWsUrl = typeof import.meta !== "undefined" ? import.meta.env?.VITE_WS_URL : undefined;
+const dynamicWsUrl =
   typeof window !== "undefined"
     ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws`
     : "ws://localhost:5173/ws";
+
+const wsUrl = envWsUrl ?? dynamicWsUrl;
 
 export const ws = new WsConnection(wsUrl);
 ws.connect();

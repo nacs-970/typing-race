@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import compression from "vite-plugin-compression";
 import { promises as fs } from "node:fs";
@@ -49,18 +49,20 @@ async function writeBrotliSiblings(outDir: string): Promise<void> {
             [zlib.constants.BROTLI_PARAM_QUALITY]: zlib.constants.BROTLI_MAX_QUALITY,
           },
         },
-        (err, result) => (err ? reject(err) : resolve(result)),
+        (err, res) => (err ? reject(err) : resolve(res)),
       ),
     );
     await fs.writeFile(`${file}.br`, compressed);
   }
 }
 
-export default defineConfig(({ command }) => {
-  // outDir is captured from the resolved config so the success hook has it
-  // without the plugin passing it through. In dev (no build) we still set up
-  // compression() to avoid branching — `enforce: "post"` and `apply: "build"`
-  // (plugin-internal) skip it for the dev server.
+export default defineConfig(({ mode }) => {
+  const rootDir = path.resolve(import.meta.dirname, "../../");
+  const env = loadEnv(mode, rootDir, "");
+  const serverPort = env.PORT || "8080";
+  const serverTarget = env.VITE_SERVER_URL || `http://localhost:${serverPort}`;
+  const wsTarget = serverTarget.replace(/^http/, "ws");
+
   let resolvedOutDir = path.resolve(process.cwd(), "dist");
 
   const brotliPlugin = {
@@ -73,15 +75,12 @@ export default defineConfig(({ command }) => {
         : path.resolve(cfg.root, cfg.build.outDir);
     },
     async writeBundle() {
-      // writeBundle (not closeBundle) — Vite calls writeBundle AFTER asset
-      // files have been flushed to disk; closeBundle fires before. Reading
-      // outDir in closeBundle would race against Vite's writer and fail with
-      // ENOENT on a cold build.
       await writeBrotliSiblings(resolvedOutDir);
     },
   };
 
   return {
+    envDir: rootDir,
     plugins: [
       react(),
       tailwindcss(),
@@ -89,30 +88,25 @@ export default defineConfig(({ command }) => {
       compression({
         algorithm: "gzip",
         ext: ".gz",
-        success: () => {
-          // gzip pass finished; brotli siblings are emitted by brotliPlugin
-          // above via closeBundle (which Vite calls in plugin order — gzip is
-          // post-hook, brotli is its own plugin, both run on bundle close).
-        },
       }),
     ],
     server: {
-      host: true,
-      port: 5173,
+      host: env.VITE_HOST === "false" ? false : true,
+      port: Number(env.VITE_PORT || 5173),
       strictPort: true,
       proxy: {
         "/api": {
-          target: "http://localhost:8080",
+          target: serverTarget,
           changeOrigin: true,
           ws: false,
         },
         "/health": {
-          target: "http://localhost:8080",
+          target: serverTarget,
           changeOrigin: true,
           ws: false,
         },
         "/ws": {
-          target: "ws://localhost:8080",
+          target: wsTarget,
           ws: true,
           changeOrigin: true,
         },

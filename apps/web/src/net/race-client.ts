@@ -332,11 +332,12 @@ let defaultRaceClient: RaceClient | null = null;
 
 export function getRaceClient(url?: string): RaceClient {
   if (!defaultRaceClient) {
-    const wsUrl =
-      url ??
-      (typeof window !== "undefined"
+    const envWsUrl = typeof import.meta !== "undefined" ? import.meta.env?.VITE_WS_URL : undefined;
+    const dynamicWsUrl =
+      typeof window !== "undefined"
         ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws`
-        : "ws://localhost:5173/ws");
+        : "ws://localhost:5173/ws";
+    const wsUrl = url ?? envWsUrl ?? dynamicWsUrl;
     defaultRaceClient = new RaceClient(wsUrl);
   }
   return defaultRaceClient;

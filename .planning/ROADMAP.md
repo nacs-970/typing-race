@@ -12,7 +12,7 @@ Build a realtime multiplayer typing-race game from a greenfield monorepo to a de
 - [ ] **Phase 4: Reconnect** - sessionToken, room sweeper, heartbeat, rematch
 - [ ] **Phase 5: Frontend Polish** - Cursor interpolation, smooth UX, error toasts
 - [ ] **Phase 6: Deploy + Hardening** - Graceful shutdown, version pinning, public Fly.io deploy
-- [ ] **Phase 7: Split into N-tier architecture** - Decouple client CDN, WebSocket gateway, race engine, and state tier
+- [x] **Phase 7: Split into N-tier architecture** - Decouple client CDN, WebSocket gateway, race engine, and state tier (completed 2026-09-04)
 
 ## Phase Details
 
@@ -184,24 +184,24 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 4. Reconnect | 0/4 | Not started | - |
 | 5. Frontend Polish | 4/4 | Complete    | 2026-09-03 |
 | 6. Deploy + Hardening | 0/3 | Not started | - |
-| 7. Split into N-tier architecture | 0/0 | Not started | - |
+| 7. Split into N-tier architecture | 3/3 | Complete    | 2026-09-04 |
 
 ### Phase 7: Split into N-tier architecture
 
 **Goal:** Decompose the monolithic server into a decoupled 3-tier architecture: Presentation Tier (`apps/web`), Real-time Gateway Tier (`apps/gateway`), Race Engine Tier (`apps/engine`), and Shared Contract Tier (`packages/shared`), supporting zero-install local dev and multi-tier containerization.
 **Requirements**: D-01, D-02, D-04, D-05, D-06, D-07, D-08, D-09
 **Depends on:** Phase 5, Phase 6
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
 **Wave 1**
 
-- [ ] 07-01: Event Bridge & Engine Extraction (Wave 1)
+- [x] 07-01: Event Bridge & Engine Extraction (Wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 07-02: Gateway Extraction & Dual-Mode Local Dev (Wave 2)
+- [x] 07-02: Gateway Extraction & Dual-Mode Local Dev (Wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 07-03: Cloud-Agnostic Containerization & End-to-End Verification (Wave 3)
+- [x] 07-03: Cloud-Agnostic Containerization & End-to-End Verification (Wave 3)

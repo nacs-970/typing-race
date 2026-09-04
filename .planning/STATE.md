@@ -71,6 +71,10 @@ Full log in PROJECT.md Key Decisions table. Recent decisions affecting current w
 - Phase 2 Plan 03 (executed): single `Date.now()` in `recordSyncRequest` (t1===t2 OK); injectable fetch for syncClock tests; App.tsx dev "Simulate countdown" button for one-developer verification
 - Phase 2 Plan 04 (executed): anti-cheat #1 implicit (frame.clientTs never read for timing); cursor_position throttle reuses `lastKeystrokeAt` (Phase 5 may split); `setCursorState` accepts Partial OR function form
 
+### Roadmap Evolution
+
+- Phase 7 added: Split into N-tier architecture
+
 ### Pending Todos
 
 None yet.

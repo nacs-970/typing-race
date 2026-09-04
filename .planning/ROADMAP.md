@@ -12,6 +12,7 @@ Build a realtime multiplayer typing-race game from a greenfield monorepo to a de
 - [ ] **Phase 4: Reconnect** - sessionToken, room sweeper, heartbeat, rematch
 - [ ] **Phase 5: Frontend Polish** - Cursor interpolation, smooth UX, error toasts
 - [ ] **Phase 6: Deploy + Hardening** - Graceful shutdown, version pinning, public Fly.io deploy
+- [ ] **Phase 7: Split into N-tier architecture** - Decouple client CDN, WebSocket gateway, race engine, and state tier
 
 ## Phase Details
 
@@ -173,7 +174,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -183,3 +184,15 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 4. Reconnect | 0/4 | Not started | - |
 | 5. Frontend Polish | 4/4 | Complete    | 2026-09-03 |
 | 6. Deploy + Hardening | 0/3 | Not started | - |
+| 7. Split into N-tier architecture | 0/0 | Not started | - |
+
+### Phase 7: Split into N-tier architecture
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 7 to break down)

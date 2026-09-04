@@ -188,11 +188,20 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 ### Phase 7: Split into N-tier architecture
 
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 6
-**Plans:** 0 plans
+**Goal:** Decompose the monolithic server into a decoupled 3-tier architecture: Presentation Tier (`apps/web`), Real-time Gateway Tier (`apps/gateway`), Race Engine Tier (`apps/engine`), and Shared Contract Tier (`packages/shared`), supporting zero-install local dev and multi-tier containerization.
+**Requirements**: D-01, D-02, D-04, D-05, D-06, D-07, D-08, D-09
+**Depends on:** Phase 5, Phase 6
+**Plans:** 3 plans
 
 Plans:
+**Wave 1**
 
-- [ ] TBD (run /gsd-plan-phase 7 to break down)
+- [ ] 07-01: Event Bridge & Engine Extraction (Wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 07-02: Gateway Extraction & Dual-Mode Local Dev (Wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 07-03: Cloud-Agnostic Containerization & End-to-End Verification (Wave 3)

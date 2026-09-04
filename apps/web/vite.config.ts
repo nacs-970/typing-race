@@ -59,7 +59,7 @@ async function writeBrotliSiblings(outDir: string): Promise<void> {
 export default defineConfig(({ mode }) => {
   const rootDir = path.resolve(import.meta.dirname, "../../");
   const env = loadEnv(mode, rootDir, "");
-  const serverPort = env.PORT || "8080";
+  const serverPort = env.GATEWAY_PORT || env.PORT || "8080";
   const serverTarget = env.VITE_SERVER_URL || `http://localhost:${serverPort}`;
   const wsTarget = serverTarget.replace(/^http/, "ws");
 

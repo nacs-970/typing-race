@@ -4,12 +4,15 @@
   "type": "module",
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "dev": "concurrently -k -n server,web -c blue,green \"bun run --cwd apps/server dev\" \"bun run --cwd apps/web dev\"",
-    "dev:server": "bun run --cwd apps/server dev",
+    "dev": "concurrently -k -n web,gateway,engine -c green,blue,magenta \"bun run dev:web\" \"bun run dev:gateway\" \"bun run dev:engine\"",
+    "dev:unified": "concurrently -k -n web,server -c green,blue \"bun run dev:web\" \"MODE=unified bun run dev:gateway\"",
     "dev:web": "bun run --cwd apps/web dev",
-    "typecheck": "bun run --cwd apps/server typecheck && bun run --cwd apps/web typecheck",
+    "dev:gateway": "bun run --cwd apps/gateway dev",
+    "dev:engine": "bun run --cwd apps/engine dev",
+    "typecheck": "bun run --cwd packages/shared typecheck && bun run --cwd apps/web typecheck && bun run --cwd apps/gateway typecheck && bun run --cwd apps/engine typecheck",
+    "test": "bun test packages/shared apps/gateway apps/engine && bun run --cwd apps/web test",
     "build": "bun run --cwd apps/web build",
-    "start": "bun run --cwd apps/server start"
+    "start": "bun run --cwd apps/gateway start"
   },
   "devDependencies": {
     "concurrently": "^9.1.0",

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { TypingEngine, type TypingEngineStats } from "../core/typing-engine";
-import { computeNetWpm, computeAccuracy } from "../../../../apps/server/src/race/scoring";
+import { computeNetWpm, computeAccuracy } from "../../../../apps/engine/src/race/scoring";
 
 describe("TypingEngine", () => {
   let engine: TypingEngine;

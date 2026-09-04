@@ -11,7 +11,8 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json bun.lock ./
 COPY packages/shared/package.json ./packages/shared/
-COPY apps/server/package.json    ./apps/server/
+COPY apps/gateway/package.json   ./apps/gateway/
+COPY apps/engine/package.json    ./apps/engine/
 COPY apps/web/package.json       ./apps/web/
 RUN bun install --frozen-lockfile
 
@@ -29,21 +30,20 @@ RUN bun x vite build
 # ---------- runtime ----------
 FROM base AS release
 ENV NODE_ENV=production
+ENV MODE=unified
 COPY --from=deps          /app/node_modules         /app/node_modules
 COPY --from=client-build  /app/apps/web/dist        /app/apps/web/dist
 COPY packages/shared      /app/packages/shared
-COPY apps/server          /app/apps/server
+COPY apps/gateway         /app/apps/gateway
+COPY apps/engine          /app/apps/engine
 COPY package.json bun.lock /app/
 
 # `oven/bun` images ship a non-root `bun` user (UID 1000). Switch before ENTRYPOINT.
 USER bun
 EXPOSE 8080
 
-# Pitfall 4 fix: WORKDIR must match `import.meta.dir` in `apps/server/src/static.ts`.
-# With WORKDIR=/app/apps/server, `import.meta.dir` resolves to
-# `/app/apps/server/src` and `path.resolve(import.meta.dir, "../../web/dist")`
-# equals `/app/apps/web/dist` — where client-build COPY'd the SPA.
-WORKDIR /app/apps/server
+# WORKDIR matches `import.meta.dir` in `apps/gateway/src/static.ts`.
+WORKDIR /app/apps/gateway
 
 # Bun.serve binds 0.0.0.0:8080 by default (no hostname override).
 # HEALTHCHECK is independent of Fly's [[http_service.checks]] — useful for

@@ -212,6 +212,6 @@ describe("LobbyView", () => {
     );
 
     expect(getByText(/Random Words • long/i)).toBeDefined();
-    expect(getByText("80 random common words — endurance test.")).toBeDefined();
+    expect(getByText("~70–90 random common words — endurance test.")).toBeDefined();
   });
 });

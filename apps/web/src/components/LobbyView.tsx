@@ -97,11 +97,11 @@ export function LobbyView({
     if (type === "random_words") {
       switch (cat) {
         case "short":
-          return "25 random common words — rapid sprint.";
+          return "~20–30 random common words — rapid sprint.";
         case "mid":
-          return "50 random common words — standard competition.";
+          return "~40–55 random common words — standard competition.";
         case "long":
-          return "80 random common words — endurance test.";
+          return "~70–90 random common words — endurance test.";
       }
     }
     switch (cat) {

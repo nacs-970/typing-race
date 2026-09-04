@@ -143,8 +143,17 @@ function generateUuid(): string {
   });
 }
 
+function getRandomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 export function generateRandomWords(category: CorpusCategory = "mid"): Passage {
-  const targetCount = category === "short" ? 25 : category === "long" ? 80 : 50;
+  const targetCount =
+    category === "short"
+      ? getRandomInt(20, 30)
+      : category === "long"
+        ? getRandomInt(70, 90)
+        : getRandomInt(40, 55);
   const words: string[] = [];
   let prevWord = "";
   for (let i = 0; i < targetCount; i++) {

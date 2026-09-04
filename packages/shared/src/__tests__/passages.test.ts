@@ -75,17 +75,23 @@ describe("Passage helpers", () => {
     expect(isValidPassageId("99999999-9999-4999-8999-999999999999")).toBe(false);
   });
 
-  test("9. generateRandomWords produces correct word count and valid uuid", () => {
+  test("9. generateRandomWords produces variable word count within category range and valid uuid", () => {
     const short = generateRandomWords("short");
-    expect(short.text.trim().split(/\s+/).length).toBe(25);
+    const shortWc = short.text.trim().split(/\s+/).length;
+    expect(shortWc).toBeGreaterThanOrEqual(20);
+    expect(shortWc).toBeLessThanOrEqual(30);
     expect(z.string().uuid().safeParse(short.id).success).toBe(true);
 
     const mid = generateRandomWords("mid");
-    expect(mid.text.trim().split(/\s+/).length).toBe(50);
+    const midWc = mid.text.trim().split(/\s+/).length;
+    expect(midWc).toBeGreaterThanOrEqual(40);
+    expect(midWc).toBeLessThanOrEqual(55);
     expect(z.string().uuid().safeParse(mid.id).success).toBe(true);
 
     const long = generateRandomWords("long");
-    expect(long.text.trim().split(/\s+/).length).toBe(80);
+    const longWc = long.text.trim().split(/\s+/).length;
+    expect(longWc).toBeGreaterThanOrEqual(70);
+    expect(longWc).toBeLessThanOrEqual(90);
     expect(z.string().uuid().safeParse(long.id).success).toBe(true);
   });
 
@@ -105,7 +111,9 @@ describe("Passage helpers", () => {
   test("11. getRandomCorpus routes between random_words and passage", () => {
     const wordsCorpus = getRandomCorpus("random_words", "short");
     expect(wordsCorpus.source.includes("Random Words")).toBe(true);
-    expect(wordsCorpus.text.trim().split(/\s+/).length).toBe(25);
+    const wc = wordsCorpus.text.trim().split(/\s+/).length;
+    expect(wc).toBeGreaterThanOrEqual(20);
+    expect(wc).toBeLessThanOrEqual(30);
 
     const passageCorpus = getRandomCorpus("passage", "mid");
     expect(PASSAGES.some((p) => p.id === passageCorpus.id)).toBe(true);

@@ -71,7 +71,124 @@ export const PASSAGES: ReadonlyArray<Passage> = [
   { id: "11111111-1111-4111-8111-000000000050", text: "Marley was dead, to begin with. There is no doubt whatever about that. The register of his burial was signed by the clergyman, the clerk, the undertaker, and the chief mourner. Scrooge signed it. And Scrooge's name was good upon the change for anything he chose to put his hand to.", source: "Charles Dickens — A Christmas Carol" },
   { id: "11111111-1111-4111-8111-000000000051", text: "Beware the Jabberwock, my son. The jaws that bite, the claws that catch. Beware the Jubjub bird, and shun the frumious Bandersnatch. He took his vorpal sword in hand, long time the manxome foe he sought, so rested he by the Tumtum tree, and stood awhile in thought.", source: "Lewis Carroll — Jabberwocky" },
   { id: "11111111-1111-4111-8111-000000000052", text: "A Fox once fell into a well and could not get out again. A thirsty Goat passed by and, peeping over the edge, asked if the water was good. The Fox spoke loudly of its excellence and suggested that the Goat should descend and drink. The Goat leaped down and the Fox mounted on his horns sprang out.", source: "Aesop — Fables" },
+  { id: "11111111-1111-4111-8111-000000000053", text: "To live is the rarest thing in the world. Most people exist, that is all. Be yourself; everyone else is already taken. The truth is rarely pure and never simple in the end.", source: "Oscar Wilde — Phrases and Philosophies" },
+  { id: "11111111-1111-4111-8111-000000000054", text: "Do not go where the path may lead, go instead where there is no path and leave a trail. What lies behind us and what lies before us are tiny matters compared to what lies within us.", source: "Ralph Waldo Emerson — Essays" },
+  { id: "11111111-1111-4111-8111-000000000055", text: "You have power over your mind, not outside events. Realize this, and you will find strength. Very little is needed to make a happy life; it is all within yourself, in your way of thinking.", source: "Marcus Aurelius — Meditations" },
+  { id: "11111111-1111-4111-8111-000000000056", text: "The secret of getting ahead is getting started. The secret of getting started is breaking your complex overwhelming tasks into small manageable tasks, and then starting on the very first one with courage.", source: "Mark Twain" },
+  { id: "11111111-1111-4111-8111-000000000057", text: "We are what we repeatedly do. Excellence, then, is not an act, but a habit. Knowing yourself is the beginning of all wisdom. During our darkest moments we must focus to see the light.", source: "Aristotle — Nicomachean Ethics" },
+  { id: "11111111-1111-4111-8111-000000000058", text: "Not until we are lost, in other words, not until we have lost the world, do we begin to find ourselves, and realize where we are and the infinite extent of our true relations.", source: "Henry David Thoreau — Walden" },
+  { id: "11111111-1111-4111-8111-000000000059", text: "In the midst of chaos, there is also opportunity. The supreme art of war is to subdue the enemy without fighting. Let your plans be dark as night, and move like a thunderbolt across the sky.", source: "Sun Tzu — The Art of War" },
+  { id: "11111111-1111-4111-8111-000000000060", text: "Hope is the thing with feathers that perches in the soul and sings the tune without the words and never stops at all, and sweetest in the Gale is heard, across every distant land.", source: "Emily Dickinson — Poems" },
+  { id: "11111111-1111-4111-8111-000000000061", text: "He who has a why to live can bear almost any how. What does not kill me makes me stronger. There are no facts, only interpretations. In individuals, insanity is rare; but in groups, it is the rule.", source: "Friedrich Nietzsche — Twilight of the Idols" },
+  { id: "11111111-1111-4111-8111-000000000062", text: "Beware; for I am fearless, and therefore powerful. I will watch with the wiliness of a snake, that I may sting with its venom. Man, you shall repent of the injuries you have infused upon me.", source: "Mary Shelley — Frankenstein" },
+  { id: "11111111-1111-4111-8111-000000000063", text: "All the world is a stage, and all the men and women merely players; they have their exits and their entrances, and one man in his time plays many parts, his acts being seven ages.", source: "William Shakespeare — As You Like It" },
+  { id: "11111111-1111-4111-8111-000000000064", text: "There are darknesses in life and there are lights, and you are one of the lights, the light of all lights. We learn from failure, not from success, and hope will always guide our weary souls.", source: "Bram Stoker — Dracula" },
+  { id: "11111111-1111-4111-8111-000000000065", text: "When you have eliminated the impossible, whatever remains, however improbable, must be the truth. It has long been an axiom of mine that the little things are infinitely the most important in every investigation.", source: "Arthur Conan Doyle — The Sign of the Four" },
+  { id: "11111111-1111-4111-8111-000000000066", text: "There is nothing like staying at home for real comfort. I cannot fix on the hour, or the spot, or the look, or the words, which laid the foundation. It was too long ago to remember clearly.", source: "Jane Austen — Emma" },
+  { id: "11111111-1111-4111-8111-000000000067", text: "Two roads diverged in a yellow wood, and sorry I could not travel both and be one traveler, long I stood and looked down one as far as I could to where it bent in the undergrowth.", source: "Robert Frost — The Road Not Taken" },
 ];
+
+export type CorpusType = "passage" | "random_words";
+export type CorpusCategory = "short" | "mid" | "long";
+
+export const COMMON_WORDS: ReadonlyArray<string> = [
+  "the", "be", "to", "of", "and", "a", "in", "that", "have", "it",
+  "for", "not", "on", "with", "he", "as", "you", "do", "at", "this",
+  "but", "his", "by", "from", "they", "we", "say", "her", "she", "or",
+  "an", "will", "my", "one", "all", "would", "there", "their", "what", "so",
+  "up", "out", "if", "about", "who", "get", "which", "go", "me", "when",
+  "make", "can", "like", "time", "no", "just", "him", "know", "take", "people",
+  "into", "year", "your", "good", "some", "could", "them", "see", "other", "than",
+  "then", "now", "look", "only", "come", "its", "over", "think", "also", "back",
+  "after", "use", "two", "how", "our", "work", "first", "well", "way", "even",
+  "new", "want", "because", "any", "these", "give", "day", "most", "us", "great",
+  "between", "need", "large", "under", "never", "place", "found", "around", "small", "number",
+  "always", "right", "world", "water", "sound", "still", "learn", "point", "mother", "answer",
+  "study", "change", "hand", "high", "every", "near", "school", "father", "light", "house",
+  "night", "live", "page", "open", "tree", "plant", "start", "story", "city", "sea",
+  "paper", "walk", "play", "run", "keep", "few", "close", "while", "along", "might",
+  "next", "hard", "example", "begin", "life", "those", "both", "together", "group", "often",
+  "important", "until", "children", "side", "feet", "car", "mile", "white", "began", "grow",
+  "took", "river", "four", "carry", "state", "once", "book", "hear", "stop", "without",
+  "second", "late", "miss", "idea", "enough", "face", "watch", "far", "really", "almost",
+  "let", "above", "girl", "sometimes", "mountain", "cut", "young", "talk", "soon", "list",
+  "song", "leave", "family", "body", "music", "color", "stand", "sun", "question", "fish",
+  "area", "mark", "dog", "horse", "birds", "problem", "complete", "room", "knew", "since",
+  "ever", "piece", "told", "usually", "friends", "easy", "heard", "order", "door", "sure",
+  "become", "top", "ship", "across", "today", "during", "short", "better", "best", "however",
+  "low", "hours", "black", "products", "happened", "whole", "measure", "remember", "early", "waves",
+  "reached", "listen", "wind", "rock", "space", "covered", "fast", "several", "hold", "himself",
+  "toward", "five", "step", "morning", "passed", "true", "hundred", "against", "pattern", "table",
+  "north", "slowly", "money", "map", "farm", "draw", "voice", "seen", "cold", "plan",
+  "notice", "south", "sing", "ground", "fall", "king", "town", "unit", "figure", "certain",
+  "field", "travel", "wood", "fire", "upon", "done", "road", "half", "ten", "fly",
+  "gave", "box", "finally", "wait", "correct", "quickly", "person", "became", "shown", "minutes",
+  "strong", "stars", "front", "feel", "fact", "inches", "street", "decided", "contain", "course",
+  "surface", "produce", "building", "ocean", "class", "note", "nothing", "rest", "carefully", "inside",
+  "wheels", "stay", "green", "known", "island", "week", "less", "machine", "base", "ago",
+  "plane", "system", "behind", "round", "boat", "possible", "force", "brought", "understand", "warm",
+  "common", "bring", "explain", "dry", "though", "language", "shape", "deep", "thousands", "yes",
+  "clear", "equation", "yet", "government", "filled", "heat", "full", "hot", "check", "object",
+  "rule", "among", "ball", "eyes", "heavy", "material", "special", "pair", "circle", "built",
+];
+
+function generateUuid(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+export function generateRandomWords(category: CorpusCategory = "mid"): Passage {
+  const targetCount = category === "short" ? 25 : category === "long" ? 80 : 50;
+  const words: string[] = [];
+  let prevWord = "";
+  for (let i = 0; i < targetCount; i++) {
+    let word = COMMON_WORDS[Math.floor(Math.random() * COMMON_WORDS.length)]!;
+    while (word === prevWord) {
+      word = COMMON_WORDS[Math.floor(Math.random() * COMMON_WORDS.length)]!;
+    }
+    words.push(word);
+    prevWord = word;
+  }
+  return {
+    id: generateUuid(),
+    text: words.join(" "),
+    source: `Random Words (${category} · ${targetCount} words)`,
+  };
+}
+
+export function getRandomPassage(
+  category: CorpusCategory = "mid",
+  excludeId?: string,
+): Passage {
+  const candidates = PASSAGES.filter((p) => {
+    if (excludeId && p.id === excludeId && PASSAGES.length > 1) return false;
+    const words = p.text.trim().split(/\s+/).length;
+    if (category === "short") return words <= 42;
+    if (category === "mid") return words >= 43 && words <= 49;
+    return words >= 50;
+  });
+
+  const pool = candidates.length > 0 ? candidates : PASSAGES;
+  const index = Math.floor(Math.random() * pool.length);
+  return pool[index]!;
+}
+
+export function getRandomCorpus(
+  type: CorpusType = "passage",
+  category: CorpusCategory = "mid",
+  excludeId?: string,
+): Passage {
+  if (type === "random_words") {
+    return generateRandomWords(category);
+  }
+  return getRandomPassage(category, excludeId);
+}
 
 export function isValidPassageId(id: string): boolean {
   return PASSAGES.some((p) => p.id === id);

@@ -28,6 +28,8 @@ export function buildLobbyStateFrame(room: Room): LobbyState {
     roomCode: room.code,
     players,
     hostPickedPassagePreview: room.hostPickedPassagePreview ?? undefined,
+    corpusType: room.corpusType,
+    corpusCategory: room.corpusCategory,
   };
 }
 
@@ -48,6 +50,8 @@ export function buildJoinedRoomFrame(room: Room, target: Player): JoinedRoom {
     players,
     clockOffsetMs: target.clientOffsetMs,
     hostPickedPassagePreview: room.hostPickedPassagePreview ?? undefined,
+    corpusType: room.corpusType,
+    corpusCategory: room.corpusCategory,
   };
 }
 
@@ -152,6 +156,8 @@ export function buildRejoinedRoomFrame(room: Room, player: Player): RejoinedRoom
     startsAtServerMs: isLobby || isFinished ? null : room.startsAtServerMs,
     graceEndsAtServerMs: isLobby || isFinished ? null : room.graceEndsAtServerMs,
     clockOffsetMs: player.clientOffsetMs,
+    corpusType: room.corpusType,
+    corpusCategory: room.corpusCategory,
     you: {
       playerId: player.playerId,
       nickname: player.nickname,

@@ -256,6 +256,8 @@ export class RaceClient {
       setRaceState({
         hostPickedPassagePreview: msg.hostPickedPassagePreview ?? null,
         lobbyPlayers: msg.players,
+        ...(msg.corpusType ? { corpusType: msg.corpusType } : {}),
+        ...(msg.corpusCategory ? { corpusCategory: msg.corpusCategory } : {}),
       });
     } else if (msg.type === "rejoined_room") {
       setConnectionStore({ playerId: msg.you.playerId });
@@ -311,6 +313,8 @@ export class RaceClient {
       setRaceState({
         hostPickedPassagePreview: msg.hostPickedPassagePreview ?? null,
         lobbyPlayers: msg.players,
+        ...(msg.corpusType ? { corpusType: msg.corpusType } : {}),
+        ...(msg.corpusCategory ? { corpusCategory: msg.corpusCategory } : {}),
       });
     }
 

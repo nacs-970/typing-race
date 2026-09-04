@@ -11,6 +11,7 @@ import {
   isValidPassageId,
   hostPickedPreview,
   PASSAGES,
+  getRandomCorpus,
 } from "@typing-race/shared";
 import {
   buildCursorUpdateFrame,
@@ -203,6 +204,24 @@ export class EngineWorker {
         break;
       }
 
+      case "set_corpus_config": {
+        if (!roomCode) return;
+        const room = await this.store.get(roomCode);
+        if (!room || room.hostId !== playerId) return;
+        if (room.state !== "lobby" && room.state !== "finished") return;
+
+        room.corpusType = message.corpusType;
+        room.corpusCategory = message.corpusCategory;
+        await this.store.set(roomCode, room);
+
+        await this.bridge.publishToGateway({
+          type: "broadcast_to_room",
+          roomCode,
+          payload: buildLobbyStateFrame(room),
+        });
+        break;
+      }
+
       case "start_race": {
         if (!roomCode) return;
         const room = await this.store.get(roomCode);
@@ -228,7 +247,13 @@ export class EngineWorker {
           }
         }
 
+        if (message.corpusType) room.corpusType = message.corpusType;
+        if (message.corpusCategory) room.corpusCategory = message.corpusCategory;
+
         let passageId: string;
+        let passageText: string;
+        let preview: string;
+
         if (message.passageId !== undefined) {
           if (!isValidPassageId(message.passageId)) {
             await this.bridge.publishToGateway({
@@ -242,25 +267,21 @@ export class EngineWorker {
             });
             return;
           }
-          passageId = message.passageId;
+          const passage = getPassageById(message.passageId);
+          if (!passage) return;
+          passageId = passage.id;
+          passageText = passage.text;
+          preview = hostPickedPreview(passage);
         } else {
-          if (room.deckOrder.length === 0) {
-            room.deckOrder = shuffle(PASSAGES.map((p) => p.id));
-            room.deckCursor = 0;
-          }
-          const dealt = dealNextPassage({
-            allPassageIds: PASSAGES.map((p) => p.id),
-            deckOrder: room.deckOrder,
-            deckCursor: room.deckCursor,
-            lastPassageId: room.lastPassageId,
-          });
-          room.deckOrder = dealt.deckOrder as string[];
-          room.deckCursor = dealt.deckCursor;
-          passageId = dealt.passageId;
+          const corpus = getRandomCorpus(
+            room.corpusType ?? "passage",
+            room.corpusCategory ?? "mid",
+            room.lastPassageId ?? undefined,
+          );
+          passageId = corpus.id;
+          passageText = corpus.text;
+          preview = hostPickedPreview(corpus);
         }
-
-        const passage = getPassageById(passageId);
-        if (!passage) return;
 
         try {
           transition(room, "countdown");
@@ -268,16 +289,12 @@ export class EngineWorker {
           return;
         }
 
-        room.passageId = passage.id;
-        room.passageText = passage.text;
+        room.passageId = passageId;
+        room.passageText = passageText;
         room.graceSeconds = message.graceSeconds;
-        room.hostPickedPassagePreview = hostPickedPreview(passage);
-        if (room.deckOrder.length === 0) {
-          room.deckOrder = shuffle(PASSAGES.map((p) => p.id));
-          room.deckCursor = 0;
-        }
-        room.lastPassageId = passage.id;
-        room.usedPassageIds.add(passage.id);
+        room.hostPickedPassagePreview = preview;
+        room.lastPassageId = passageId;
+        room.usedPassageIds.add(passageId);
         await this.store.set(roomCode, room);
 
         const countdownFrame = buildCountdownFrame(room.startsAtServerMs!, 3);

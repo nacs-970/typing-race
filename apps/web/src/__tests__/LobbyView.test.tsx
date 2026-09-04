@@ -171,4 +171,47 @@ describe("LobbyView", () => {
     fireEvent.click(leaveBtn);
     expect(onLeaveRoom).toHaveBeenCalledTimes(1);
   });
+
+  it("allows host to switch corpus type and category", () => {
+    const onStartRace = vi.fn();
+    const { getByText } = render(
+      <LobbyView
+        roomCode="ABCDEF"
+        isHost={true}
+        players={[{ playerId: "p1", nickname: "HostRacer", isHost: true, progress: 0 }]}
+        onStartRace={onStartRace}
+      />,
+    );
+
+    expect(getByText("📖 Passage")).toBeDefined();
+    expect(getByText("🔤 Random Words")).toBeDefined();
+
+    // Switch to Random Words
+    fireEvent.click(getByText("🔤 Random Words"));
+    // Switch to Short
+    fireEvent.click(getByText("short"));
+
+    // Start race
+    fireEvent.click(getByText("Start Race"));
+    expect(onStartRace).toHaveBeenCalledWith(undefined, 5, "random_words", "short");
+  });
+
+  it("displays selected corpus config for guest", () => {
+    useRaceStore.setState({
+      corpusType: "random_words",
+      corpusCategory: "long",
+    });
+
+    const { getByText } = render(
+      <LobbyView
+        roomCode="ABCDEF"
+        isHost={false}
+        players={[{ playerId: "p2", nickname: "GuestRacer", isHost: false, progress: 0 }]}
+        onStartRace={() => {}}
+      />,
+    );
+
+    expect(getByText(/Random Words • long/i)).toBeDefined();
+    expect(getByText("80 random common words — endurance test.")).toBeDefined();
+  });
 });

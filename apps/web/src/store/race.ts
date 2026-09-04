@@ -5,13 +5,13 @@
  * cursor_update frames don't re-render the lobby/connection stores.
  */
 import { create } from "zustand";
-import type { PlayerFinalStats } from "@typing-race/shared";
+import type { PlayerFinalStats, CorpusType, CorpusCategory } from "@typing-race/shared";
 
 /** Per-character state. Mirrors server-side CharState (apps/server/src/race/types.ts).
  *  Server is the sole producer; client renders accents. */
 export type CharState = "pending" | "correct" | "error";
 
-export type { CharState as CharStateType };
+export type { CharState as CharStateType, CorpusType, CorpusCategory };
 
 export type GraceBanner = {
   leaderPlayerId: string;
@@ -35,6 +35,8 @@ export type RaceUiState = {
   raceEndResults: PlayerFinalStats[] | null;
   hostPickedPassagePreview: string | null;
   hostGraceSeconds: number;
+  corpusType: CorpusType;
+  corpusCategory: CorpusCategory;
   passageText: string | null;
   /** Server timestamp when countdown began (ms). Null when not in countdown. */
   countdownStartsAtServerMs: number | null;
@@ -49,6 +51,8 @@ export const useRaceStore = create<RaceUiState>(() => ({
   raceEndResults: null,
   hostPickedPassagePreview: null,
   hostGraceSeconds: 5,
+  corpusType: "passage",
+  corpusCategory: "mid",
   passageText: null,
   countdownStartsAtServerMs: null,
   lobbyPlayers: [],

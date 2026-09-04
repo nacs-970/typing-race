@@ -53,6 +53,8 @@ export class RoomManager {
       deckCursor: 0,
       firstFinisherId: null,
       graceEndsAtServerMs: null,
+      corpusType: "passage",
+      corpusCategory: "mid",
     };
     await this.store.set(code, room);
 

@@ -10,6 +10,9 @@ import {
   getPassageById,
   isValidPassageId,
   hostPickedPreview,
+  generateRandomWords,
+  getRandomPassage,
+  getRandomCorpus,
 } from "../passages.ts";
 
 describe("Passage corpus shape", () => {
@@ -70,5 +73,41 @@ describe("Passage helpers", () => {
     if (!known) throw new Error("PASSAGES[0] missing");
     expect(isValidPassageId(known.id)).toBe(true);
     expect(isValidPassageId("99999999-9999-4999-8999-999999999999")).toBe(false);
+  });
+
+  test("9. generateRandomWords produces correct word count and valid uuid", () => {
+    const short = generateRandomWords("short");
+    expect(short.text.trim().split(/\s+/).length).toBe(25);
+    expect(z.string().uuid().safeParse(short.id).success).toBe(true);
+
+    const mid = generateRandomWords("mid");
+    expect(mid.text.trim().split(/\s+/).length).toBe(50);
+    expect(z.string().uuid().safeParse(mid.id).success).toBe(true);
+
+    const long = generateRandomWords("long");
+    expect(long.text.trim().split(/\s+/).length).toBe(80);
+    expect(z.string().uuid().safeParse(long.id).success).toBe(true);
+  });
+
+  test("10. getRandomPassage selects passages respecting category word bounds", () => {
+    const short = getRandomPassage("short");
+    expect(short.text.trim().split(/\s+/).length).toBeLessThanOrEqual(42);
+
+    const mid = getRandomPassage("mid");
+    const midWc = mid.text.trim().split(/\s+/).length;
+    expect(midWc).toBeGreaterThanOrEqual(43);
+    expect(midWc).toBeLessThanOrEqual(49);
+
+    const long = getRandomPassage("long");
+    expect(long.text.trim().split(/\s+/).length).toBeGreaterThanOrEqual(50);
+  });
+
+  test("11. getRandomCorpus routes between random_words and passage", () => {
+    const wordsCorpus = getRandomCorpus("random_words", "short");
+    expect(wordsCorpus.source.includes("Random Words")).toBe(true);
+    expect(wordsCorpus.text.trim().split(/\s+/).length).toBe(25);
+
+    const passageCorpus = getRandomCorpus("passage", "mid");
+    expect(PASSAGES.some((p) => p.id === passageCorpus.id)).toBe(true);
   });
 });

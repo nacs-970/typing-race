@@ -3,9 +3,11 @@ import type {
   PassageId,
   PlayerSummary,
   RaceState,
+  CorpusType,
+  CorpusCategory,
 } from "@typing-race/shared";
 
-export type { PlayerId, PassageId, PlayerSummary, RaceState };
+export type { PlayerId, PassageId, PlayerSummary, RaceState, CorpusType, CorpusCategory };
 
 /** Per-character state. 2-tone (D-11/D-12): no "corrected" intermediate. */
 export type CharState = "pending" | "correct" | "error";
@@ -61,4 +63,6 @@ export interface Room {
   deckCursor: number;
   firstFinisherId: PlayerId | null;
   graceEndsAtServerMs: number | null;
+  corpusType?: CorpusType;
+  corpusCategory?: CorpusCategory;
 }

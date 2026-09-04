@@ -1,10 +1,5 @@
-import React, { useState, useMemo } from "react";
-import {
-  PASSAGES,
-  type Passage,
-  filterPassages,
-  type PassageLengthFilter,
-} from "@typing-race/shared";
+import React, { useState } from "react";
+import type { CorpusType, CorpusCategory } from "@typing-race/shared";
 import { useRaceStore, type LobbyPlayer } from "../store/race.ts";
 import { useConnectionStore } from "../store/connection.ts";
 import { ws } from "../net/ws.ts";
@@ -13,7 +8,12 @@ export interface LobbyViewProps {
   roomCode: string;
   isHost: boolean;
   players?: LobbyPlayer[];
-  onStartRace: (passageId: string, graceSeconds: number) => void;
+  onStartRace: (
+    passageId?: string,
+    graceSeconds?: number,
+    corpusType?: CorpusType,
+    corpusCategory?: CorpusCategory,
+  ) => void;
   onToggleReady?: (ready: boolean) => void;
   onLeaveRoom?: () => void;
 }
@@ -32,27 +32,37 @@ export function LobbyView({
 
   const preview = useRaceStore((s) => s.hostPickedPassagePreview);
   const passageText = useRaceStore((s) => s.passageText);
+  const storeCorpusType = useRaceStore((s) => s.corpusType);
+  const storeCorpusCategory = useRaceStore((s) => s.corpusCategory);
 
-  // Filters state
-  const [lengthFilter, setLengthFilter] = useState<PassageLengthFilter>("all");
-  const [punctuationFilter, setPunctuationFilter] = useState<boolean | null>(null);
-
-  const filteredPassages = useMemo(() => {
-    return filterPassages(PASSAGES, {
-      length: lengthFilter,
-      punctuation: punctuationFilter,
-    });
-  }, [lengthFilter, punctuationFilter]);
-
-  const [pickedId, setPickedId] = useState<string>(
-    filteredPassages[0]?.id ?? PASSAGES[0]?.id ?? "",
-  );
+  const [corpusType, setCorpusType] = useState<CorpusType>(storeCorpusType ?? "passage");
+  const [corpusCategory, setCorpusCategory] = useState<CorpusCategory>(storeCorpusCategory ?? "mid");
   const [grace, setGrace] = useState<number>(5);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
 
   const me = players.find((p) => p.playerId === myPlayerId);
   const guests = players.filter((p) => !p.isHost);
   const allGuestsReady = guests.length > 0 && guests.every((g) => g.isReady);
+
+  const handleCorpusTypeChange = (newType: CorpusType) => {
+    setCorpusType(newType);
+    useRaceStore.setState({ corpusType: newType });
+    ws.send({
+      type: "set_corpus_config",
+      corpusType: newType,
+      corpusCategory,
+    });
+  };
+
+  const handleCorpusCategoryChange = (newCategory: CorpusCategory) => {
+    setCorpusCategory(newCategory);
+    useRaceStore.setState({ corpusCategory: newCategory });
+    ws.send({
+      type: "set_corpus_config",
+      corpusType,
+      corpusCategory: newCategory,
+    });
+  };
 
   const handleToggleReady = () => {
     const nextReady = !me?.isReady;
@@ -73,7 +83,6 @@ export function LobbyView({
   };
 
   const handleStartRace = () => {
-    const targetPassageId = pickedId || filteredPassages[0]?.id || PASSAGES[0]?.id || "";
     if (guests.length > 0 && !allGuestsReady) {
       const confirmed =
         typeof window !== "undefined" && window.confirm
@@ -81,7 +90,28 @@ export function LobbyView({
           : true;
       if (!confirmed) return;
     }
-    onStartRace(targetPassageId, grace);
+    onStartRace(undefined, grace, corpusType, corpusCategory);
+  };
+
+  const getCategoryDescription = (type: CorpusType, cat: CorpusCategory): string => {
+    if (type === "random_words") {
+      switch (cat) {
+        case "short":
+          return "25 random common words — rapid sprint.";
+        case "mid":
+          return "50 random common words — standard competition.";
+        case "long":
+          return "80 random common words — endurance test.";
+      }
+    }
+    switch (cat) {
+      case "short":
+        return "~30–42 words of classic literature or quotes.";
+      case "mid":
+        return "~43–49 words of rich storytelling.";
+      case "long":
+        return "50–60 words of classic narrative prose.";
+    }
   };
 
   return (
@@ -90,7 +120,7 @@ export function LobbyView({
         <div>
           <h2 className="text-2xl font-bold m-0">Room {roomCode} {isHost ? "(Host)" : ""}</h2>
           <p className="text-sm text-[var(--color-text-muted)] mt-1 mb-0">
-            {isHost ? "Configure passage and start when racers are ready" : "Waiting for host to start the race…"}
+            {isHost ? "Configure race corpus and start when racers are ready" : "Waiting for host to start the race…"}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -188,9 +218,27 @@ export function LobbyView({
           >
             {me?.isReady ? "Cancel Ready" : "Ready Up"}
           </button>
+
+          <div className="mt-4 p-4 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-border-subtle)]">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs uppercase font-bold text-[var(--color-text-muted)]">
+                Selected Corpus
+              </span>
+              <span className="text-xs font-bold text-[var(--color-accent-clay)] uppercase">
+                {storeCorpusType === "random_words" ? "Random Words" : "Passage"} • {storeCorpusCategory}
+              </span>
+            </div>
+            <p className="text-xs text-[var(--color-text-muted)] m-0">
+              {getCategoryDescription(storeCorpusType ?? "passage", storeCorpusCategory ?? "mid")}
+            </p>
+            <p className="text-[11px] text-[var(--color-text-faint)] mt-2 mb-0 italic">
+              🎲 A random {storeCorpusType === "random_words" ? "word sequence" : "passage"} will be dealt when the host starts the race.
+            </p>
+          </div>
+
           {preview && (
-            <div className="host-choice mt-4 text-sm text-[var(--color-text-muted)]">
-              <span className="font-semibold text-[var(--color-text-bright)]">Host chose:</span>{" "}
+            <div className="host-choice mt-3 text-sm text-[var(--color-text-muted)]">
+              <span className="font-semibold text-[var(--color-text-bright)]">Host preview:</span>{" "}
               <span className="preview italic">{preview}</span>
             </div>
           )}
@@ -201,96 +249,69 @@ export function LobbyView({
       {/* Host Controls */}
       {isHost && (
         <div className="host-controls space-y-4">
-          {/* Passage Filter Controls */}
-          <div className="filter-controls bg-[var(--color-bg-base)] p-3 rounded-lg border border-[var(--color-border-subtle)]">
+          {/* Corpus Type Selector */}
+          <div className="corpus-type-controls bg-[var(--color-bg-base)] p-3 rounded-lg border border-[var(--color-border-subtle)]">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-              <span className="text-xs uppercase font-bold text-[var(--color-text-muted)]">Passage Length:</span>
-              <div className="flex gap-1.5">
-                {(["all", "short", "medium", "long"] as const).map((len) => (
+              <span className="text-xs uppercase font-bold text-[var(--color-text-muted)]">Corpus Type:</span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors ${
+                    corpusType === "passage"
+                      ? "bg-[var(--color-accent-clay)] text-[var(--color-text-dark)]"
+                      : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] border border-[var(--color-border-subtle)]"
+                  }`}
+                  onClick={() => handleCorpusTypeChange("passage")}
+                >
+                  📖 Passage
+                </button>
+                <button
+                  type="button"
+                  className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors ${
+                    corpusType === "random_words"
+                      ? "bg-[var(--color-accent-clay)] text-[var(--color-text-dark)]"
+                      : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] border border-[var(--color-border-subtle)]"
+                  }`}
+                  onClick={() => handleCorpusTypeChange("random_words")}
+                >
+                  🔤 Random Words
+                </button>
+              </div>
+            </div>
+
+            {/* Category / Length Buttons */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--color-border-subtle)]/50 pt-3">
+              <span className="text-xs uppercase font-bold text-[var(--color-text-muted)]">Length:</span>
+              <div className="flex gap-2">
+                {(["short", "mid", "long"] as const).map((cat) => (
                   <button
-                    key={len}
+                    key={cat}
                     type="button"
-                    className={`px-2.5 py-1 text-xs rounded font-medium transition-colors capitalize ${
-                      lengthFilter === len
-                        ? "bg-[var(--color-accent-clay)] text-[var(--color-text-dark)] font-bold"
+                    className={`px-3 py-1 text-xs rounded-lg font-bold transition-colors capitalize ${
+                      corpusCategory === cat
+                        ? "bg-[var(--color-accent-clay)] text-[var(--color-text-dark)]"
                         : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] border border-[var(--color-border-subtle)]"
                     }`}
-                    onClick={() => {
-                      setLengthFilter(len);
-                      const next = filterPassages(PASSAGES, {
-                        length: len,
-                        punctuation: punctuationFilter,
-                      });
-                      if (next[0]) setPickedId(next[0].id);
-                    }}
+                    onClick={() => handleCorpusCategoryChange(cat)}
                   >
-                    {len}
+                    {cat}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="flex items-center justify-between border-t border-[var(--color-border-subtle)]/50 pt-2">
-              <span className="text-xs uppercase font-bold text-[var(--color-text-muted)]">Punctuation:</span>
-              <button
-                type="button"
-                className={`px-2.5 py-1 text-xs rounded font-medium transition-colors ${
-                  punctuationFilter === true
-                    ? "bg-[var(--color-accent-clay)] text-[var(--color-text-dark)] font-bold"
-                    : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-subtle)]"
-                }`}
-                onClick={() => {
-                  const nextPunc = punctuationFilter === true ? null : true;
-                  setPunctuationFilter(nextPunc);
-                  const next = filterPassages(PASSAGES, {
-                    length: lengthFilter,
-                    punctuation: nextPunc,
-                  });
-                  if (next[0]) setPickedId(next[0].id);
-                }}
-              >
-                {punctuationFilter === true ? "✓ Complex Punctuation" : "Any Punctuation"}
-              </button>
+            {/* Live Description */}
+            <div className="mt-3 pt-2 border-t border-[var(--color-border-subtle)]/30 text-xs text-[var(--color-text-muted)]">
+              {getCategoryDescription(corpusType, corpusCategory)}
+              <span className="block text-[11px] text-[var(--color-text-faint)] mt-0.5">
+                🎲 Automatically dealt at race start.
+              </span>
             </div>
-          </div>
-
-          {/* Passage Dropdown & Random */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-bold text-[var(--color-text-muted)] uppercase">
-                Choose Passage ({filteredPassages.length} available)
-              </label>
-              <button
-                type="button"
-                className="text-xs text-[var(--color-accent-clay)] hover:underline font-semibold"
-                onClick={() => {
-                  if (filteredPassages.length > 0) {
-                    const idx = Math.floor(Math.random() * filteredPassages.length);
-                    const p = filteredPassages[idx];
-                    if (p) setPickedId(p.id);
-                  }
-                }}
-              >
-                🎲 Pick Random
-              </button>
-            </div>
-            <select
-              className="passage-select w-full bg-[var(--color-bg-base)] border border-[var(--color-border-subtle)] rounded-lg p-2 text-sm text-[var(--color-text-bright)]"
-              value={pickedId}
-              onChange={(e) => setPickedId(e.target.value)}
-              size={5}
-            >
-              {filteredPassages.map((p) => (
-                <option key={p.id} value={p.id} className="py-1">
-                  {p.text.slice(0, 60)}… ({p.source})
-                </option>
-              ))}
-            </select>
           </div>
 
           {/* Grace Picker */}
           <div className="flex items-center justify-between bg-[var(--color-bg-base)] p-3 rounded-lg border border-[var(--color-border-subtle)]">
-            <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase">Grace Period:</span>
+            <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase">Countdown Grace:</span>
             <div className="flex gap-2">
               {[3, 5, 10].map((g) => (
                 <button
@@ -314,8 +335,8 @@ export function LobbyView({
             type="button"
             className={`w-full py-3.5 rounded-lg text-base font-bold transition-all shadow-md ${
               guests.length === 0 || allGuestsReady
-                ? "bg-[var(--color-accent-clay)] hover:bg-[var(--color-accent-hover)] text-[var(--color-text-dark)]"
-                : "bg-[var(--color-bg-surface-hover)] hover:bg-[var(--color-olive-leaf-700)] text-[var(--color-text-bright)]"
+                ? "bg-[var(--color-accent-clay)] hover:bg-[var(--color-accent-hover)] text-[var(--color-text-dark)] cursor-pointer"
+                : "bg-[var(--color-bg-surface-hover)] hover:bg-[var(--color-olive-leaf-700)] text-[var(--color-text-bright)] cursor-pointer"
             }`}
             onClick={handleStartRace}
           >

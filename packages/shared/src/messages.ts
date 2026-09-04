@@ -57,12 +57,23 @@ export const clockSyncSchema = z.object({
   t3: z.number().int().nonnegative(), // client receive time of last response
 });
 
+export const corpusTypeSchema = z.enum(["passage", "random_words"]);
+export const corpusCategorySchema = z.enum(["short", "mid", "long"]);
+
+/** Host configures corpus settings in lobby. */
+export const setCorpusConfigSchema = z.object({
+  type: z.literal("set_corpus_config"),
+  corpusType: corpusTypeSchema,
+  corpusCategory: corpusCategorySchema,
+});
+
 /** Host starts the race (only valid in `lobby` state with ≥2 players).
- *  - `passageId` optional: when omitted, server auto-deals next passage via D-04
- *    no-repeat deck (used for rematch — Phase 2 host_choice, Phase 3 auto-deal).
+ *  - `passageId` optional: when omitted, server randomly deals passage or random words.
  */
 export const startRaceSchema = z.object({
   type: z.literal("start_race"),
+  corpusType: corpusTypeSchema.optional(),
+  corpusCategory: corpusCategorySchema.optional(),
   passageId: z.string().uuid().optional(),
   graceSeconds: z.number().int().min(3).max(10).default(5),
 });
@@ -125,6 +136,7 @@ export const clientToServerSchema = z.discriminatedUnion("type", [
   returnToLobbySchema,
   rejoinRoomSchema,
   setReadySchema,
+  setCorpusConfigSchema,
 ]);
 
 export type ClientToServer = z.infer<typeof clientToServerSchema>;
@@ -139,6 +151,7 @@ export type CursorPosition = z.infer<typeof cursorPositionSchema>;
 export type Correction = z.infer<typeof correctionSchema>;
 export type RejoinRoom = z.infer<typeof rejoinRoomSchema>;
 export type SetReady = z.infer<typeof setReadySchema>;
+export type SetCorpusConfig = z.infer<typeof setCorpusConfigSchema>;
 
 // ──────────────────────────────────────────────────────────────────────────
 // Server → Client
@@ -188,6 +201,8 @@ export const joinedRoomSchema = z.object({
   players: z.array(PLAYER_SUMMARY),
   clockOffsetMs: z.number(),
   hostPickedPassagePreview: z.string().optional(),
+  corpusType: corpusTypeSchema.optional(),
+  corpusCategory: corpusCategorySchema.optional(),
 });
 
 /** Broadcast to all members when the lobby composition changes. */
@@ -196,6 +211,8 @@ export const lobbyStateSchema = z.object({
   roomCode: z.string().regex(ROOM_CODE_REGEX),
   players: z.array(PLAYER_SUMMARY),
   hostPickedPassagePreview: z.string().optional(),
+  corpusType: corpusTypeSchema.optional(),
+  corpusCategory: corpusCategorySchema.optional(),
 });
 
 /** Sent when the host starts the race; clients show the countdown UI. */
@@ -284,6 +301,8 @@ export const rejoinedRoomSchema = z.object({
   startsAtServerMs: z.number().int().nullable(),
   graceEndsAtServerMs: z.number().int().nullable(),
   clockOffsetMs: z.number(),
+  corpusType: corpusTypeSchema.optional(),
+  corpusCategory: corpusCategorySchema.optional(),
   you: z.object({
     playerId: z.string().uuid(),
     nickname: z.string(),

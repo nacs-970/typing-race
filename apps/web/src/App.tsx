@@ -433,8 +433,14 @@ export function App(): React.ReactElement {
         <LobbyView
           roomCode={roomCode}
           isHost={isHost}
-          onStartRace={(passageId, graceSeconds) => {
-            ws.send({ type: "start_race", passageId, graceSeconds });
+          onStartRace={(passageId, graceSeconds, corpusType, corpusCategory) => {
+            ws.send({
+              type: "start_race",
+              ...(passageId ? { passageId } : {}),
+              graceSeconds,
+              corpusType,
+              corpusCategory,
+            });
           }}
           onLeaveRoom={handleLeaveRoom}
         />

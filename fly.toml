@@ -1,13 +1,10 @@
 # Fly.io launch config — generated 2026-08-30 (Phase 1 Plan 03, REQ-12)
+# Updated 2026-09-04 for Phase 7 N-tier unified deployment fallback (D-04, D-07)
 #
 # Single-process Bun runtime serving the React SPA + WS API + /health on
-# port 8080. Tuned for the Fly.io free tier (shared-cpu-1x, 256MB), WS-heavy
-# concurrency (`type = "connections"`), scale-to-zero, and SIGTERM-driven
-# graceful shutdown matching `apps/server/src/index.ts`.
-#
-# NOTE: this plan BUILDS the deploy infrastructure but does NOT execute
-# `fly deploy` — that lives in Phase 6. See scripts/deploy.sh for the
-# pre-flight-only wrapper.
+# port 8080 with headless race engine running in unified mode. Tuned for Fly.io free tier
+# (shared-cpu-1x, 256MB), WS-heavy concurrency (`type = "connections"`), scale-to-zero,
+# and SIGTERM-driven graceful shutdown.
 
 app = "typing-race"
 primary_region = "ord"
@@ -20,6 +17,7 @@ kill_timeout = "10s"
 [env]
   NODE_ENV = "production"
   PORT     = "8080"        # triple-match: EXPOSE 8080, internal_port 8080, env.ts PORT ?? 8080
+  MODE     = "unified"
 
 [http_service]
   internal_port        = 8080

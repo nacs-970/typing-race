@@ -2,51 +2,73 @@
 
 Realtime multiplayer typing race. Two connected clients see each other's cursor in real time and the race ends with a fair, identical WPM/accuracy score.
 
-## Run modes
-
-Two ways to run locally.
-
-**Dev (Vite + HMR, recommended for editing):**
-
-```bash
-bun install
-bun --filter @typing-race/server run dev    # Bun on :8080
-bun --filter @typing-race/web run dev       # Vite on :5173 (separate terminal)
-```
-
-Open http://localhost:5173. Vite proxies `/api`, `/health`, and `/ws` to Bun on :8080.
-
-**Prod (single Bun process, simulates Fly.io deploy):**
-
-```bash
-bun install
-bun --filter @typing-race/web run build      # builds apps/web/dist
-bun --filter @typing-race/server run start   # Bun on :8080 serves SPA + WS + /health
-```
-
-Open http://localhost:8080. Bun serves the built React SPA, upgrades WS at `ws://localhost:8080/ws`, and returns `ok` at `/health` from one process — same shape as the Fly.io deploy in Phase 6.
-
-For both modes combined in dev:
-
-```bash
-bun install
-bun run dev                                  # boots server (:8080) + Vite (:5173) concurrently
-```
-
-Bun 1.3.2+ required. Lockfile is text-based (`bun.lock`) and committed; install is deterministic via `bun install --frozen-lockfile`.
-
 ## Architecture
 
-Three workspaces under `apps/*` and `packages/*`:
+The project is structured as a cloud-agnostic N-tier monorepo:
 
-- **`@typing-race/shared`** — Zod 4 discriminated unions for the wire contract. Single source of truth (REQ-13).
-- **`@typing-race/server`** — Bun.serve + Hono on :8080. Native WebSocket upgrade, typed `ws.data`, Zod-validated dispatch. In prod also serves the built SPA with precompressed `.gz` / `.br` siblings via Hono `serveStatic` (`precompressed: true`).
-- **`@typing-race/web`** — Vite 8 + React 19 + Zustand 5 on :5173. Dev proxy forwards `/ws`, `/health`, and `/api/*` to :8080. Build emits `.gz` + `.br` siblings via `vite-plugin-compression` (gzip) + a Node `zlib.brotliCompress` post-pass.
+- **`packages/shared`** (`@typing-race/shared`): Canonical wire protocol schemas (Zod discriminated unions), room codes, corpus, and typed `EventBridge` contracts (`InMemoryEventBridge`, `RedisEventBridge`).
+- **`apps/web`** (`@typing-race/web`): Pure presentation tier built with Vite 8, React 19, and Tailwind CSS v4. Dev proxy routes `/ws`, `/api`, and `/health` to Gateway.
+- **`apps/gateway`** (`@typing-race/gateway`): Real-time ingress tier using `Bun.serve` + Hono. Manages client WebSocket connections, NTP clock sync, IP rate limiting, and forwards game actions to Engine via `EventBridge`.
+- **`apps/engine`** (`@typing-race/engine`): Headless race simulation tier. Runs authoritative race loop, anti-cheat timestamp/rate validation, scoring, and 60-second disconnect grace handling.
 
-## Verify the dev server is up
+## Development
+
+Bun 1.3.2+ is required. Dependencies are installed deterministically:
 
 ```bash
-curl -fsS http://localhost:8080/health    # → "ok"
-curl -fsS http://localhost:5173/health    # → "ok" (proxied through Vite)
-open http://localhost:5173                # green "open" pill + playerId
+bun install --frozen-lockfile
 ```
+
+### Local Run Modes
+
+1. **Split Mode (Default, 3 independent processes)**:
+   ```bash
+   bun run dev
+   ```
+   Runs `web` (:5173), `gateway` (:8080), and `engine` (:8081) concurrently using internal loopback IPC.
+
+2. **Unified Mode (Single server process)**:
+   ```bash
+   bun run dev:unified
+   ```
+   Runs `web` (:5173) and `gateway` (:8080) running gateway + engine in a single process via in-memory event dispatch.
+
+3. **Isolated Component Debugging**:
+   - `bun run dev:web`: Vite development server on port 5173
+   - `bun run dev:gateway`: Gateway server on port 8080
+   - `bun run dev:engine`: Standalone headless engine on port 8081
+
+### Quality Checks
+
+```bash
+bun run typecheck   # Typecheck all packages
+bun run test        # Run test suites across shared, gateway, engine, and web
+bun run build       # Production client build
+```
+
+## Deployment
+
+### Multi-Container Topology (Docker Compose)
+
+Spin up the distributed 3-tier stack with optional Redis pub/sub:
+
+```bash
+docker compose up --build
+```
+
+- **redis**: Redis 7 on port 6379 for inter-tier Pub/Sub
+- **engine**: Headless engine container connected to Redis
+- **gateway**: WebSocket gateway on port 8080 with healthcheck
+- **web**: Static client served via Caddy on port 5173 (maps to :80)
+
+### Single-Container Fallback (Fly.io)
+
+For resource-constrained single-process deployments (such as Fly.io free tier):
+
+```bash
+docker build -t typing-race -f Dockerfile .
+docker run -p 8080:8080 typing-race
+```
+
+Runs Gateway, Engine, and static SPA serving in unified mode (`MODE=unified`) under a non-root `bun` user.
+Configuration is maintained in `fly.toml`.

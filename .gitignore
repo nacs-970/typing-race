@@ -21,3 +21,6 @@ packages/*/dist/
 # Test artifacts
 *.tsbuildinfo
 .vite/
+
+# Agent/Tool cache
+.hermes/

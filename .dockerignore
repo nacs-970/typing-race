@@ -1,7 +1,8 @@
 node_modules
+dist
 apps/web/dist
-apps/server/dist
-bun.lockb
+coverage
+.nyc_output
 .git
 .planning
 *.log
@@ -9,7 +10,6 @@ bun.lockb
 .env.*
 .DS_Store
 README.md
-Dockerfile
 .dockerignore
 fly.toml
 spec.md

@@ -77,8 +77,18 @@ export function ResultsBoard({
     return `${mins}:${secs}`;
   };
 
+  const corpusType = useRaceStore((s) => s.corpusType ?? "passage");
+  const corpusCategory = useRaceStore((s) => s.corpusCategory ?? "mid");
+  const typeLabel = corpusType === "random_words" ? "Random Words" : "Passage";
+  const catLabel = corpusCategory.charAt(0).toUpperCase() + corpusCategory.slice(1);
+
   const handleRematch = () => {
-    ws.send({ type: "start_race", graceSeconds: 5 });
+    ws.send({
+      type: "start_race",
+      graceSeconds: 5,
+      corpusType,
+      corpusCategory,
+    });
     onRematch?.();
   };
 
@@ -198,7 +208,7 @@ export function ResultsBoard({
             data-testid="rematch-button"
             onClick={handleRematch}
           >
-            Play Again (Auto-deal Passage)
+            Play Again ({typeLabel} - {catLabel})
           </button>
           <button
             type="button"

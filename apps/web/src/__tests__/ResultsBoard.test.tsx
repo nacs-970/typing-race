@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, fireEvent, cleanup } from "@testing-library/react";
 import { ResultsBoard } from "../components/ResultsBoard";
 import { useConnectionStore } from "../store/connection";
+import { useRaceStore } from "../store/race";
 import type { PlayerFinalStats } from "@typing-race/shared";
 
 afterEach(() => {
@@ -90,6 +91,15 @@ describe("ResultsBoard", () => {
     const playAgainBtn = getByTestId("rematch-button");
     fireEvent.click(playAgainBtn);
     expect(onRematch).toHaveBeenCalled();
+  });
+
+  it("shows selected type and length in Play Again button", () => {
+    useRaceStore.setState({ corpusType: "random_words", corpusCategory: "short" });
+    const { getByText } = render(
+      <ResultsBoard results={sampleResults} isHost={true} />,
+    );
+
+    expect(getByText("Play Again (Random Words - Short)")).toBeDefined();
   });
 
   it("triggers onLeaveRoom when host clicks Leave Room", () => {

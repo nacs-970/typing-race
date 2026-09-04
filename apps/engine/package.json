@@ -2,7 +2,12 @@
   "name": "@typing-race/engine",
   "private": true,
   "type": "module",
-  "main": "src/index.ts",
+  "main": "src/engine.ts",
+  "exports": {
+    ".": "./src/engine.ts",
+    "./engine": "./src/engine.ts",
+    "./store": "./src/rooms/store.ts"
+  },
   "scripts": {
     "dev": "bun --hot run src/index.ts",
     "start": "bun run src/index.ts",

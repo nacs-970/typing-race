@@ -1,5 +1,7 @@
 import type { EventBridge, GatewayToEngineEvent } from "@typing-race/shared/bridge";
 import type { RoomStore } from "./rooms/store.ts";
+import { InMemoryRoomStore } from "./rooms/store.ts";
+export { InMemoryRoomStore, type RoomStore };
 import { RoomManager } from "./rooms/manager.ts";
 import { RaceController, transition } from "./race/controller.ts";
 import { validateKeystroke } from "./race/validate-keystroke.ts";

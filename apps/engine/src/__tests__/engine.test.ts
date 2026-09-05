@@ -176,4 +176,34 @@ describe("EngineWorker end-to-end flow", () => {
     await worker.controller.tick(disconnectTs + 130_000);
     expect(await store.has(roomCode)).toBe(false);
   });
+
+  test("join_room for non-existent room returns ROOM_DOES_NOT_EXIST", async () => {
+    bridge.publishToEngine({
+      type: "client_message",
+      playerId: "p-unknown",
+      roomCode: null,
+      ip: "127.0.0.1",
+      clientOffsetMs: 0,
+      serverTs: 1000,
+      message: {
+        type: "join_room",
+        code: "NOPE99",
+        nickname: "Charlie",
+      },
+    });
+
+    await new Promise((r) => setTimeout(r, 15));
+
+    const errEvent = gatewayEvents.find(
+      (e) =>
+        e.type === "send_to_client" &&
+        e.playerId === "p-unknown" &&
+        e.payload.type === "error",
+    );
+    expect(errEvent).toBeDefined();
+    if (errEvent && errEvent.type === "send_to_client") {
+      expect((errEvent.payload as any).code).toBe("ROOM_DOES_NOT_EXIST");
+      expect((errEvent.payload as any).message).toBe("Room does not exist");
+    }
+  });
 });

@@ -115,13 +115,14 @@ export class EngineWorker {
       case "join_room": {
         const result = await this.roomManager.addPlayer(message.code, playerId, message.nickname);
         if (!result.ok) {
+          const isNotFound = result.code === "ROOM_NOT_FOUND";
           await this.bridge.publishToGateway({
             type: "send_to_client",
             playerId,
             payload: {
               type: "error",
-              code: result.code,
-              message: result.code,
+              code: isNotFound ? "ROOM_DOES_NOT_EXIST" : result.code,
+              message: isNotFound ? "Room does not exist" : result.code,
             },
           });
           return;

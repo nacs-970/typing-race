@@ -178,7 +178,21 @@ export function App(): React.ReactElement {
       if (msg.type === "error") {
         let title = "Error";
         let body = msg.message;
-        if (msg.code === "ROOM_NOT_FOUND") {
+        if (msg.code === "ROOM_DOES_NOT_EXIST") {
+          title = "Room Not Found";
+          body = "Room does not exist. Check the code and try again.";
+        } else if (msg.code === "ROOM_NOT_FOUND") {
+          if (!roomCode) {
+            title = "Room Not Found";
+            body = "Room does not exist. Check the code and try again.";
+          } else {
+            title = "Room Lost";
+            body = "Room lost — connection expired. Return to lobby or create a new room.";
+          }
+        } else if (msg.code === "ROOM_FULL") {
+          title = "Room Full";
+          body = "This room is already at maximum capacity (8 players).";
+        } else if (msg.code === "SESSION_INVALID") {
           title = "Room Lost";
           body = "Room lost — connection expired. Return to lobby or create a new room.";
         } else if (msg.code === "RATE_LIMITED") {

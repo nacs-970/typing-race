@@ -178,6 +178,7 @@ export const errorSchema = z.object({
     "INVALID_FRAME",
     "INVALID_CODE",
     "ROOM_NOT_FOUND",
+    "ROOM_DOES_NOT_EXIST",
     "ROOM_FULL",
     "ALREADY_IN_ROOM",
     "NOT_IN_ROOM",

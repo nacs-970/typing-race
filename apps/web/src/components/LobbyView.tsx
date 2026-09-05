@@ -157,7 +157,7 @@ export function LobbyView({
             className="px-4 py-2 rounded-lg text-sm font-semibold bg-[var(--color-accent-clay)] text-white hover:bg-[var(--color-accent-hover)] transition-opacity"
             onClick={handleCopyLink}
           >
-            {copySuccess ? "✓ Copied Room Link" : "Copy   Room Link"}
+            {copySuccess ? "✓ Copied Room Link" : "📋 Copy Room Link"}
           </button>
         </div>
       )}

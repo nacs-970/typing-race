@@ -69,26 +69,26 @@
   --color-copperwood-950: #1e1106;
 
   /* Semantic Theme Tokens */
-  --color-bg-base: #ffffff;
-  --color-bg-surface: #ffffff;
-  --color-bg-surface-elevated: #ffffff;
-  --color-bg-surface-hover: #f1f6ed;
-  --color-bg-overlay: rgba(255, 255, 255, 0.92);
+  --color-bg-base: #fefbe6;
+  --color-bg-surface: #fefbe6;
+  --color-bg-surface-elevated: #fefbe6;
+  --color-bg-surface-hover: #f3edd0;
+  --color-bg-overlay: rgba(254, 251, 230, 0.92);
 
-  --color-border-subtle: #e1e8db;
-  --color-border-muted: rgba(60, 86, 38, 0.15);
-  --color-border-hover: #38761d;
+  --color-border-subtle: #d8debe;
+  --color-border-muted: rgba(60, 70, 38, 0.2);
+  --color-border-hover: #9bad67;
 
   --color-text-bright: #151d10;
-  --color-text-muted: #4e5f38;
-  --color-text-faint: #8f9e7f;
-  --color-text-dark: #ffffff;
+  --color-text-muted: #4a572c;
+  --color-text-faint: #7e914a;
+  --color-text-dark: #151d10;
 
-  /* Green Accent */
-  --color-accent-green: #38761d;
-  --color-accent-green-hover: #2c5f16;
-  --color-accent-green-subtle: rgba(56, 118, 29, 0.12);
-  --color-accent-green-glow: rgba(56, 118, 29, 0.4);
+  /* Green Accent: #9bad67 (Olive Leaf 400) */
+  --color-accent-green: #9bad67;
+  --color-accent-green-hover: #869954;
+  --color-accent-green-subtle: rgba(155, 173, 103, 0.2);
+  --color-accent-green-glow: rgba(155, 173, 103, 0.5);
 
   --color-accent-clay: var(--color-accent-green);
   --color-accent-hover: var(--color-accent-green-hover);
@@ -404,10 +404,10 @@ h1 {
 
 @keyframes pulse-leader {
   0%, 100% {
-    box-shadow: 0 0 10px 2px rgba(56, 118, 29, 0.7), 0 0 20px 4px rgba(56, 118, 29, 0.3);
+    box-shadow: 0 0 10px 2px rgba(155, 173, 103, 0.7), 0 0 20px 4px rgba(155, 173, 103, 0.3);
   }
   50% {
-    box-shadow: 0 0 16px 4px rgba(56, 118, 29, 0.95), 0 0 28px 6px rgba(56, 118, 29, 0.5);
+    box-shadow: 0 0 16px 4px rgba(155, 173, 103, 0.95), 0 0 28px 6px rgba(155, 173, 103, 0.5);
   }
 }
 
@@ -437,7 +437,7 @@ h1 {
 .race-end-banner button {
   padding: 0.5rem 1rem;
   background: var(--color-accent-clay);
-  color: #ffffff;
+  color: var(--color-text-dark);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -496,7 +496,7 @@ h1 {
 }
 .grace-pill.active {
   background: var(--color-accent-clay);
-  color: #ffffff;
+  color: var(--color-text-dark);
   border-color: var(--color-accent-clay);
   font-weight: 600;
 }
@@ -521,7 +521,7 @@ h1 {
 }
 .start-button {
   background: var(--color-accent-clay);
-  color: #ffffff;
+  color: var(--color-text-dark);
   border: none;
   border-radius: 6px;
   padding: 0.75rem 1.5rem;
@@ -554,7 +554,7 @@ h1 {
 .rematch-button {
   margin-top: 1rem;
   background: var(--color-accent-clay);
-  color: #ffffff;
+  color: var(--color-text-dark);
   border: none;
   border-radius: 6px;
   padding: 0.75rem 1.5rem;

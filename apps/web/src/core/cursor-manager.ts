@@ -297,7 +297,7 @@ export class CursorManager {
       "cursor-micro-tag absolute bottom-full left-0 mb-1 px-1.5 py-0.5 rounded text-[10px] font-bold shadow-md whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]";
     tag.textContent = nickname.slice(0, 16);
     tag.style.backgroundColor = color;
-    tag.style.color = "#ffffff";
+    tag.style.color = "var(--color-text-dark)";
 
     const caret = document.createElement("div");
     caret.className = "cursor-caret w-[2px] h-[22px] rounded-full transition-shadow duration-300";

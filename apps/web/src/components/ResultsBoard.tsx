@@ -204,7 +204,7 @@ export function ResultsBoard({
         <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t border-[var(--color-border-subtle)]">
           <button
             type="button"
-            className="flex-1 py-3 px-4 rounded-lg text-sm font-bold bg-[var(--color-accent-clay)] text-white hover:bg-[var(--color-accent-hover)] transition-colors shadow-md text-center cursor-pointer"
+            className="flex-1 py-3 px-4 rounded-lg text-sm font-bold bg-[var(--color-accent-clay)] text-[var(--color-text-dark)] hover:bg-[var(--color-accent-hover)] transition-colors shadow-md text-center cursor-pointer"
             data-testid="rematch-button"
             onClick={handleRematch}
           >

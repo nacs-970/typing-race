@@ -152,7 +152,7 @@ export function RaceHud({
         <span
           className={`px-2.5 py-1 rounded text-xs font-bold transition-all shadow-sm ${
             rank === 1
-              ? "bg-[var(--color-accent-clay)] text-[var(--color-text-dark)]"
+              ? "bg-[var(--color-accent-clay)] text-white"
               : "bg-[var(--color-bg-surface-hover)] text-[var(--color-text-muted)]"
           }`}
           data-testid="rank-badge"

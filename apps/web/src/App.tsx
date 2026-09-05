@@ -371,7 +371,7 @@ export function App(): React.ReactElement {
 
             <button
               type="button"
-              className="w-full py-3.5 px-4 bg-[var(--color-accent-clay)] hover:bg-[var(--color-accent-hover)] text-[var(--color-text-dark)] font-bold rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-base font-mono mt-1"
+              className="w-full py-3.5 px-4 bg-[var(--color-accent-clay)] hover:bg-[var(--color-accent-hover)] text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-base font-mono mt-1"
               onClick={() => {
                 const nick = nickname.trim() || "Racer";
                 ws.send({ type: "create_room", nickname: nick });

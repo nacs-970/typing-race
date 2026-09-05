@@ -154,10 +154,10 @@ export function LobbyView({
           <button
             type="button"
             aria-label="Copy room invite link"
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-[var(--color-accent-clay)] text-[var(--color-text-dark)] hover:bg-[var(--color-accent-hover)] transition-opacity"
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-[var(--color-accent-clay)] text-white hover:bg-[var(--color-accent-hover)] transition-opacity"
             onClick={handleCopyLink}
           >
-            {copySuccess ? "✓ Copied Invite Link" : "Copy Room Link"}
+            {copySuccess ? "✓ Copied Room Link" : "Copy   Room Link"}
           </button>
         </div>
       )}
@@ -211,7 +211,7 @@ export function LobbyView({
             className={`w-full py-3 rounded-lg text-base font-bold transition-colors ${
               me?.isReady
                 ? "bg-[var(--color-bg-surface-hover)] hover:bg-[var(--color-border-subtle)] text-[var(--color-text-bright)] border border-[var(--color-border-subtle)]"
-                : "bg-[var(--color-accent-clay)] hover:bg-[var(--color-accent-hover)] text-[var(--color-text-dark)]"
+                : "bg-[var(--color-accent-clay)] hover:bg-[var(--color-accent-hover)] text-white"
             }`}
             onClick={handleToggleReady}
           >
@@ -257,7 +257,7 @@ export function LobbyView({
                   type="button"
                   className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors ${
                     corpusType === "passage"
-                      ? "bg-[var(--color-accent-clay)] text-[var(--color-text-dark)]"
+                      ? "bg-[var(--color-accent-clay)] text-white"
                       : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] border border-[var(--color-border-subtle)]"
                   }`}
                   onClick={() => handleCorpusTypeChange("passage")}
@@ -268,7 +268,7 @@ export function LobbyView({
                   type="button"
                   className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors ${
                     corpusType === "random_words"
-                      ? "bg-[var(--color-accent-clay)] text-[var(--color-text-dark)]"
+                      ? "bg-[var(--color-accent-clay)] text-white"
                       : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] border border-[var(--color-border-subtle)]"
                   }`}
                   onClick={() => handleCorpusTypeChange("random_words")}
@@ -288,7 +288,7 @@ export function LobbyView({
                     type="button"
                     className={`px-3 py-1 text-xs rounded-lg font-bold transition-colors capitalize ${
                       corpusCategory === cat
-                        ? "bg-[var(--color-accent-clay)] text-[var(--color-text-dark)]"
+                        ? "bg-[var(--color-accent-clay)] text-white"
                         : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] border border-[var(--color-border-subtle)]"
                     }`}
                     onClick={() => handleCorpusCategoryChange(cat)}
@@ -318,7 +318,7 @@ export function LobbyView({
                   type="button"
                   className={`px-3 py-1 text-xs rounded font-bold transition-colors ${
                     grace === g
-                      ? "bg-[var(--color-accent-clay)] text-[var(--color-text-dark)]"
+                      ? "bg-[var(--color-accent-clay)] text-white"
                       : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-subtle)]"
                   }`}
                   onClick={() => setGrace(g)}
@@ -334,7 +334,7 @@ export function LobbyView({
             type="button"
             className={`w-full py-3.5 rounded-lg text-base font-bold transition-all shadow-md ${
               guests.length === 0 || allGuestsReady
-                ? "bg-[var(--color-accent-clay)] hover:bg-[var(--color-accent-hover)] text-[var(--color-text-dark)] cursor-pointer"
+                ? "bg-[var(--color-accent-clay)] hover:bg-[var(--color-accent-hover)] text-white cursor-pointer"
                 : "bg-[var(--color-bg-surface-hover)] hover:bg-[var(--color-border-subtle)] text-[var(--color-text-bright)] border border-[var(--color-border-subtle)] cursor-pointer"
             }`}
             onClick={handleStartRace}

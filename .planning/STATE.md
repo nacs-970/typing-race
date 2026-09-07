@@ -1,14 +1,14 @@
 ---
-gsd_state_version: 1.0
+gsd_state_version: "1.0"
 milestone: v1.0
-current_phase: 1
-current_phase_name: Foundation
+current_phase: 6
+current_phase_name: Deploy + Hardening
 status: planning
-stopped_at: Phase 7 complete, ready to plan Phase 1
-last_updated: "2026-09-04T11:19:43.469Z"
-last_activity: 2026-09-04
-last_activity_desc: Phase 7 complete, transitioned to Phase 1
-state_head: 41b9ec3ce382a1348e866793f052b89e654687c9
+stopped_at: Phase 06 context gathered
+last_updated: "2026-09-07T18:47:53.734Z"
+last_activity: 2026-09-08
+last_activity_desc: Reconciled stale planning state against actual git history during /gsd-resume-work
+state_head: 95f9df9864c3a1fb80565a861471f41d4cf347d6
 progress:
   total_phases: 7
   completed_phases: 2
@@ -24,16 +24,16 @@ milestone_name: milestone
 See: .planning/PROJECT.md (updated 2026-08-30)
 
 **Core value:** Two connected clients see each other's cursor in real time and the race ends with a fair, identical WPM/accuracy score.
-**Current focus:** Phase 07 — Split into N-tier architecture
+**Current focus:** Phase 06 — Deploy + Hardening (last unstarted phase)
 
 ## Current Position
 
-Phase: 1 — Foundation
-Plan: Not started
+Phase: 6 — Deploy + Hardening
+Plan: Not started (0/3 plans)
 Status: Ready to plan
-Last activity: 2026-09-04 — Phase 7 complete, transitioned to Phase 1
+Last activity: 2026-09-08 — reconciled planning docs against real git history (phases 1,3,4 were marked pending/not-started but are actually complete)
 
-Progress: [████████████████████] 75% (Overall)
+Progress: [██████████████████░░] 86% (6/7 phases)
 
 ## Performance Metrics
 
@@ -49,7 +49,11 @@ Progress: [████████████████████] 75% (Ov
 |-------|-------|-------|----------|
 | 1 — Foundation | 3/3 | 3 | 18 min |
 | 2 — Race Engine | 4/4 | 4 | 21 min |
-| 7 | 3 | - | - |
+| 3 — Race Track + WPM | 4/4 | - | - |
+| 4 — Reconnect | 5/5 | - | - |
+| 5 — Frontend Polish | 4/4 | - | - |
+| 6 — Deploy + Hardening | 0/3 | - | - |
+| 7 — Split into N-tier architecture | 3/3 | - | - |
 
 **Recent Trend:**
 
@@ -72,9 +76,15 @@ Full log in PROJECT.md Key Decisions table. Recent decisions affecting current w
 - Phase 2 Plan 03 (executed): single `Date.now()` in `recordSyncRequest` (t1===t2 OK); injectable fetch for syncClock tests; App.tsx dev "Simulate countdown" button for one-developer verification
 - Phase 2 Plan 04 (executed): anti-cheat #1 implicit (frame.clientTs never read for timing); cursor_position throttle reuses `lastKeystrokeAt` (Phase 5 may split); `setCursorState` accepts Partial OR function form
 
+- Phase 3 (executed): bundled passage corpus with no-repeat picker; per-character state model; server-only WPM/accuracy computation
+- Phase 4 (executed): sessionToken reconnect handshake, 500ms grace period, room sweeper + heartbeat, dynamic host promotion, 60s uniform grace on disconnect
+- Phase 5 (executed): isolated 30Hz cursorStore vs 1Hz roomStore, CSS transform3d cursor positioning outside React tree, reconnect progress bar + 4-case error toasts
+- Post-milestone (not tracked as a phase, already shipped): corpus category randomization, green-accent white-background theme, distinguishing non-existent-room vs lost-room errors
+
 ### Roadmap Evolution
 
 - Phase 7 added: Split into N-tier architecture
+- 2026-09-08: STATE.md/ROADMAP.md/state.json were stale (last synced 2026-09-04) — reconciled against actual git history. Phases 1, 3, 4 were marked pending/not-started but SUMMARY.md files + commits confirm they shipped 2026-08-30 through 2026-09-03. Only Phase 6 (Deploy + Hardening) is genuinely unstarted — no phase directory, no CI workflow, no `.bun-version`, no anti-cheat regression suite. Note: SIGTERM handling (a Phase 6 deliverable) already exists ad-hoc in `apps/engine/src/index.ts` and `apps/gateway/src/index.ts`, done alongside the Phase 7 N-tier split.
 
 ### Pending Todos
 
@@ -83,9 +93,9 @@ None yet.
 ### Blockers/Concerns
 
 - Room-code collision math: ADDRESSED in Plan 01 (3 retries, 887M keyspace, birthday paradox ~0.006% at 10k rooms)
-- React Compiler config: MEDIUM confidence. Defer to Phase 6 plan 03 — profile first, opt-in only if DevTools shows cursor render bottleneck.
-- Styling choice (Tailwind v4 vs plain CSS vs CSS Modules) deferred to Phase 5 — pick during frontend polish planning. Two design refs ready: Renkit and Claude.com brand spec. Default to Renkit-style unless user overrides.
-- Bun WebSocket lifecycle under browser tab kill (esp. mobile Safari) MEDIUM confidence — verify empirically in Phase 4 plan 04.
+- React Compiler config: MEDIUM confidence, still deferred — no evidence it was revisited in Phase 5.
+- `.planning/debug/*.md` (host-promotion/solo-disconnect, lobby-rejoin-race-view, reconnect-cursor-reset) are marked "Diagnosed" but verified FIXED in current code (landed in Phase 4 Plan 05, commit `04-05`). Notes are stale history, not open work — safe to leave as record or archive.
+- Phase 6 requirements not yet met: no `.github/` CI workflow, no `.bun-version` pin, no anti-cheat regression test suite, no documented `fly deploy` execution (Dockerfile/fly.toml exist as scaffolding only).
 
 ## Deferred Items
 
@@ -104,6 +114,6 @@ Items acknowledged and deferred, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-02T20:20:58.296Z
-Stopped at: Phase 7 complete, ready to plan Phase 1
-Resume file: .planning/phases/05-frontend-polish/05-UI-SPEC.md
+Last session: 2026-09-07T18:47:52.016Z
+Stopped at: Phase 06 context gathered
+Resume file: .planning/phases/06-deploy-hardening/06-CONTEXT.md

@@ -6,11 +6,11 @@ Build a realtime multiplayer typing-race game from a greenfield monorepo to a de
 
 ## Phases
 
-- [ ] **Phase 1: Foundation** - Monorepo, shared contract, deployable hello world
+- [x] **Phase 1: Foundation** - Monorepo, shared contract, deployable hello world (completed 2026-08-30)
 - [x] **Phase 2: Race Engine** - Server-authoritative core with clock sync and anti-cheat (completed 2026-08-30)
-- [x] **Phase 3: Race Track + WPM** - Per-word correctness, backspace, results board, passage corpus (completed 2026-09-02)
-- [ ] **Phase 4: Reconnect** - sessionToken, room sweeper, heartbeat, rematch
-- [ ] **Phase 5: Frontend Polish** - Cursor interpolation, smooth UX, error toasts
+- [x] **Phase 3: Race Track + WPM** - Per-word correctness, backspace, results board, passage corpus (completed 2026-08-31)
+- [x] **Phase 4: Reconnect** - sessionToken, room sweeper, heartbeat, rematch (completed 2026-09-03)
+- [x] **Phase 5: Frontend Polish** - Cursor interpolation, smooth UX, error toasts (completed 2026-09-03)
 - [ ] **Phase 6: Deploy + Hardening** - Graceful shutdown, version pinning, public Fly.io deploy
 - [x] **Phase 7: Split into N-tier architecture** - Decouple client CDN, WebSocket gateway, race engine, and state tier (completed 2026-09-04)
 
@@ -167,9 +167,9 @@ Plans:
 
 Plans:
 
-- [ ] 06-01: SIGTERM handler in Bun.serve (drain in-flight rooms, broadcast `error` frame, force-close WS after 30s), `fly deploy --strategy immediate` documented
-- [ ] 06-02: Bun version pinning (`.bun-version`, Dockerfile `oven/bun:1.3.x-slim`), CI workflow (lint + typecheck + test + build + smoke `bun run start`), deploy gate
-- [ ] 06-03: Anti-cheat regression test suite (4 checks confirmed), README rewrite (deploy strategy, restart behavior, local dev, demo instructions), production smoke test, optional React Compiler opt-in (only if profiling shows cursor render bottleneck)
+- [ ] 06-01-PLAN.md — Graceful SIGTERM drain: `draining`/`drained` EventBridge contract, EngineWorker.drain()/GatewayInstance.drain() (90s cap), SERVER_SHUTTING_DOWN error code + client toast (D-01/D-02/D-03)
+- [ ] 06-02-PLAN.md — `.bun-version` pin + Dockerfile/package.json drift-guard regression test (D-04/D-05; Dockerfiles were already pinned)
+- [ ] 06-03-PLAN.md — Anti-cheat bypass regression tests (replay, impossible-WPM, exact boundary), README deploy-strategy/shutdown docs, local (non-Fly.io) smoke test script (D-06/D-07/D-08; CI gate and live Fly.io deploy explicitly deferred per 06-CONTEXT.md)
 
 ## Progress
 
@@ -178,10 +178,10 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/3 | Not started | - |
+| 1. Foundation | 3/3 | Complete    | 2026-08-30 |
 | 2. Race Engine | 4/4 | Complete    | 2026-08-30 |
-| 3. Race Track + WPM | 0/4 | Not started | - |
-| 4. Reconnect | 0/4 | Not started | - |
+| 3. Race Track + WPM | 4/4 | Complete    | 2026-08-31 |
+| 4. Reconnect | 5/5 | Complete    | 2026-09-03 |
 | 5. Frontend Polish | 4/4 | Complete    | 2026-09-03 |
 | 6. Deploy + Hardening | 0/3 | Not started | - |
 | 7. Split into N-tier architecture | 3/3 | Complete    | 2026-09-04 |

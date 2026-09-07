@@ -163,13 +163,14 @@ Plans:
   4. README documents deploy strategy (`fly deploy --strategy immediate` not rolling), restart behavior, graceful shutdown, and local dev workflow
   5. Live deploy URL serves the full game end-to-end: two browsers join, race, results show, rematch works — verified by manual smoke test before shipping
 
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
 
-- [ ] 06-01-PLAN.md — Graceful SIGTERM drain: `draining`/`drained` EventBridge contract, EngineWorker.drain()/GatewayInstance.drain() (90s cap), SERVER_SHUTTING_DOWN error code + client toast (D-01/D-02/D-03)
+- [ ] 06-01-PLAN.md — Graceful SIGTERM drain: `draining`/`drained` EventBridge contract, EngineWorker.drain()/GatewayInstance.drain() (90s cap), SERVER_SHUTTING_DOWN error code broadcast (D-01/D-02/D-03)
 - [ ] 06-02-PLAN.md — `.bun-version` pin + Dockerfile/package.json drift-guard regression test (D-04/D-05; Dockerfiles were already pinned)
 - [ ] 06-03-PLAN.md — Anti-cheat bypass regression tests (replay, impossible-WPM, exact boundary), README deploy-strategy/shutdown docs, local (non-Fly.io) smoke test script (D-06/D-07/D-08; CI gate and live Fly.io deploy explicitly deferred per 06-CONTEXT.md)
+- [ ] 06-04-PLAN.md — Client-side SERVER_SHUTTING_DOWN toast in `apps/web/src/App.tsx`, split from 06-01 to keep that plan's file footprint near the 5-8 target (depends on 06-01)
 
 ## Progress
 

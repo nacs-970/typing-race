@@ -184,7 +184,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Race Track + WPM | 4/4 | Complete    | 2026-08-31 |
 | 4. Reconnect | 5/5 | Complete    | 2026-09-03 |
 | 5. Frontend Polish | 4/4 | Complete    | 2026-09-03 |
-| 6. Deploy + Hardening | 0/3 | Not started | - |
+| 6. Deploy + Hardening | 0/4 | Not started | - |
 | 7. Split into N-tier architecture | 3/3 | Complete    | 2026-09-04 |
 
 ### Phase 7: Split into N-tier architecture

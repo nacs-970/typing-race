@@ -88,3 +88,18 @@ Note: `fly.toml`'s current `kill_timeout` is `"10s"`, well under the 90s drain w
 ### Local Smoke Test
 
 The new `scripts/smoke-test.sh` is the local pre-ship check. The full two-browser manual race verification and the CI gate are both explicitly deferred out of Phase 6's scope and remain manual/future work respectively.
+
+### Environment Variables
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `MODE` | `unified` (single process) or `split` (Gateway + Engine as separate tiers) | `split` |
+| `PORT` / `GATEWAY_PORT` | Gateway listen port | `8080` |
+| `HOST` / `GATEWAY_HOST` | Gateway bind address | `0.0.0.0` |
+| `ENGINE_HOST` | Engine host, split mode only | `127.0.0.1` |
+| `ENGINE_PORT` | Engine port, split mode only | `8081` |
+| `REDIS_URL` | Redis connection string for the split-mode EventBridge; unset in unified mode | none |
+| `NODE_ENV` | `production` / `development` | `development` |
+| `LOG_LEVEL` | pino log level | `info` in production, `debug` otherwise |
+
+Names only — no values are committed anywhere in this repo. `REDIS_URL` and any Fly.io deploy token are supplied as secrets by the hosting platform, never checked in.

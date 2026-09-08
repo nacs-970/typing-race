@@ -25,6 +25,8 @@ export class EngineWorker {
   public controller: RaceController;
   private unsubscribe?: () => void;
   private tickTimer?: ReturnType<typeof setInterval>;
+  private draining = false;
+  private drainPromise?: Promise<void>;
 
   constructor(
     public bridge: EventBridge,
@@ -32,6 +34,38 @@ export class EngineWorker {
   ) {
     this.roomManager = new RoomManager(this.store, this.bridge);
     this.controller = new RaceController(this.store, this.bridge, this.roomManager);
+  }
+
+  drain(timeoutMs = 90_000, pollIntervalMs = 500): Promise<void> {
+    if (this.drainPromise) return this.drainPromise;
+    this.draining = true;
+    void this.bridge.publishToGateway({ type: "draining" });
+
+    const hardTimeout = new Promise<void>(resolve => setTimeout(resolve, timeoutMs));
+    let pollTimer: ReturnType<typeof setTimeout>;
+
+    const pollLoop = new Promise<void>((resolve) => {
+      const check = async () => {
+        try {
+          const rooms = await this.store.list();
+          const active = rooms.filter(r => r.state === "countdown" || r.state === "racing" || r.state === "grace");
+          if (active.length === 0) {
+            resolve();
+            return;
+          }
+        } catch (e) {
+          logger.error({ err: e }, "[engine] drain poll error");
+        }
+        pollTimer = setTimeout(check, pollIntervalMs);
+      };
+      void check();
+    });
+
+    this.drainPromise = Promise.race([pollLoop, hardTimeout]).then(() => {
+      clearTimeout(pollTimer);
+      void this.bridge.publishToGateway({ type: "drained" });
+    });
+    return this.drainPromise;
   }
 
   start(): void {
@@ -90,6 +124,14 @@ export class EngineWorker {
         break;
 
       case "create_room": {
+        if (this.draining) {
+          void this.bridge.publishToGateway({
+            type: "send_to_client",
+            playerId,
+            payload: { type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" },
+          });
+          return;
+        }
         try {
           const { code, room } = await this.roomManager.createRoom(playerId, message.nickname);
           const player = room.players.get(playerId);
@@ -113,6 +155,14 @@ export class EngineWorker {
       }
 
       case "join_room": {
+        if (this.draining) {
+          void this.bridge.publishToGateway({
+            type: "send_to_client",
+            playerId,
+            payload: { type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" },
+          });
+          return;
+        }
         const result = await this.roomManager.addPlayer(message.code, playerId, message.nickname);
         if (!result.ok) {
           const isNotFound = result.code === "ROOM_NOT_FOUND";
@@ -224,6 +274,14 @@ export class EngineWorker {
       }
 
       case "start_race": {
+        if (this.draining) {
+          void this.bridge.publishToGateway({
+            type: "send_to_client",
+            playerId,
+            payload: { type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" },
+          });
+          return;
+        }
         if (!roomCode) return;
         const room = await this.store.get(roomCode);
         if (!room || room.hostId !== playerId) {

@@ -54,6 +54,12 @@ export type EngineToGatewayEvent =
       type: "player_room_cleared";
       playerId: string;
       roomCode: string;
+    }
+  | {
+      type: "draining";
+    }
+  | {
+      type: "drained";
     };
 
 export interface EventBridge {

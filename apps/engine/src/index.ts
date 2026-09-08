@@ -30,6 +30,7 @@ worker.start();
 
 const shutdown = async () => {
   logger.info("[engine] Shutting down gracefully...");
+  await worker.drain(90_000);
   worker.stop();
   await bridge.close();
   process.exit(0);

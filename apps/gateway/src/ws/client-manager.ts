@@ -4,6 +4,26 @@ import type { WsData } from "./handlers.ts";
 export class ClientManager {
   public sockets = new Map<string, ServerWebSocket<WsData>>();
   public roomMembers = new Map<string, Set<string>>();
+  private draining = false;
+
+  setDraining(v: boolean) {
+    this.draining = v;
+  }
+
+  isDraining(): boolean {
+    return this.draining;
+  }
+
+  broadcastAll(payload: unknown): void {
+    const str = JSON.stringify(payload);
+    for (const socket of this.sockets.values()) {
+      try {
+        socket.send(str);
+      } catch {
+        // ignore send errors
+      }
+    }
+  }
 
   addSocket(playerId: string, ws: ServerWebSocket<WsData>): void {
     this.sockets.set(playerId, ws);
@@ -68,6 +88,7 @@ export class ClientManager {
   clear(): void {
     this.sockets.clear();
     this.roomMembers.clear();
+    this.draining = false;
   }
 }
 

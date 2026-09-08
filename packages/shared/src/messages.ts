@@ -185,6 +185,7 @@ export const errorSchema = z.object({
     "RATE_LIMITED",
     "INTERNAL",
     "SESSION_INVALID",
+    "SERVER_SHUTTING_DOWN",
   ]),
   message: z.string(),
 });

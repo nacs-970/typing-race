@@ -88,6 +88,16 @@ export function bindBridgeToGateway(
         manager.clearRoom(event.playerId, event.roomCode);
         break;
       }
+
+      case "draining": {
+        manager.setDraining(true);
+        manager.broadcastAll({ type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" });
+        break;
+      }
+
+      case "drained": {
+        break;
+      }
     }
   });
 }

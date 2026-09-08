@@ -38,7 +38,8 @@ export interface GatewayInstance {
   port: number;
   bridge: EventBridge;
   clientManager: ClientManager;
-  engineWorker?: { stop: () => void };
+  engineWorker?: { stop: () => void; drain?: (timeoutMs?: number) => Promise<void> };
+  drain: (timeoutMs?: number) => Promise<void>;
   stop: () => Promise<void>;
 }
 
@@ -54,7 +55,7 @@ export async function startGateway(
   const manager = options.manager ?? clientManager;
 
   let bridge: EventBridge;
-  let engineWorker: { stop: () => void } | undefined;
+  let engineWorker: { stop: () => void; drain?: (timeoutMs?: number) => Promise<void> } | undefined;
 
   if (redisUrl) {
     bridge = new RedisEventBridge(redisUrl);
@@ -120,6 +121,32 @@ export async function startGateway(
 
   logger.info({ port: actualPort, host, mode }, "[gateway] listening");
 
+  let drainPromise: Promise<void> | undefined;
+  const drain = async (timeoutMs = 90_000) => {
+    if (drainPromise) return drainPromise;
+    drainPromise = (async () => {
+      manager.setDraining(true);
+      manager.broadcastAll({ type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" });
+
+      if (engineWorker && engineWorker.drain) {
+        await engineWorker.drain(timeoutMs);
+      } else {
+        let unsubscribe: (() => void) | undefined;
+        const eventPromise = new Promise<void>((resolve) => {
+          unsubscribe = bridge.onGatewayEvent((event) => {
+            if (event.type === "drained") {
+              resolve();
+            }
+          });
+        });
+        const timeoutPromise = new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
+        await Promise.race([eventPromise, timeoutPromise]);
+        if (unsubscribe) unsubscribe();
+      }
+    })();
+    return drainPromise;
+  };
+
   const stop = async () => {
     clearInterval(heartbeatTimer);
     unbindBridge();
@@ -137,6 +164,7 @@ export async function startGateway(
     bridge,
     clientManager: manager,
     engineWorker,
+    drain,
     stop,
   };
 }
@@ -145,6 +173,7 @@ if (import.meta.main) {
   startGateway().then((instance) => {
     const onShutdown = async (sig: string) => {
       logger.info({ sig }, "[gateway] shutting down...");
+      await instance.drain(90_000);
       await instance.stop();
       process.exit(0);
     };

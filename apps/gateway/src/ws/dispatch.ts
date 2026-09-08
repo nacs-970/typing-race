@@ -11,7 +11,7 @@ export function dispatch(
   ws: ServerWebSocket<WsData>,
   raw: string | ArrayBuffer | Uint8Array,
   bridge: EventBridge,
-  _manager: ClientManager = clientManager,
+  manager: ClientManager = clientManager,
 ): void {
   let text: string;
   if (typeof raw === "string") {
@@ -67,6 +67,17 @@ export function dispatch(
       );
       return;
     }
+  }
+
+  if ((msg.type === "create_room" || msg.type === "join_room" || msg.type === "start_race") && manager.isDraining()) {
+    ws.send(
+      JSON.stringify({
+        type: "error",
+        code: "SERVER_SHUTTING_DOWN",
+        message: "Server is shutting down",
+      }),
+    );
+    return;
   }
 
   // Forward valid game frames to Engine via EventBridge

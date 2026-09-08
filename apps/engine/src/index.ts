@@ -28,7 +28,10 @@ if (REDIS_URL) {
 const worker = new EngineWorker(bridge, store);
 worker.start();
 
+let shuttingDown = false;
 const shutdown = async () => {
+  if (shuttingDown) return;
+  shuttingDown = true;
   logger.info("[engine] Shutting down gracefully...");
   await worker.drain(90_000);
   worker.stop();

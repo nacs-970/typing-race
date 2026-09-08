@@ -185,7 +185,10 @@ export async function startGateway(
 
 if (import.meta.main) {
   startGateway().then((instance) => {
+    let shuttingDown = false;
     const onShutdown = async (sig: string) => {
+      if (shuttingDown) return;
+      shuttingDown = true;
       logger.info({ sig }, "[gateway] shutting down...");
       await instance.drain(90_000);
       await instance.stop();

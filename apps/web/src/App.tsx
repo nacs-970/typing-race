@@ -195,6 +195,10 @@ export function App(): React.ReactElement {
         } else if (msg.code === "SESSION_INVALID") {
           title = "Room Lost";
           body = "Room lost — connection expired. Return to lobby or create a new room.";
+        } else if (msg.code === "SERVER_SHUTTING_DOWN") {
+          title = "Server Restarting";
+          body =
+            "The server is restarting for maintenance. Please wait a moment and try rejoining.";
         } else if (msg.code === "RATE_LIMITED") {
           if (
             msg.message &&

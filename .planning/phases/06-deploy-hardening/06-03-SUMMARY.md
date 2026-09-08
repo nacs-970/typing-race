@@ -2,7 +2,7 @@
 phase: 06-deploy-hardening
 plan: 03
 status: complete
-commit: TBD
+commit: 6a17b31
 completed: 2026-09-08T09:42:00.000Z
 ---
 

@@ -3,17 +3,17 @@ gsd_state_version: "1.0"
 milestone: v1.0
 current_phase: 06
 current_phase_name: Deploy + Hardening
-status: executing
-stopped_at: Phase 06 plan 01/04 complete (graceful shutdown), plans 02-04 remaining
-last_updated: "2026-09-08T09:15:00.000Z"
+status: complete
+stopped_at: Phase 06 complete (4/4 plans) — all Phase 6 deliverables shipped
+last_updated: "2026-09-08T09:42:00.000Z"
 last_activity: 2026-09-08
-last_activity_desc: Executed 06-01 (graceful SIGTERM drain) via agy delegation, verified, committed da0f5c5
-state_head: da0f5c5c2d53513cbf60c21ed1668a362e1afa7f
+last_activity_desc: Completed Phase 6 (06-02 bun-version pin, 06-04 client toast, 06-03 anti-cheat bypass tests + deploy docs + smoke test), committed 6a17b31
+state_head: 6a17b31f96a5544753c39f1643efb96c1fa180a1
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 7
   total_plans: 27
-  completed_plans: 24
+  completed_plans: 27
 milestone_name: milestone
 ---
 
@@ -24,16 +24,16 @@ milestone_name: milestone
 See: .planning/PROJECT.md (updated 2026-08-30)
 
 **Core value:** Two connected clients see each other's cursor in real time and the race ends with a fair, identical WPM/accuracy score.
-**Current focus:** Phase 06 — Deploy + Hardening (last unstarted phase)
+**Current focus:** All 7 phases complete — v1.0 milestone fully executed
 
 ## Current Position
 
-Phase: 06 (Deploy + Hardening) — EXECUTING
-Plan: 1/4 complete (06-01 graceful shutdown done; 06-02 bun-version pin, 06-04 App.tsx toast, 06-03 anti-cheat regression tests remain)
-Status: Executing
-Last activity: 2026-09-08 — 06-01 executed via agy delegation (branch phase-06-deploy-hardening), verified independently, committed da0f5c5
+Phase: 06 (Deploy + Hardening) — COMPLETE (all 7 phases now complete)
+Plan: 4/4 complete
+Status: Ready for milestone completion / PR review
+Last activity: 2026-09-08 — Phase 6 finished (06-02, 06-04, 06-03), branch phase-06-deploy-hardening, HEAD 6a17b31
 
-Progress: [██████████████████░░] 86% (6/7 phases)
+Progress: [████████████████████] 100% (7/7 phases)
 
 ## Performance Metrics
 
@@ -52,7 +52,7 @@ Progress: [██████████████████░░] 86% (6/
 | 3 — Race Track + WPM | 4/4 | - | - |
 | 4 — Reconnect | 5/5 | - | - |
 | 5 — Frontend Polish | 4/4 | - | - |
-| 6 — Deploy + Hardening | 1/4 | - | - |
+| 6 — Deploy + Hardening | 4/4 | - | - |
 | 7 — Split into N-tier architecture | 3/3 | - | - |
 
 **Recent Trend:**
@@ -95,8 +95,10 @@ None yet.
 - Room-code collision math: ADDRESSED in Plan 01 (3 retries, 887M keyspace, birthday paradox ~0.006% at 10k rooms)
 - React Compiler config: MEDIUM confidence, still deferred — no evidence it was revisited in Phase 5. Phase 6 D-08 formally decided: skip (no measured bottleneck).
 - `.planning/debug/*.md` (host-promotion/solo-disconnect, lobby-rejoin-race-view, reconnect-cursor-reset) are marked "Diagnosed" but verified FIXED in current code (landed in Phase 4 Plan 05, commit `04-05`). Notes are stale history, not open work — safe to leave as record or archive.
-- Phase 6 remaining: no `.bun-version` pin / Dockerfile pinning (06-02), no App.tsx SERVER_SHUTTING_DOWN toast (06-04), no anti-cheat regression test suite (06-03). `.github/` CI workflow and `fly deploy` execution are explicitly out of scope for this phase (deferred to a future deploy-focused pass, per 06-CONTEXT.md).
-- agy-delegate reliability note: a single delegation covering all 4 phase-6 plans timed out ("timeout waiting for response", ~210K tokens, no commit). Delegate one plan per call going forward for this phase — see `.planning/phases/06-deploy-hardening/06-01-SUMMARY.md`.
+- Phase 6 COMPLETE: `.bun-version` pinned + Dockerfile drift guard (06-02), App.tsx SERVER_SHUTTING_DOWN toast (06-04), anti-cheat bypass regression tests + deploy docs + local smoke test (06-03). `.github/` CI workflow and `fly deploy` execution remain explicitly out of scope (deferred to a future deploy-focused pass, per 06-CONTEXT.md) — the only genuinely open follow-up work.
+- ROADMAP-vs-implementation mismatch surfaced (not silently resolved): ROADMAP's "WPM cap 250 enforced" criterion has no matching clamp in code — the real structural ceiling from the 20ms min-interval floor is ~600 WPM. Documented in README, not changed (no D-NN decision authorized adding a clamp).
+- fly.toml's `kill_timeout = "10s"` is below the 90s drain window (D-02) — must be bumped to ≥90s before any real Fly.io deploy, or SIGKILL will cut drain short mid-shutdown. Flagged in README; fly.toml itself intentionally untouched this phase.
+- agy-delegate reliability note (confirmed twice, 06-01 and 06-03): a single delegation covering multiple plans/tasks reliably times out ("timeout waiting for response") on the final response after already writing files to disk — never on the writes themselves. Always delegate one plan per call, and always verify + commit directly rather than trusting the run to finish its own report. See `.planning/phases/06-deploy-hardening/06-01-SUMMARY.md` and `06-03-SUMMARY.md`.
 
 ## Deferred Items
 
@@ -115,6 +117,6 @@ Items acknowledged and deferred, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-08T09:15:00.000Z
-Stopped at: Phase 06 plan 01/04 complete (committed da0f5c5), resuming to plan 06-02 next
-Resume file: .planning/phases/06-deploy-hardening/06-01-SUMMARY.md
+Last session: 2026-09-08T09:42:00.000Z
+Stopped at: Phase 06 complete — all 4 plans committed (da0f5c5, 9c4087f/9562982, cef145d, 6a17b31). All 7 phases now complete.
+Resume file: .planning/phases/06-deploy-hardening/06-03-SUMMARY.md

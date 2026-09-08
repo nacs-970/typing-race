@@ -91,7 +91,9 @@ export function bindBridgeToGateway(
 
       case "draining": {
         manager.setDraining(true);
-        manager.broadcastAll({ type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" });
+        if (manager.announceShuttingDownOnce()) {
+          manager.broadcastAll({ type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" });
+        }
         break;
       }
 

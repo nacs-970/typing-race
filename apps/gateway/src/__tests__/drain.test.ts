@@ -123,4 +123,77 @@ describe("Gateway drain", () => {
 
     await inst.stop();
   });
+
+  test("announceShuttingDownOnce() gates a single broadcast per shutdown cycle", () => {
+    const m = new ClientManager();
+    expect(m.announceShuttingDownOnce()).toBe(true);
+    expect(m.announceShuttingDownOnce()).toBe(false);
+    expect(m.announceShuttingDownOnce()).toBe(false);
+    m.clear();
+    expect(m.announceShuttingDownOnce()).toBe(true);
+  });
+
+  test("WR-01 (split mode): engine-initiated \"draining\" + gateway's own drain() send exactly one SERVER_SHUTTING_DOWN", async () => {
+    const manager = new ClientManager();
+    const inst = await startGateway({ mode: "split", port: 0, manager });
+
+    const ws = {
+      data: { playerId: crypto.randomUUID() },
+      send: mock(() => {}),
+    } as any;
+    inst.clientManager.addSocket(ws.data.playerId, ws);
+
+    // Simulate the engine's OWN independent SIGTERM/drain cycle publishing
+    // "draining" first (e.g. both containers received SIGTERM together).
+    await inst.bridge.publishToGateway({ type: "draining" });
+    // Then the gateway's own shutdown sequence calls drain(), which used to
+    // unconditionally broadcast again in split mode (WR-01 split-mode gap).
+    void inst.drain(5000);
+    await new Promise((r) => setTimeout(r, 20));
+
+    const shuttingDownSends = ws.send.mock.calls.filter((c: any[]) =>
+      String(c[0]).includes("SERVER_SHUTTING_DOWN"),
+    );
+    expect(shuttingDownSends.length).toBe(1);
+
+    await inst.bridge.publishToGateway({ type: "drained" });
+    await inst.stop();
+  });
+
+  test("CR-B1: a stale \"drained\" latch from a PRIOR unrelated engine restart does not poison the next real drain()", async () => {
+    const manager = new ClientManager();
+    const inst = await startGateway({ mode: "split", port: 0, manager });
+
+    // An earlier, unrelated engine-only restart already published "drained"
+    // long before this shutdown began (e.g. docker-compose `restart:
+    // unless-stopped` cycling the engine container independently).
+    await inst.bridge.publishToGateway({ type: "drained" });
+    expect(inst.clientManager.isDrained()).toBe(true);
+
+    // A real shutdown begins now — the stale latch must be cleared first
+    // (mirrors apps/gateway/src/index.ts's onShutdown), or drain() would
+    // wrongly short-circuit instead of waiting for the CURRENT in-flight work.
+    inst.clientManager.setDrained(false);
+
+    const ws = {
+      data: { playerId: crypto.randomUUID() },
+      send: mock(() => {}),
+    } as any;
+    inst.clientManager.addSocket(ws.data.playerId, ws);
+
+    const start = Date.now();
+    const drainPromise = inst.drain(300);
+    await new Promise((r) => setTimeout(r, 50));
+    // Mid-drain, with the stale latch cleared: must still be waiting, not
+    // already resolved on the poisoned flag.
+    expect(Date.now() - start).toBeLessThan(300);
+
+    // Now the CURRENT shutdown's own "drained" event arrives for real.
+    await inst.bridge.publishToGateway({ type: "drained" });
+    await drainPromise;
+    const elapsed = Date.now() - start;
+    expect(elapsed).toBeLessThan(300);
+
+    await inst.stop();
+  });
 });

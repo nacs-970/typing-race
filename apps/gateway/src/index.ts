@@ -134,7 +134,14 @@ export async function startGateway(
         // SERVER_SHUTTING_DOWN. Don't double-send here.
         await engineWorker.drain(timeoutMs);
       } else {
-        manager.broadcastAll({ type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" });
+        // Split/Redis mode: the engine's own independent SIGTERM handler can
+        // also publish "draining" for its own shutdown, which bindBridgeToGateway
+        // broadcasts. Gate through announceShuttingDownOnce() so whichever path
+        // fires first wins and the client never gets two SERVER_SHUTTING_DOWN
+        // frames for one shutdown (WR-01, split-mode case).
+        if (manager.announceShuttingDownOnce()) {
+          manager.broadcastAll({ type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" });
+        }
         if (manager.isDrained()) {
           // The engine's "drained" event already arrived (and was latched by
           // bindBridgeToGateway's "drained" case) before we started
@@ -190,6 +197,13 @@ if (import.meta.main) {
       if (shuttingDown) return;
       shuttingDown = true;
       logger.info({ sig }, "[gateway] shutting down...");
+      // Clear any stale "drained" latch left by an unrelated PRIOR engine
+      // restart (split mode: the engine's own SIGTERM/drain cycle publishes
+      // "drained" independently of this gateway's lifecycle, e.g. a crash
+      // restart under docker-compose's `restart: unless-stopped`). Without
+      // this, a stray latch from hours earlier would make THIS drain() skip
+      // waiting for the CURRENT shutdown's in-flight races (CR-B1).
+      instance.clientManager.setDrained(false);
       await instance.drain(90_000);
       await instance.stop();
       process.exit(0);

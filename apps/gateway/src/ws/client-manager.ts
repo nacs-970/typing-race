@@ -6,6 +6,7 @@ export class ClientManager {
   public roomMembers = new Map<string, Set<string>>();
   private draining = false;
   private drained = false;
+  private shuttingDownAnnounced = false;
 
   setDraining(v: boolean) {
     this.draining = v;
@@ -21,6 +22,19 @@ export class ClientManager {
 
   isDrained(): boolean {
     return this.drained;
+  }
+
+  /**
+   * Idempotent SERVER_SHUTTING_DOWN announcement gate. Split mode can trigger
+   * the "draining" bridge event (engine-initiated) and the gateway's own
+   * drain() broadcast independently for the same shutdown — this makes
+   * "broadcast once" true regardless of which path fires first or both.
+   * Returns true only the first time it's called (per shutdown cycle).
+   */
+  announceShuttingDownOnce(): boolean {
+    if (this.shuttingDownAnnounced) return false;
+    this.shuttingDownAnnounced = true;
+    return true;
   }
 
   broadcastAll(payload: unknown): void {
@@ -99,6 +113,7 @@ export class ClientManager {
     this.roomMembers.clear();
     this.draining = false;
     this.drained = false;
+    this.shuttingDownAnnounced = false;
   }
 }
 

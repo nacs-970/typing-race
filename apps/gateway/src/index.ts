@@ -126,11 +126,15 @@ export async function startGateway(
     if (drainPromise) return drainPromise;
     drainPromise = (async () => {
       manager.setDraining(true);
-      manager.broadcastAll({ type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" });
 
       if (engineWorker && engineWorker.drain) {
+        // The "draining" event published by engineWorker.drain() is delivered
+        // back to this same process via the bridge and handled by
+        // bindBridgeToGateway's "draining" case, which broadcasts
+        // SERVER_SHUTTING_DOWN. Don't double-send here.
         await engineWorker.drain(timeoutMs);
       } else {
+        manager.broadcastAll({ type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" });
         let unsubscribe: (() => void) | undefined;
         const eventPromise = new Promise<void>((resolve) => {
           unsubscribe = bridge.onGatewayEvent((event) => {

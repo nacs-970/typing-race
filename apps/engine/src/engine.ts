@@ -41,13 +41,17 @@ export class EngineWorker {
     this.draining = true;
     void this.bridge.publishToGateway({ type: "draining" });
 
-    const hardTimeout = new Promise<void>(resolve => setTimeout(resolve, timeoutMs));
-    let pollTimer: ReturnType<typeof setTimeout>;
+    let stopped = false;
+    let hardTimer: ReturnType<typeof setTimeout>;
+    const hardTimeout = new Promise<void>(resolve => { hardTimer = setTimeout(resolve, timeoutMs); });
+    let pollTimer: ReturnType<typeof setTimeout> | undefined;
 
     const pollLoop = new Promise<void>((resolve) => {
       const check = async () => {
+        if (stopped) return;
         try {
           const rooms = await this.store.list();
+          if (stopped) return;
           const active = rooms.filter(r => r.state === "countdown" || r.state === "racing" || r.state === "grace");
           if (active.length === 0) {
             resolve();
@@ -56,13 +60,15 @@ export class EngineWorker {
         } catch (e) {
           logger.error({ err: e }, "[engine] drain poll error");
         }
-        pollTimer = setTimeout(check, pollIntervalMs);
+        if (!stopped) pollTimer = setTimeout(check, pollIntervalMs);
       };
       void check();
     });
 
     this.drainPromise = Promise.race([pollLoop, hardTimeout]).then(() => {
-      clearTimeout(pollTimer);
+      stopped = true;
+      clearTimeout(hardTimer);
+      if (pollTimer) clearTimeout(pollTimer);
       void this.bridge.publishToGateway({ type: "drained" });
     });
     return this.drainPromise;

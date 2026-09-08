@@ -141,6 +141,7 @@ export async function startGateway(
           // listening here — nothing left to wait for (CR-01).
         } else {
           let unsubscribe: (() => void) | undefined;
+          let timer: ReturnType<typeof setTimeout> | undefined;
           const eventPromise = new Promise<void>((resolve) => {
             unsubscribe = bridge.onGatewayEvent((event) => {
               if (event.type === "drained") {
@@ -148,9 +149,12 @@ export async function startGateway(
               }
             });
           });
-          const timeoutPromise = new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
+          const timeoutPromise = new Promise<void>((resolve) => {
+            timer = setTimeout(resolve, timeoutMs);
+          });
           await Promise.race([eventPromise, timeoutPromise]);
           if (unsubscribe) unsubscribe();
+          if (timer) clearTimeout(timer);
         }
       }
     })();

@@ -13,6 +13,9 @@ The project is structured as a cloud-agnostic N-tier monorepo:
 
 ## Development
 
+Note: React Compiler was evaluated and skipped (D-08) — Phase 5 already isolated cursor rendering outside the React tree via CSS `transform3d`, and no profiling has shown a render bottleneck that would justify it; revisit only if that changes.
+
+
 Bun 1.3.2+ is required. Dependencies are installed deterministically:
 
 ```bash
@@ -72,3 +75,16 @@ docker run -p 8080:8080 typing-race
 
 Runs Gateway, Engine, and static SPA serving in unified mode (`MODE=unified`) under a non-root `bun` user.
 Configuration is maintained in `fly.toml`.
+
+### Deploy Strategy
+
+`fly deploy --strategy immediate --remote-only` is the intended command, chosen over a rolling strategy because a single-VM-per-tier deploy has no second instance to roll onto; the actual `fly deploy` invocation and `fly.toml` tuning are explicitly out of scope for Phase 6 and remain a follow-up.
+
+### Graceful Shutdown
+
+On SIGTERM, the process broadcasts a `SERVER_SHUTTING_DOWN` error frame to all connected clients (rendered as a "Server Restarting" toast), stops accepting new `create_room`/`join_room`/`start_race` messages, lets in-flight races finish normally, and exits once drained or after a 90-second hard cap (via `apps/engine/src/engine.ts`'s `EngineWorker.drain()` and `apps/gateway/src/index.ts`'s `GatewayInstance.drain()`).
+Note: `fly.toml`'s current `kill_timeout` is `"10s"`, well under the 90s drain window — whoever performs the actual Fly.io deploy work must bump `kill_timeout` to `>= 90s` first, or Fly will SIGKILL mid-drain.
+
+### Local Smoke Test
+
+The new `scripts/smoke-test.sh` is the local pre-ship check. The full two-browser manual race verification and the CI gate are both explicitly deferred out of Phase 6's scope and remain manual/future work respectively.

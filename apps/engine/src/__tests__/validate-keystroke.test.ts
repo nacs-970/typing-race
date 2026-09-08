@@ -113,6 +113,37 @@ describe("validateKeystroke — 4 anti-cheat checks", () => {
     expect(ok.ok).toBe(true);
   });
 
+  test("3.1. min-interval boundary: 19ms → RATE_LIMITED; 20ms → ok; 21ms → ok", () => {
+    const now = 1000;
+    const at19 = validateKeystroke({
+      room: fakeRoom("racing", now - 200),
+      player: fakePlayer(now - 19),
+      frame: fakeFrame(0, "h"),
+      passageText: PASSAGE,
+      now,
+    });
+    expect(at19.ok).toBe(false);
+    if (!at19.ok) expect(at19.reason).toBe("RATE_LIMITED");
+
+    const at20 = validateKeystroke({
+      room: fakeRoom("racing", now - 200),
+      player: fakePlayer(now - 20),
+      frame: fakeFrame(0, "h"),
+      passageText: PASSAGE,
+      now,
+    });
+    expect(at20.ok).toBe(true);
+
+    const at21 = validateKeystroke({
+      room: fakeRoom("racing", now - 200),
+      player: fakePlayer(now - 21),
+      frame: fakeFrame(0, "h"),
+      passageText: PASSAGE,
+      now,
+    });
+    expect(at21.ok).toBe(true);
+  });
+
   test("4. char-match: wrong char → INVALID_FRAME; right → ok", () => {
     const now = 1000;
     const room = fakeRoom("racing", now - 200);
@@ -481,5 +512,98 @@ describe("validateKeystroke — Phase 3 char-state extension", () => {
 
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.reason).toBe("INVALID_FRAME");
+  });
+});
+
+describe("validateKeystroke — D-07 bypass scenarios", () => {
+  console.log("D-07 bypass scenarios");
+  test("replay attack: replaying identical accepted frame cannot inflate WPM or progress", () => {
+    const startMs = 0;
+    const room = fakeRoom("racing", startMs, PASSAGE);
+    const player = fakePlayer(0, 0);
+
+    let now = 1000;
+    const r1 = validateKeystroke({
+      room,
+      player,
+      frame: fakeFrame(0, "h"),
+      passageText: PASSAGE,
+      now,
+    });
+    expect(r1.ok).toBe(true);
+    const wpmAfterFirst = player.currentWpm;
+    const progressAfterFirst = player.progress;
+    expect(player.totalKeystrokes).toBe(1);
+
+    for (let i = 2; i <= 4; i++) {
+      now += 50;
+      const r = validateKeystroke({
+        room,
+        player,
+        frame: fakeFrame(0, "h"),
+        passageText: PASSAGE,
+        now,
+      });
+      expect(r.ok).toBe(true);
+      expect(player.progress).toBe(progressAfterFirst);
+      expect(player.currentWpm).toBeLessThanOrEqual(wpmAfterFirst);
+      expect(player.totalKeystrokes).toBe(i);
+    }
+  });
+
+  test("replay attack sub-boundary: replay <20ms is RATE_LIMITED", () => {
+    const room = fakeRoom("racing", 0, PASSAGE);
+    const player = fakePlayer(0, 0);
+    const now = 1000;
+
+    const r1 = validateKeystroke({
+      room,
+      player,
+      frame: fakeFrame(0, "h"),
+      passageText: PASSAGE,
+      now,
+    });
+    expect(r1.ok).toBe(true);
+
+    const r2 = validateKeystroke({
+      room,
+      player,
+      frame: fakeFrame(0, "h"),
+      passageText: PASSAGE,
+      now: now + 19,
+    });
+    expect(r2.ok).toBe(false);
+    if (!r2.ok) expect(r2.reason).toBe("RATE_LIMITED");
+  });
+
+  test("claimed-impossible-WPM: spoofed clientTs ignores spoofing and bounds to structural ceiling", () => {
+    const room = fakeRoom("racing", 0, PASSAGE);
+    const player = fakePlayer(0, 0);
+
+    let now = 1000;
+    const MIN_INTERVAL_MS = 20;
+
+    for (let i = 0; i < PASSAGE.length; i++) {
+      const spoofedTs = now - 600_000;
+      const res = validateKeystroke({
+        room,
+        player,
+        frame: fakeFrame(i, PASSAGE.charAt(i), spoofedTs),
+        passageText: PASSAGE,
+        now,
+      });
+      expect(res.ok).toBe(true);
+      if (i < PASSAGE.length - 1) {
+        now += MIN_INTERVAL_MS;
+      }
+    }
+
+    const expectedElapsed = now;
+    const expectedCorrectChars = PASSAGE.length;
+    const independentWpm = (expectedCorrectChars / 5) / (expectedElapsed / 60_000);
+
+    expect(player.currentWpm).toBe(independentWpm);
+    const ceilingWpm = (PASSAGE.length / 5) / ((PASSAGE.length * MIN_INTERVAL_MS) / 60_000);
+    expect(player.currentWpm).toBeLessThanOrEqual(ceilingWpm);
   });
 });

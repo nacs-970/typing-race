@@ -2,7 +2,7 @@
 phase: 06-deploy-hardening
 plan: 04
 status: complete
-commit: TBD
+commit: cef145d
 completed: 2026-09-08T09:35:00.000Z
 ---
 

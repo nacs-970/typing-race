@@ -135,17 +135,23 @@ export async function startGateway(
         await engineWorker.drain(timeoutMs);
       } else {
         manager.broadcastAll({ type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" });
-        let unsubscribe: (() => void) | undefined;
-        const eventPromise = new Promise<void>((resolve) => {
-          unsubscribe = bridge.onGatewayEvent((event) => {
-            if (event.type === "drained") {
-              resolve();
-            }
+        if (manager.isDrained()) {
+          // The engine's "drained" event already arrived (and was latched by
+          // bindBridgeToGateway's "drained" case) before we started
+          // listening here — nothing left to wait for (CR-01).
+        } else {
+          let unsubscribe: (() => void) | undefined;
+          const eventPromise = new Promise<void>((resolve) => {
+            unsubscribe = bridge.onGatewayEvent((event) => {
+              if (event.type === "drained") {
+                resolve();
+              }
+            });
           });
-        });
-        const timeoutPromise = new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
-        await Promise.race([eventPromise, timeoutPromise]);
-        if (unsubscribe) unsubscribe();
+          const timeoutPromise = new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
+          await Promise.race([eventPromise, timeoutPromise]);
+          if (unsubscribe) unsubscribe();
+        }
       }
     })();
     return drainPromise;

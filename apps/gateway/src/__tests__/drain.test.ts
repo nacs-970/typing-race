@@ -98,4 +98,29 @@ describe("Gateway drain", () => {
 
     await inst.stop();
   });
+
+  test("CR-01: drain() resolves promptly if \"drained\" arrives before drain() is called", async () => {
+    const manager = new ClientManager();
+    const inst = await startGateway({ mode: "split", port: 0, manager });
+
+    // Simulate the engine's SIGTERM handler winning the race and publishing
+    // "drained" before the gateway's own drain() has started listening.
+    await inst.bridge.publishToGateway({ type: "drained" });
+
+    const ws = {
+      data: { playerId: crypto.randomUUID() },
+      send: mock(() => {}),
+    } as any;
+    inst.clientManager.addSocket(ws.data.playerId, ws);
+
+    const start = Date.now();
+    await inst.drain(5000);
+    const elapsed = Date.now() - start;
+
+    // Without the CR-01 latch, this would block for the full 5000ms timeout.
+    expect(elapsed).toBeLessThan(200);
+    expect(inst.clientManager.isDraining()).toBe(true);
+
+    await inst.stop();
+  });
 });

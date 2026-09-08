@@ -96,6 +96,10 @@ export function bindBridgeToGateway(
       }
 
       case "drained": {
+        // Latch this even if drain() hasn't started listening yet: in
+        // split/Redis mode the engine's own SIGTERM handler can publish
+        // "drained" before the gateway's drain() has subscribed (CR-01).
+        manager.setDrained(true);
         break;
       }
     }

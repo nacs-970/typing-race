@@ -5,6 +5,7 @@ export class ClientManager {
   public sockets = new Map<string, ServerWebSocket<WsData>>();
   public roomMembers = new Map<string, Set<string>>();
   private draining = false;
+  private drained = false;
 
   setDraining(v: boolean) {
     this.draining = v;
@@ -12,6 +13,14 @@ export class ClientManager {
 
   isDraining(): boolean {
     return this.draining;
+  }
+
+  setDrained(v: boolean) {
+    this.drained = v;
+  }
+
+  isDrained(): boolean {
+    return this.drained;
   }
 
   broadcastAll(payload: unknown): void {
@@ -89,6 +98,7 @@ export class ClientManager {
     this.sockets.clear();
     this.roomMembers.clear();
     this.draining = false;
+    this.drained = false;
   }
 }
 

@@ -4,16 +4,16 @@ milestone: v1.0
 current_phase: 06
 current_phase_name: Deploy + Hardening
 status: executing
-stopped_at: Phase 06 context gathered
-last_updated: "2026-09-07T19:36:42.628Z"
+stopped_at: Phase 06 plan 01/04 complete (graceful shutdown), plans 02-04 remaining
+last_updated: "2026-09-08T09:15:00.000Z"
 last_activity: 2026-09-08
-last_activity_desc: Reconciled stale planning state against actual git history during /gsd-resume-work
-state_head: 619b9cbc5693021f08e46dffdff6d57cd88ab080
+last_activity_desc: Executed 06-01 (graceful SIGTERM drain) via agy delegation, verified, committed da0f5c5
+state_head: da0f5c5c2d53513cbf60c21ed1668a362e1afa7f
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 27
-  completed_plans: 23
+  completed_plans: 24
 milestone_name: milestone
 ---
 
@@ -28,10 +28,10 @@ See: .planning/PROJECT.md (updated 2026-08-30)
 
 ## Current Position
 
-Phase: 06 (Deploy + Hardening) — READY TO EXECUTE
-Plan: Not started (0/3 plans)
-Status: Ready to execute
-Last activity: 2026-09-08 — reconciled planning docs against real git history (phases 1,3,4 were marked pending/not-started but are actually complete)
+Phase: 06 (Deploy + Hardening) — EXECUTING
+Plan: 1/4 complete (06-01 graceful shutdown done; 06-02 bun-version pin, 06-04 App.tsx toast, 06-03 anti-cheat regression tests remain)
+Status: Executing
+Last activity: 2026-09-08 — 06-01 executed via agy delegation (branch phase-06-deploy-hardening), verified independently, committed da0f5c5
 
 Progress: [██████████████████░░] 86% (6/7 phases)
 
@@ -52,7 +52,7 @@ Progress: [██████████████████░░] 86% (6/
 | 3 — Race Track + WPM | 4/4 | - | - |
 | 4 — Reconnect | 5/5 | - | - |
 | 5 — Frontend Polish | 4/4 | - | - |
-| 6 — Deploy + Hardening | 0/3 | - | - |
+| 6 — Deploy + Hardening | 1/4 | - | - |
 | 7 — Split into N-tier architecture | 3/3 | - | - |
 
 **Recent Trend:**
@@ -93,9 +93,10 @@ None yet.
 ### Blockers/Concerns
 
 - Room-code collision math: ADDRESSED in Plan 01 (3 retries, 887M keyspace, birthday paradox ~0.006% at 10k rooms)
-- React Compiler config: MEDIUM confidence, still deferred — no evidence it was revisited in Phase 5.
+- React Compiler config: MEDIUM confidence, still deferred — no evidence it was revisited in Phase 5. Phase 6 D-08 formally decided: skip (no measured bottleneck).
 - `.planning/debug/*.md` (host-promotion/solo-disconnect, lobby-rejoin-race-view, reconnect-cursor-reset) are marked "Diagnosed" but verified FIXED in current code (landed in Phase 4 Plan 05, commit `04-05`). Notes are stale history, not open work — safe to leave as record or archive.
-- Phase 6 requirements not yet met: no `.github/` CI workflow, no `.bun-version` pin, no anti-cheat regression test suite, no documented `fly deploy` execution (Dockerfile/fly.toml exist as scaffolding only).
+- Phase 6 remaining: no `.bun-version` pin / Dockerfile pinning (06-02), no App.tsx SERVER_SHUTTING_DOWN toast (06-04), no anti-cheat regression test suite (06-03). `.github/` CI workflow and `fly deploy` execution are explicitly out of scope for this phase (deferred to a future deploy-focused pass, per 06-CONTEXT.md).
+- agy-delegate reliability note: a single delegation covering all 4 phase-6 plans timed out ("timeout waiting for response", ~210K tokens, no commit). Delegate one plan per call going forward for this phase — see `.planning/phases/06-deploy-hardening/06-01-SUMMARY.md`.
 
 ## Deferred Items
 
@@ -114,6 +115,6 @@ Items acknowledged and deferred, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-07T18:47:52.016Z
-Stopped at: Phase 06 context gathered
-Resume file: .planning/phases/06-deploy-hardening/06-CONTEXT.md
+Last session: 2026-09-08T09:15:00.000Z
+Stopped at: Phase 06 plan 01/04 complete (committed da0f5c5), resuming to plan 06-02 next
+Resume file: .planning/phases/06-deploy-hardening/06-01-SUMMARY.md

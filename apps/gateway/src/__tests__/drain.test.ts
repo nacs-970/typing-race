@@ -67,32 +67,35 @@ describe("Gateway drain", () => {
     inst.clientManager.addSocket(ws.data.playerId, ws);
     
     await inst.drain(50);
-    
+
     expect(inst.clientManager.isDraining()).toBe(true);
-    expect(ws.send).toHaveBeenCalled();
-    
+    // WR-01 regression: unified mode must broadcast SERVER_SHUTTING_DOWN
+    // exactly once (via the engineWorker's "draining" event), not once
+    // directly plus once again through the bridge.
+    expect(ws.send).toHaveBeenCalledTimes(1);
+
     await inst.stop();
   });
 
   test("GatewayInstance.drain() in split mode", async () => {
     const inst = await startGateway({ mode: "split", port: 0 });
-    
+
     const ws = {
       data: { playerId: crypto.randomUUID() },
       send: mock(() => {}),
     } as any;
     inst.clientManager.addSocket(ws.data.playerId, ws);
-    
+
     const p = inst.drain(500);
-    
+
     // Simulate engine draining
     await inst.bridge.publishToGateway({ type: "drained" });
-    
+
     await p;
-    
+
     expect(inst.clientManager.isDraining()).toBe(true);
     expect(ws.send).toHaveBeenCalled();
-    
+
     await inst.stop();
   });
 });

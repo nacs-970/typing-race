@@ -72,17 +72,12 @@ describe("ToastQueue", () => {
       addToast({
         type: "warning",
         title: "Server Restart",
-        body: "Server restarted — reconnecting automatically in 5s. Your race progress will be preserved.",
+        body: "The server is restarting for maintenance. Please wait a moment and try rejoining.",
       });
       addToast({
         type: "error",
         title: "Rate Limit",
         body: "Rate limit reached (max 10 rooms/hr). Wait 15 minutes or join an existing room.",
-      });
-      addToast({
-        type: "error",
-        title: "Version Mismatch",
-        body: "Game version outdated. Refresh the browser page to load the latest engine.",
       });
     });
 
@@ -91,17 +86,12 @@ describe("ToastQueue", () => {
     ).toBeDefined();
     expect(
       getByText(
-        "Server restarted — reconnecting automatically in 5s. Your race progress will be preserved.",
+        "The server is restarting for maintenance. Please wait a moment and try rejoining.",
       ),
     ).toBeDefined();
     expect(
       getByText(
         "Rate limit reached (max 10 rooms/hr). Wait 15 minutes or join an existing room.",
-      ),
-    ).toBeDefined();
-    expect(
-      getByText(
-        "Game version outdated. Refresh the browser page to load the latest engine.",
       ),
     ).toBeDefined();
   });

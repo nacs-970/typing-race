@@ -9,6 +9,7 @@ import { CountdownView } from "./components/CountdownView.tsx";
 import { RaceView } from "./components/RaceView.tsx";
 import { LobbyView } from "./components/LobbyView.tsx";
 import { GraceBanner } from "./components/GraceBanner.tsx";
+import { ReconnectBanner } from "./components/ReconnectBanner.tsx";
 import { ResultsBoard } from "./components/ResultsBoard.tsx";
 import { ToastQueue } from "./components/ToastQueue.tsx";
 import { addToast } from "./store/toast.ts";
@@ -189,6 +190,9 @@ export function App(): React.ReactElement {
             title = "Room Lost";
             body = "Room lost — connection expired. Return to lobby or create a new room.";
           }
+        } else if (msg.code === "ROOM_CLOSED") {
+          title = "Room Closed";
+          body = "All players have left this room.";
         } else if (msg.code === "ROOM_FULL") {
           title = "Room Full";
           body = "This room is already at maximum capacity (8 players).";
@@ -340,6 +344,8 @@ export function App(): React.ReactElement {
           </button>
         </div>
       )}
+
+      <ReconnectBanner sessionTakenOver={sessionTakenOver} />
 
       <GraceBanner />
 

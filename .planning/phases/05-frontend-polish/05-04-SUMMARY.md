@@ -53,7 +53,7 @@ Delivered the concluding user experience and polish features for Phase 5 (Wave 3
    - Refactored into a sleek, non-intrusive banner pinned above the HUD with glowing amber border and shrinking gradient timer bar from 100% to 0% over `remainingMs`.
 3. **Top-Right Stacked Toast Queue (`ToastQueue`)**:
    - Created `useToastStore`, `addToast`, `dismissToast`, and `<ToastQueue />` rendered top-right with top-to-bottom stacking order (capped at 5 max).
-   - Handles disconnect 60s grace, reconnect notifications, and exact UI-SPEC copywriting contracts (Room Lost, Server Restart, Rate Limit, Version Mismatch).
+   - Handles disconnect 60s grace, reconnect notifications, and exact UI-SPEC copywriting contracts (Room Lost, Server Restart, Rate Limit).
 4. **Ranked Results Board (`ResultsBoard`)**:
    - Displays server-authoritative `PlayerFinalStats[]` ranked by `finishTimeMs` ascending with `wpm` descending tiebreaker.
    - Formats finish time deltas relative to winner (`Winner`, `+1.2s`), podium medals (`🥇`, `🥈`, `🥉`), and highlights local player with `(You)` tag.

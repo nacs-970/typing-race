@@ -34,8 +34,6 @@ with a fair, identical WPM/accuracy score — nothing else matters.
 - [ ] Rematch button (same room, new passage)
 - [ ] English passages only, bundled public-domain corpus (~50-100 short
       passages, ~30-60 words each)
-- [ ] Public deployment to Fly.io (single process serves frontend + WS API),
-      free tier with card on file
 
 ### Out of Scope
 
@@ -47,6 +45,10 @@ with a fair, identical WPM/accuracy score — nothing else matters.
 - Persistent room history — rooms evaporate when last player leaves
 - Multiplayer spectating post-race — lobby closes after rematch dismissed
 - Mobile-first UI — desktop-first, mobile acceptable but not optimized
+- Public deployment to Fly.io — infra built and smoke-tested (Dockerfile,
+  fly.toml, scripts/deploy.sh, graceful shutdown/drain), but `fly deploy`
+  never run. Removed from v1.0 scope 2026-09-16 per user decision; local-run
+  demo is sufficient for the resume/demo goal.
 
 ## Context
 

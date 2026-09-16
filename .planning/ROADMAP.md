@@ -89,6 +89,17 @@ Plans:
 - [x] 03-03: WPM + accuracy computation (server-only, standard formula, unit tests with fixtures: "30 chars in 30s → 2 WPM"; net WPM with errors penalty; raw WPM)
 - [x] 03-04: Race-end detection (all players finished or one finished + others past 95% progress), Results view (ranked board, finish time / WPM / accuracy / time-delta-to-winner), Rematch button
 
+### Phase 03.1: Wire word-correctness into output frame (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 3
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 03.1 to break down)
+
 ### Phase 4: Reconnect
 
 **Goal**: Mid-race reconnect without corrupting state, plus room lifecycle (idle sweeper, heartbeat ping/pong) and per-IP rate limiting. Makes the demo URL robust to wifi blips and prevents OOM on Fly.io.
@@ -114,6 +125,17 @@ Plans:
 - [x] 04-03: Room sweeper (60s interval, evict idle >10min), heartbeat ping/pong in `Bun.serve` WS handlers (15s ping, 5s pong timeout, graceful close), per-IP room-creation rate limit (10/hr, in-memory LRU)
 - [x] 04-04: Graceful disconnect UX (opponents see "X disconnected — waiting 30s" toast, not "X left"), WS lifecycle hardening (close vs error vs tab kill, mobile Safari coverage)
 - [x] 04-05: Gap closure — cursor index restore, lobby/finished reconnect cleanup, dynamic host promotion & 60s uniform grace
+
+### Phase 04.1: Add proactive room-closed toast (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 4
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 04.1 to break down)
 
 ### Phase 5: Frontend Polish
 
@@ -146,6 +168,17 @@ Plans:
 
 - [x] 05-03: Server-synced countdown UI, per-player "ready" lobby indicator, "Starting in 2s…" pause with synced timer, rematch flow polish
 - [x] 05-04: Reconnect progress bar (5s grace), distinct error toasts (4 cases: lost connection / server restart / rate limit / version mismatch), WPM display polish (integer + raw/net hover tooltip), time-delta-to-winner
+
+### Phase 05.1: Add reconnect progress bar, fix version-mismatch toast wiring (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 5
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 05.1 to break down)
 
 ### Phase 6: Deploy + Hardening
 
@@ -193,6 +226,17 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 5. Frontend Polish | 4/4 | Complete    | 2026-09-03 |
 | 6. Deploy + Hardening | 0/4 | Not started | - |
 | 7. Split into N-tier architecture | 3/3 | Complete    | 2026-09-04 |
+
+### Phase 06.1: Fix draining latch reset in split-mode topology (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 06.1 to break down)
 
 ### Phase 7: Split into N-tier architecture
 

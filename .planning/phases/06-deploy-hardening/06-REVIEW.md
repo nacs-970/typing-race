@@ -2,251 +2,261 @@
 phase: 06-deploy-hardening
 reviewed: 2026-09-09T00:00:00Z
 depth: standard
-files_reviewed: 16
+files_reviewed: 8
 files_reviewed_list:
-  - .bun-version
   - README.md
-  - apps/engine/src/__tests__/drain.test.ts
-  - apps/engine/src/__tests__/validate-keystroke.test.ts
   - apps/engine/src/engine.ts
   - apps/engine/src/index.ts
   - apps/gateway/src/__tests__/drain.test.ts
   - apps/gateway/src/index.ts
   - apps/gateway/src/ws/client-manager.ts
-  - apps/gateway/src/ws/dispatch.ts
   - apps/gateway/src/ws/handlers.ts
-  - apps/web/src/App.tsx
-  - packages/shared/src/__tests__/bun-version-pin.test.ts
-  - packages/shared/src/bridge.ts
-  - packages/shared/src/messages.ts
-  - scripts/smoke-test.sh
+  - apps/web/src/__tests__/App.test.tsx
 findings:
   critical: 1
-  warning: 3
-  info: 2
-  total: 6
+  warning: 1
+  info: 1
+  total: 3
 status: issues_found
 ---
 
-# Phase 6: Code Review Report
+# Phase 6: Code Review Report (Re-Review)
 
-**Reviewed:** 2026-09-09T00:00:00Z
+**Reviewed:** 2026-09-09
 **Depth:** standard
-**Files Reviewed:** 16
+**Files Reviewed:** 8
 **Status:** issues_found
 
 ## Summary
 
-Reviewed the Phase 6 (Deploy + Hardening) deliverables: the `.bun-version`/Dockerfile drift guard, `EngineWorker.drain()` / `GatewayInstance.drain()` graceful shutdown, the `SERVER_SHUTTING_DOWN` propagation path (engine → bridge → gateway → client toast), the anti-cheat regression test additions, and `scripts/smoke-test.sh`.
+This is a re-review of the fix commits for the prior review's 4 findings (CR-01 gateway
+drain-event latch race, WR-01 duplicate `SERVER_SHUTTING_DOWN` broadcast, WR-02 uncleared
+drain timers, WR-03 re-entrant SIGTERM/SIGINT guard), plus a new README "Environment
+Variables" doc section and a new `App.test.tsx` regression test.
 
-The drift-guard test and anti-cheat regression tests are well constructed, and the `draining` gate is applied consistently at both the gateway (`dispatch.ts`) and engine (`engine.ts`) layers for `create_room`/`join_room`/`start_race`, matching the documented behavior in `README.md` ("lets in-flight races finish normally").
+Traced against `git diff f391968..HEAD`:
 
-Tracing the actual cross-process event flow for the two deploy topologies this phase targets (unified single-container / split or Redis-backed multi-container) surfaced one critical race condition that defeats the drain feature's own purpose in exactly the multi-container/Redis topology the phase is meant to harden, plus a duplicate-broadcast defect in unified mode, timer-cleanup gaps in both drain() implementations, and an un-guarded shutdown re-entrancy window that got materially riskier once the drain window grew to up to 90 seconds. Details and fixes below.
+- **WR-02 (uncleared drain timers):** Fixed correctly in `apps/engine/src/engine.ts`.
+  Both `hardTimer` and `pollTimer` are captured and cleared in the `.then()` continuation,
+  and the `stopped` flag guards the in-flight `check()` async function against scheduling a
+  further poll after the race has already settled.
+- **WR-03 (re-entrant SIGTERM/SIGINT):** Fixed correctly in both `apps/engine/src/index.ts`
+  and `apps/gateway/src/index.ts` via a synchronously-set `shuttingDown` flag checked before
+  any `await`, which closes the re-entrancy window given Node/Bun signal handlers run one at
+  a time on the event loop.
+- **CR-01 (latch race): the fix introduces a new, more serious bug.** The check-then-subscribe
+  sequence itself is race-free (verified: no `await` between the `isDrained()` check and the
+  `bridge.onGatewayEvent` subscription), so the *specific* interleaving the regression test
+  targets is closed. But the underlying `manager.setDrained(true)` latch it relies on is
+  **permanent and process-lifetime-scoped**, not scoped to a single drain cycle — see the
+  Critical finding below. This is worse than the bug it replaced.
+- **WR-01 (duplicate broadcast): only partially fixed.** Fixed for unified mode; still
+  duplicates in split/Redis mode, the project's primary documented production topology.
+  See the Warning finding below.
+
+The new README section (Environment Variables) was cross-checked against
+`apps/gateway/src/env.ts` and `apps/engine/src/env.ts` and is accurate. The `fly.toml
+kill_timeout = "10s"` claim was verified directly against `fly.toml` and is correct. The
+new `App.test.tsx` is functionally sound, with one minor hygiene note in Info.
 
 ## Critical Issues
 
-### CR-01: Lost `"drained"` event races the gateway's own `drain()` subscription in split/Redis mode — drain can silently degrade to the full 90s hard-cap, which is longer than the deployed `kill_timeout`
+### CR-B1: `manager.isDrained()` latch is never reset between drain cycles, causing premature/incorrect drain short-circuit and loss of in-flight race state
 
-**File:** `apps/gateway/src/index.ts:124-148` (interacts with `apps/gateway/src/ws/handlers.ts:98-100`)
+**File:** `apps/gateway/src/ws/handlers.ts:98-104` (sets the latch), `apps/gateway/src/index.ts:138-142` (consumes the latch), `apps/gateway/src/ws/client-manager.ts:18-24,97-102` (latch storage/reset)
 
-**Issue:** In split mode or Redis mode, `engineWorker` is `undefined` on the gateway (it only exists in `MODE=unified`), so `GatewayInstance.drain()` takes the `else` branch and *only then* subscribes to the bridge for a `"drained"` event:
+**Issue:**
+`bindBridgeToGateway`'s `"drained"` case sets the latch unconditionally, with no
+correlation to *which* drain cycle produced it:
+
+```ts
+case "drained": {
+  manager.setDrained(true);
+  break;
+}
+```
+
+The only place this is ever reset is `ClientManager.clear()`, which is only called from
+`GatewayInstance.stop()` — i.e., *after* a real shutdown's `drain()` has already run. There
+is no mechanism that resets the latch at the *start* of a drain cycle, and no timestamp or
+epoch tying a given `"drained"` event to a given `drain()` invocation.
+
+In split/Redis mode (`docker-compose.yml`'s topology, and the only topology where CR-01's
+race is even reachable — see `RedisEventBridge`/`LoopbackIpcClient`), the engine process
+publishes `"drained"` at the end of **every** `EngineWorker.drain()` call — which fires on
+*any* SIGTERM the engine process receives, not only ones correlated with an intentional
+gateway shutdown. `docker-compose.yml` gives the engine container `restart: unless-stopped`,
+so an engine crash-restart, a `docker compose restart engine`, or an independent
+engine-only redeploy all cause the engine to publish `"draining"` then `"drained"` on the
+shared bridge. The long-lived gateway process latches `drained = true` at that point and
+never clears it.
+
+Much later, when the *gateway* itself is actually asked to shut down (its own SIGTERM), its
+`drain()` runs:
+
+```ts
+manager.broadcastAll({ type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" });
+if (manager.isDrained()) {
+  // "nothing left to wait for" — but this is a stale latch from an
+  // unrelated engine restart that may have happened hours/days earlier
+} else {
+  // wait for a fresh "drained" event or timeout
+}
+```
+
+`manager.isDrained()` returns the stale `true` from the earlier, unrelated engine restart,
+so `drain()` resolves **immediately** instead of waiting up to 90s for the current engine
+instance to actually finish in-flight races. `GatewayInstance.stop()` then runs
+`server.stop(true)` (a forceful close), tearing down every currently-open WebSocket
+connection — including any race that is genuinely mid-progress at that moment. This directly
+contradicts the documented shutdown contract in `README.md:85` ("lets in-flight races finish
+normally... exits once drained or after a 90-second hard cap") and is a real risk of losing
+in-progress race state / abruptly disconnecting players who are mid-race, purely because of
+an unrelated engine restart that happened at some earlier point in the gateway's uptime.
+
+Note this is worse than the bug CR-01 originally fixed: the pre-fix behavior in the true
+CR-01 race (both processes SIGTERM'd together, "drained" published a hair before `drain()`
+subscribes) was merely "wait the full timeout instead of resolving instantly" — a slow but
+otherwise correct drain. The fix trades that timing inefficiency for a correctness bug: a
+stale latch from a completely unrelated, non-concurrent event can now cause an *incorrect*
+instant resolution during a real, unrelated shutdown.
+
+(This is compounded by a pre-existing, out-of-diff-scope issue in the same code path: the
+sibling `manager.setDraining(true)` in `bindBridgeToGateway`'s `"draining"` case has the
+identical staleness problem — a lone engine restart also permanently flips the gateway into
+"draining" mode, causing `dispatch.ts` to reject all `create_room`/`join_room`/`start_race`
+frames for the remaining lifetime of the gateway process, even though the gateway itself
+never received a shutdown signal. That defect predates this diff, but it's worth flagging
+here since it makes the scenario above far more likely to occur in practice than a one-off
+edge case.)
+
+**Fix:** Scope the latch to a drain cycle instead of the process lifetime — e.g., only trust
+a `"drained"` event if it arrived recently relative to when this `drain()` invocation
+started, and reset the latch when a new drain cycle begins:
+
+```ts
+// client-manager.ts
+private drainedAtMs: number | null = null;
+
+setDrained(): void {
+  this.drainedAtMs = Date.now();
+}
+
+isDrainedSince(sinceMs: number, freshnessMs = 10_000): boolean {
+  return this.drainedAtMs !== null
+    && this.drainedAtMs >= sinceMs - freshnessMs;
+}
+```
+
+```ts
+// index.ts drain()
+const drainStartedAtMs = Date.now();
+manager.setDraining(true);
+...
+manager.broadcastAll({ ... });
+if (manager.isDrainedSince(drainStartedAtMs)) {
+  // genuinely a CR-01-style race with *this* shutdown, not a stale event
+} else {
+  // subscribe for a fresh "drained" event, as today
+}
+```
+
+Apply the same epoch/freshness discipline to the `WR-A1` fix's proposed
+"broadcast shutdown once" latch below — a bare boolean there would reintroduce this exact
+staleness class.
+
+## Warnings
+
+### WR-A1: `SERVER_SHUTTING_DOWN` is still broadcast twice in split/Redis mode
+
+**File:** `apps/gateway/src/index.ts:124-162` (the `drain()` closure), interacting with
+`apps/gateway/src/ws/handlers.ts:92-96` (`bindBridgeToGateway`'s `"draining"` case)
+
+**Issue:**
+The WR-01 fix only prevents the double broadcast when the gateway has a **local**
+`engineWorker` (unified mode: `if (engineWorker && engineWorker.drain) { await
+engineWorker.drain(timeoutMs); }` — no direct `manager.broadcastAll(...)` call here, relying
+solely on the `"draining"` bridge event to trigger the single broadcast in
+`bindBridgeToGateway`).
+
+In split mode (`LoopbackIpcClient`) and Redis mode (`RedisEventBridge`) — the topology used
+by `docker-compose.yml`, where gateway and engine run as **separate processes/containers** —
+`engineWorker` is always `undefined` in the gateway process, so `drain()` always takes the
+`else` branch:
 
 ```ts
 } else {
-  let unsubscribe: (() => void) | undefined;
-  const eventPromise = new Promise<void>((resolve) => {
-    unsubscribe = bridge.onGatewayEvent((event) => {
-      if (event.type === "drained") { resolve(); }
-    });
-  });
-  const timeoutPromise = new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
-  await Promise.race([eventPromise, timeoutPromise]);
+  manager.broadcastAll({ type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" });
   ...
 }
 ```
 
-The engine (a separate process in split mode, or a separate process/container in Redis mode) has its own independent `SIGTERM` handler (`apps/engine/src/index.ts:39-45`) and calls `worker.drain(90_000)` on its own schedule. `EngineWorker.drain()` resolves — and publishes `{ type: "drained" }` — almost immediately whenever there happen to be no active rooms (`apps/engine/src/engine.ts:39-69`, first poll iteration). Container orchestrators (Docker Compose `down`, Fly.io machine stop, Kubernetes pod termination) commonly deliver `SIGTERM` to multiple containers/processes at close to the same time, so it is entirely plausible — and will happen routinely whenever no race is in progress — for the engine to publish `"drained"` *before* the gateway's own `SIGTERM` handler has even called `instance.drain(90_000)`.
+This unconditionally broadcasts directly from the gateway's own `drain()` call (triggered by
+the gateway process's own SIGTERM/SIGINT handler). Independently, the **engine** process has
+its own SIGTERM handler (`apps/engine/src/index.ts`) that calls `worker.drain(90_000)`, whose
+first action is `void this.bridge.publishToGateway({ type: "draining" })`. That event
+traverses the IPC/Redis bridge to the gateway's already-bound `bindBridgeToGateway` listener,
+whose `"draining"` case *also* calls `manager.broadcastAll(SERVER_SHUTTING_DOWN)`.
 
-When that ordering occurs, the early `"drained"` event is silently dropped: `bindBridgeToGateway`'s handler for it is an explicit no-op (`apps/gateway/src/ws/handlers.ts:98-100`, `case "drained": { break; }`), so nothing latches the fact that draining already completed. The gateway's later, freshly-registered `eventPromise` listener will never see that event (it already fired), so `Promise.race` can only resolve via `timeoutPromise` — meaning the gateway now blocks for the *entire* `timeoutMs` (90s by default) even though the engine finished draining instantly.
+Because `docker compose down`/`docker compose stop` sends SIGTERM to all containers
+essentially in parallel (per `docker-compose.yml`, gateway and engine are separate
+`services:` entries with independent lifecycles), a normal production shutdown will trigger
+**both** code paths, producing two `SERVER_SHUTTING_DOWN` frames per connected client — the
+exact class of bug WR-01 was meant to close, just relocated to the mode that actually matters
+for deployment. The only existing regression test for this ("GatewayInstance.drain() in
+split mode", `drain.test.ts:80-100`) never simulates a concurrent `"draining"` event from a
+real second process, so it does not exercise this path and the regression passed unnoticed.
 
-This is the exact failure mode `README.md` calls out as a known deploy risk: `fly.toml`'s `kill_timeout` is `"10s"`, "well under the 90s drain window." The intent of that note is that *whoever wires up the real deploy* must bump `kill_timeout`. But this bug means even a correctly-configured deploy with `kill_timeout >= 90s` pays the full 90-second penalty on every ordinary shutdown (engine-drained-first case) instead of exiting promptly, and any deploy that has *not yet* bumped `kill_timeout` (i.e., the current `fly.toml` as shipped) gets `SIGKILL`ed mid-drain non-deterministically — killing in-flight WebSocket connections/races ungracefully, which is precisely the outcome graceful drain was built to prevent.
-
-**Fix:** Latch `"drained"` state on the bridge event as soon as it's observed, independent of whether `drain()` has been called yet, and have `drain()` check that latch before subscribing:
+**Fix:** Guard the direct broadcast with a cycle-scoped idempotency latch (not a bare
+permanent boolean — see CR-B1 above for why that's insufficient) shared between the
+split-mode branch of `drain()` and `bindBridgeToGateway`'s `"draining"` case:
 
 ```ts
-// client-manager.ts (or a small module-level flag near drain wiring)
-let alreadyDrained = false;
-
-// handlers.ts
-case "drained": {
-  alreadyDrained = true; // or manager.setDrained(true)
-  break;
-}
-
-// index.ts drain()
-} else {
-  if (alreadyDrained) {
-    // engine already reported drained before we started listening
-  } else {
-    let unsubscribe: (() => void) | undefined;
-    const eventPromise = new Promise<void>((resolve) => {
-      unsubscribe = bridge.onGatewayEvent((event) => {
-        if (event.type === "drained") resolve();
-      });
-    });
-    const timeoutPromise = new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
-    await Promise.race([eventPromise, timeoutPromise]);
-    if (unsubscribe) unsubscribe();
-  }
+// client-manager.ts
+private shutdownBroadcastAtMs: number | null = null;
+broadcastShutdownOnce(): void {
+  if (this.shutdownBroadcastAtMs !== null) return; // already sent this cycle
+  this.shutdownBroadcastAtMs = Date.now();
+  this.broadcastAll({ type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" });
 }
 ```
-Register this latch listener at gateway startup (alongside `bindBridgeToGateway`), not inside `drain()`, so it cannot miss an early event. Add a regression test that publishes `"drained"` *before* calling `instance.drain()` and asserts it resolves promptly rather than waiting for the timeout.
 
-## Warnings
-
-### WR-01: Duplicate SERVER_SHUTTING_DOWN broadcast in unified mode (self-triggered feedback loop)
-
-**File:** `apps/gateway/src/index.ts:125-134` (also involves `apps/gateway/src/ws/handlers.ts:92-96`)
-
-**Issue:** In `MODE=unified` (the documented Fly.io fallback target — see `README.md` "Single-Container Fallback"), the gateway and the in-process `EngineWorker` share the *same* `InMemoryEventBridge` instance. `GatewayInstance.drain()` does two things back-to-back:
-
-1. It calls `manager.broadcastAll({ type: "error", code: "SERVER_SHUTTING_DOWN", ... })` directly (line 129).
-2. It then calls `engineWorker.drain(timeoutMs)` (line 132), which internally does `void this.bridge.publishToGateway({ type: "draining" })` (`apps/engine/src/engine.ts:42`).
-
-That `publishToGateway({ type: "draining" })` call is delivered back to the *same* gateway process via the bridge, where `bindBridgeToGateway`'s `"draining"` case (`apps/gateway/src/ws/handlers.ts:92-96`) again calls `manager.setDraining(true)` and `manager.broadcastAll(...)` with the identical payload. Every connected socket therefore receives two `SERVER_SHUTTING_DOWN` frames per shutdown instead of one. The client-side `addToast` dedup (`apps/web/src/store/toast.ts`) happens to mask this when both sends land within the same ~5s toast window, but in split/Redis mode the two publishes can be separated by real network latency (Redis pub/sub round-trip, or independent SIGTERM delivery skew between containers), which can cause the toast to reappear after the first one auto-dismissed. This is also not caught by the existing test (`apps/gateway/src/__tests__/drain.test.ts:60-75`, "GatewayInstance.drain() in unified mode"), which only asserts `expect(ws.send).toHaveBeenCalled()` rather than call count, so a regression to double-send would pass silently.
-
-**Fix:** Don't broadcast directly from `GatewayInstance.drain()` when delegating to `engineWorker.drain()` — let the single `"draining"` event (handled by `bindBridgeToGateway`) be the sole source of the broadcast, or guard the direct call so it only fires on the non-engineWorker (event-listening) branch:
-
-```ts
-const drain = async (timeoutMs = 90_000) => {
-  if (drainPromise) return drainPromise;
-  drainPromise = (async () => {
-    manager.setDraining(true);
-    if (engineWorker && engineWorker.drain) {
-      // "draining" event from engineWorker.drain() will trigger the broadcast
-      // via bindBridgeToGateway — don't double-send here.
-      await engineWorker.drain(timeoutMs);
-    } else {
-      manager.broadcastAll({ type: "error", code: "SERVER_SHUTTING_DOWN", message: "Server is shutting down" });
-      let unsubscribe: (() => void) | undefined;
-      ...
-    }
-  })();
-  return drainPromise;
-};
-```
-Also tighten the regression test to assert `expect(ws.send).toHaveBeenCalledTimes(1)` so a re-introduced double-send fails CI.
-
-### WR-02: Both `drain()` implementations leak timers after they resolve
-
-**File:** `apps/engine/src/engine.ts:39-69`, `apps/gateway/src/index.ts:124-148`
-
-**Issue:** Two related timer-cleanup gaps, present in both drain implementations:
-
-1. **Engine (`engine.ts:44`):** `hardTimeout`'s `setTimeout(resolve, timeoutMs)` is never captured in a variable, so it can never be cancelled. If `pollLoop` resolves quickly (the common case — no active rooms), the underlying OS timer for `hardTimeout` (up to 90s by default) keeps running in the background until it naturally fires, doing nothing useful.
-
-   Separately, when `hardTimeout` *does* win the race (active rooms never clear before the cap), the recursive `check()` closure has an `await this.store.list()` gap. If `hardTimeout` fires and the `.then()` (lines 64-67) calls `clearTimeout(pollTimer)` while a `check()` invocation is mid-flight, that `check()` call will — after its `await` resolves — reassign `pollTimer = setTimeout(check, pollIntervalMs)` (line 59) *after* the cleanup already ran. This new timer is never tracked or cleared, so the poll loop keeps re-invoking `check()` (and re-querying `this.store.list()`) indefinitely, even after `"drained"` has already been published.
-
-2. **Gateway (`index.ts:142`):** The identical pattern exists here — `const timeoutPromise = new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));` is never captured or cleared. This one is arguably worse: the engine's `index.ts` always calls `process.exit(0)` immediately after `drain()` resolves, masking the leak in production, but `GatewayInstance.stop()` is a clean-teardown API that tests call directly with no process exit (`apps/gateway/src/__tests__/drain.test.ts:74,96`, `await inst.stop()`), so a ref'd up-to-90s timer survives `stop()` and keeps the event loop (and, in a real deployment reusing `startGateway()` as a library, the process) alive well past teardown.
-
-Neither timer is `.unref()`'d (unlike the heartbeat timer in `handlers.ts:187`, which is).
-
-**Fix:** Track and always clear every timer regardless of which branch of the race wins, in both files. For `engine.ts`:
-
-```ts
-drain(timeoutMs = 90_000, pollIntervalMs = 500): Promise<void> {
-  if (this.drainPromise) return this.drainPromise;
-  this.draining = true;
-  void this.bridge.publishToGateway({ type: "draining" });
-
-  let hardTimer: ReturnType<typeof setTimeout>;
-  const hardTimeout = new Promise<void>(resolve => { hardTimer = setTimeout(resolve, timeoutMs); });
-
-  let pollTimer: ReturnType<typeof setTimeout> | undefined;
-  let stopped = false;
-  const pollLoop = new Promise<void>((resolve) => {
-    const check = async () => {
-      if (stopped) return;
-      try {
-        const rooms = await this.store.list();
-        if (stopped) return;
-        const active = rooms.filter(r => r.state === "countdown" || r.state === "racing" || r.state === "grace");
-        if (active.length === 0) { resolve(); return; }
-      } catch (e) {
-        logger.error({ err: e }, "[engine] drain poll error");
-      }
-      if (!stopped) pollTimer = setTimeout(check, pollIntervalMs);
-    };
-    void check();
-  });
-
-  this.drainPromise = Promise.race([pollLoop, hardTimeout]).then(() => {
-    stopped = true;
-    clearTimeout(hardTimer);
-    if (pollTimer) clearTimeout(pollTimer);
-    void this.bridge.publishToGateway({ type: "drained" });
-  });
-  return this.drainPromise;
-}
-```
-Apply the same "capture and clear" treatment to the `timeoutPromise` in `apps/gateway/src/index.ts`'s `drain()`.
-
-### WR-03: Shutdown handlers are not guarded against re-entrant SIGINT/SIGTERM
-
-**File:** `apps/engine/src/index.ts:31-45`, `apps/gateway/src/index.ts:172-184`
-
-**Issue:** Both entrypoints register `SIGINT`/`SIGTERM` handlers that call an unguarded `shutdown`/`onShutdown` async function:
-
-```ts
-const shutdown = async () => {
-  logger.info("[engine] Shutting down gracefully...");
-  await worker.drain(90_000);
-  worker.stop();
-  await bridge.close();
-  process.exit(0);
-};
-process.on("SIGINT", () => { void shutdown(); });
-process.on("SIGTERM", () => { void shutdown(); });
-```
-
-Before this phase, shutdown was effectively immediate, so the window for a second signal to arrive mid-shutdown was negligible. Now that `drain()` can legitimately keep the process alive for up to 90 seconds, a second `SIGINT`/`SIGTERM` (common with impatient operators, or orchestrators that send a repeat signal before their configured grace period) will invoke `shutdown()`/`onShutdown()` a second time concurrently. `EngineWorker.drain()` itself is idempotent (`if (this.drainPromise) return this.drainPromise;`), but `bridge.close()` is not guaranteed to be — for `RedisEventBridge.close()` (`packages/shared/src/bridge.ts:175-179`), calling `pub.quit()`/`sub.quit()` a second time on an already-quitting/closed `ioredis` client can reject, and since the outer call site is `void shutdown()` (fire-and-forget), a rejection becomes an unhandled promise rejection during the shutdown path.
-
-**Fix:** Guard the handler so a second signal is a no-op:
-
-```ts
-let shuttingDown = false;
-const shutdown = async () => {
-  if (shuttingDown) return;
-  shuttingDown = true;
-  logger.info("[engine] Shutting down gracefully...");
-  await worker.drain(90_000);
-  worker.stop();
-  await bridge.close();
-  process.exit(0);
-};
-```
-Apply the same pattern to `apps/gateway/src/index.ts`'s `onShutdown`.
+Call `manager.broadcastShutdownOnce()` from both call sites instead of two independent
+`manager.broadcastAll(...)` calls, and reset `shutdownBroadcastAtMs` alongside whatever reset
+mechanism CR-B1's fix introduces. Add a regression test that publishes a `"draining"` bridge
+event *and* calls `instance.drain()` in split mode and asserts `ws.send` is called exactly
+once, mirroring the existing unified-mode regression test.
 
 ## Info
 
-### IN-01: Stray `console.log` at module scope in test file
+### IN-01: `drain.test.ts` describe-scope `manager` variable is shadowed, making its `afterEach` cleanup misleading
 
-**File:** `apps/engine/src/__tests__/validate-keystroke.test.ts:519`
+**File:** `apps/gateway/src/__tests__/drain.test.ts:12-21, 60-125`
 
-**Issue:** `console.log("D-07 bypass scenarios")` is called directly inside the `describe()` body (not inside a `test()`/`beforeAll()`), so it executes once at test-collection time on every test run, unconditionally polluting test output. It doesn't affect test correctness/reliability, but it's debug-artifact noise that should have been removed before commit.
+**Issue:** The `describe` block declares `let manager: ClientManager;` at the top and
+`afterEach` calls `manager?.clear();` expecting this to clean up whatever `ClientManager` each
+test used. Only the first test ("E2E contract...") actually assigns to this describe-scope
+variable (`manager = new ClientManager();`). The next three tests either use the default
+`clientManager` singleton implicitly (via `startGateway()` without an explicit `manager`
+option) or declare their own **local** `const manager = new ClientManager();` inside the test
+body (the CR-01 test), which shadows the outer `let manager` rather than assigning to it.
+Consequently `afterEach`'s `manager?.clear()` is, for tests 2-4, clearing a stale reference
+left over from test 1 (or `undefined`), not the `ClientManager` instance actually exercised by
+that test. This doesn't currently cause test failures because each of those tests separately
+calls `inst.stop()`, which does perform the correct cleanup on the manager it actually used —
+but the `afterEach` line gives false confidence that it's doing cleanup work it isn't, and a
+future test added without its own explicit `inst.stop()` call would silently leak
+`ClientManager` state (sockets/room membership/draining flags) into subsequent tests via the
+shared `clientManager` singleton.
 
-**Fix:** Remove the stray `console.log`, or replace with a code comment if the intent was documentation.
-
-### IN-02: Local smoke test never exercises the phase's headline feature (graceful drain)
-
-**File:** `scripts/smoke-test.sh`
-
-**Issue:** `README.md` describes `scripts/smoke-test.sh` as "the local pre-ship check" for Phase 6. The script boots the unified server, polls `/health`, and opens one WebSocket connection to confirm a `hello` frame — but it never sends `SIGTERM` to the server and asserts that connected clients receive `SERVER_SHUTTING_DOWN` / that the process exits within the drain window. `cleanup()` (lines 22-26) does send `SIGTERM` via `kill "$SERVER_PID"`, but only as unconditional teardown in the `EXIT` trap, with `|| true` swallowing the result — it makes no assertion about drain behavior at all. Given this phase's primary deliverable is graceful shutdown, and given CR-01/WR-01/WR-02 above, a smoke test that actually SIGTERMed the server mid-connection and asserted the drain announcement + timely exit would likely have caught at least WR-01.
-
-**Fix:** Add a step that connects a WS client, sends `SIGTERM` to `$SERVER_PID`, and asserts (a) the client receives exactly one `SERVER_SHUTTING_DOWN` error frame, and (b) the process exits within a bounded time.
+**Fix:** Either reassign the outer `manager` variable explicitly in every test (`manager =
+new ClientManager()` without `const`, or `manager = inst.clientManager` after `startGateway`),
+or drop the shared `afterEach` cleanup assumption and have each test responsible for its own
+teardown (already effectively true via `inst.stop()`), removing the misleading
+`manager?.clear()` line from `afterEach`.
 
 ---
 
-_Reviewed: 2026-09-09T00:00:00Z_
+_Reviewed: 2026-09-09_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_

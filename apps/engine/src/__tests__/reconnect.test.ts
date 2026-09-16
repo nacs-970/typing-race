@@ -74,4 +74,61 @@ describe("sessionToken & reconnect handshake", () => {
     );
     expect(sawReconnected).toBe(true);
   });
+
+  test("4. rejoinPlayer on a genuinely new playerId (multi-tab takeover) notifies and evicts the old socket", async () => {
+    const { code } = await manager.createRoom("h1", "Host");
+    const res = await manager.addPlayer(code, "p2", "Guest");
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+
+    const ok = await manager.rejoinPlayer(code, res.player.sessionToken, "p2-new-tab", 2000);
+    expect(ok).toBe(true);
+
+    const sessionTakenOverEvents = gatewayEvents.filter(
+      (e) =>
+        e.type === "send_to_client" &&
+        e.playerId === "p2" &&
+        e.payload.type === "session_taken_over",
+    );
+    expect(sessionTakenOverEvents.length).toBe(1);
+
+    const disconnectEvents = gatewayEvents.filter(
+      (e) =>
+        e.type === "disconnect_client" &&
+        e.playerId === "p2" &&
+        e.code === 1000 &&
+        e.reason === "Session taken over by another tab",
+    );
+    expect(disconnectEvents.length).toBe(1);
+  });
+
+  test("5. rejoinPlayer on the same still-open connection (duplicate/retried rejoin_room) does not notify or evict", async () => {
+    const { code } = await manager.createRoom("h1", "Host");
+    const res = await manager.addPlayer(code, "p2", "Guest");
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+
+    const ok = await manager.rejoinPlayer(code, res.player.sessionToken, "p2", 2000);
+    expect(ok).toBe(true);
+
+    const sessionTakenOverEvents = gatewayEvents.filter(
+      (e) => e.type === "send_to_client" && e.payload.type === "session_taken_over",
+    );
+    expect(sessionTakenOverEvents.length).toBe(0);
+
+    const disconnectEvents = gatewayEvents.filter(
+      (e) => e.type === "disconnect_client" && e.playerId === "p2",
+    );
+    expect(disconnectEvents.length).toBe(0);
+
+    const sawRejoined = gatewayEvents.some(
+      (e) => e.type === "send_to_client" && e.payload.type === "rejoined_room",
+    );
+    expect(sawRejoined).toBe(true);
+
+    const sawReconnected = gatewayEvents.some(
+      (e) => e.type === "broadcast_to_room" && e.payload.type === "player_reconnected",
+    );
+    expect(sawReconnected).toBe(true);
+  });
 });

@@ -222,8 +222,8 @@ monolith-to-N-tier split — opening a second tab on the same session must
 notify and evict the first tab's socket, matching pre-Phase-7 behavior.
 **Requirements**: REQ-07
 **Depends on:** Phase 7
-**Plans:** 1 plan
+**Plans:** 1/1 plans executed
 
 Plans:
 
-- [ ] 07.1-01-PLAN.md — Restore `session_taken_over` notify + `disconnect_client` evict in `RoomManager.rejoinPlayer()` on multi-tab rejoin, with regression test covering both the multi-tab fix and the same-tab no-regression case
+- [x] 07.1-01-PLAN.md — Restore `session_taken_over` notify + `disconnect_client` evict in `RoomManager.rejoinPlayer()` on multi-tab rejoin, with regression test covering both the multi-tab fix and the same-tab no-regression case

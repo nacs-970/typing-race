@@ -31,7 +31,7 @@
     {
       "number": "6",
       "name": "Deploy + Hardening",
-      "status": "complete"
+      "status": "pending"
     },
     {
       "number": "7",
@@ -40,9 +40,9 @@
     }
   ],
   "next": {
-    "command": "/gsd:complete-milestone",
-    "label": "All phases complete — archive milestone",
-    "reason": "7 of 7 phases complete"
+    "command": "/gsd:progress",
+    "label": "Show progress",
+    "reason": "Unsure of state — showing progress"
   },
-  "updated_at": "2026-09-09T05:31:48.000Z"
+  "updated_at": "2026-09-16T06:50:25.127Z"
 }

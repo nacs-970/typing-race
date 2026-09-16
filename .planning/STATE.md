@@ -1,19 +1,19 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1.0
-current_phase: 06
-current_phase_name: Deploy + Hardening
+current_phase: 07.1
+current_phase_name: Fix multi-tab session takeover regression
 status: complete
-stopped_at: Phase 07.1 context gathered
-last_updated: "2026-09-16T06:52:14.245Z"
-last_activity: 2026-09-08
-last_activity_desc: Completed Phase 6 (06-02 bun-version pin, 06-04 client toast, 06-03 anti-cheat bypass tests + deploy docs + smoke test), committed 6a17b31
-state_head: 45ff37f53224abf28d036080a991161eb982af7c
+stopped_at: Completed 07.1-01-PLAN.md
+last_updated: "2026-09-16T07:58:38.033Z"
+last_activity: 2026-09-16
+last_activity_desc: Completed Phase 07.1 (07.1-01 restored session_taken_over notify+evict on multi-tab rejoin), committed d3c9a28
+state_head: d3c9a282c323f75a0d336527e219fd7db2c05480
 progress:
   total_phases: 8
-  completed_phases: 2
-  total_plans: 27
-  completed_plans: 27
+  completed_phases: 8
+  total_plans: 28
+  completed_plans: 28
 milestone_name: milestone
 ---
 
@@ -28,12 +28,12 @@ See: .planning/PROJECT.md (updated 2026-08-30)
 
 ## Current Position
 
-Phase: 06 (Deploy + Hardening) — COMPLETE (all 7 phases now complete)
-Plan: 4/4 complete
+Phase: 07.1 (Fix multi-tab session takeover regression) — COMPLETE (all 8 phases now complete)
+Plan: 1/1 complete
 Status: Ready for milestone completion / PR review
-Last activity: 2026-09-08 — Phase 6 finished (06-02, 06-04, 06-03), branch phase-06-deploy-hardening, HEAD 6a17b31
+Last activity: 2026-09-16 — Phase 07.1 finished (07.1-01: restored session_taken_over notify+evict on multi-tab rejoin), commits ac021f4 (test) + d3c9a28 (fix)
 
-Progress: [████████████████████] 100% (7/7 phases)
+Progress: [████████████████████] 100% (8/8 phases)
 
 ## Performance Metrics
 
@@ -61,6 +61,11 @@ Progress: [████████████████████] 100% (7
 - Trend: stable execution time around 20 min/plan as patterns established
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 07.1 P01 | 4min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -80,6 +85,7 @@ Full log in PROJECT.md Key Decisions table. Recent decisions affecting current w
 - Phase 4 (executed): sessionToken reconnect handshake, 500ms grace period, room sweeper + heartbeat, dynamic host promotion, 60s uniform grace on disconnect
 - Phase 5 (executed): isolated 30Hz cursorStore vs 1Hz roomStore, CSS transform3d cursor positioning outside React tree, reconnect progress bar + 4-case error toasts
 - Post-milestone (not tracked as a phase, already shipped): corpus category randomization, green-accent white-background theme, distinguishing non-existent-room vs lost-room errors
+- Phase 07.1 (executed): restored dropped session_taken_over notify+evict in RoomManager.rejoinPlayer() via isMultiTabTakeover-gated bridge publishes (oldPlayerId targeted explicitly, not targetPlayer.playerId, since targetPlayer is mutated in place); committed directly to master per project's branching_strategy: none convention
 
 ### Roadmap Evolution
 
@@ -118,6 +124,6 @@ Items acknowledged and deferred, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-16T06:52:11.148Z
-Stopped at: Phase 07.1 context gathered
-Resume file: .planning/phases/07.1-fix-multi-tab-session-takeover-regression/07.1-CONTEXT.md
+Last session: 2026-09-16T07:58:36.254Z
+Stopped at: Completed 07.1-01-PLAN.md
+Resume file: None

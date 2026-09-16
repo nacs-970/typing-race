@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-09-16T08:00:53.150Z",
+  "phase": "07.1",
+  "phase_name": "Fix multi-tab session takeover regression",
+  "phase_dir": ".planning/phases/07.1-fix-multi-tab-session-takeover-regression",
+  "plan": 1,
+  "task": 1,
+  "total_tasks": 1,
+  "status": "complete",
+  "completed_tasks": [
+    {"id": 1, "name": "Restore session_taken_over notify + evict on multi-tab rejoin", "status": "done", "commit": "d3c9a28"}
+  ],
+  "remaining_tasks": [],
+  "blockers": [],
+  "async_jobs": [],
+  "human_actions_pending": [],
+  "decisions": [
+    {"decision": "Inserted Phase 07.1 (decimal) after Phase 7 to close a milestone-audit gap rather than folding the fix into an existing phase", "rationale": "REQ-07-multitab regression was discovered post-hoc by /gsd-audit-milestone during v1.0 close; a decimal insertion preserves phase history without renumbering", "phase": "07.1"},
+    {"decision": "Skipped interactive discuss-phase for 07.1", "rationale": "Root cause, exact fix location, and exact fix mechanism were already fully diagnosed by the audit and independently re-verified (grep + direct code read) before context was written — no product-level gray areas remained", "phase": "07.1"},
+    {"decision": "Placed the two new bridge.publishToGateway calls after store.set(), not before/interleaved with the room.players reassignment", "rationale": "Matches the pre-Phase-7 reference implementation's ordering guarantee; plan-checker confirmed the underlying cross-instance race this ordering originally guarded against does not exist in this architecture (single engine instance, no docker-compose replicas), so it's retained as defense-in-depth/parity rather than a tested invariant", "phase": "07.1"},
+    {"decision": "Used local oldPlayerId variable, not targetPlayer.playerId, in the new publishes", "rationale": "targetPlayer is the same object reference stored in the map and gets mutated to newPlayerId a few lines earlier — using targetPlayer.playerId would silently target the wrong (new) player and produce a false-positive-passing test", "phase": "07.1"}
+  ],
+  "uncommitted_files": [
+    "?? .planning/phases/07.1-fix-multi-tab-session-takeover-regression/.gitkeep",
+    "?? .planning/v1.0-MILESTONE-AUDIT.md"
+  ],
+  "next_action": "Phase 07.1 is complete and independently re-verified this session (typecheck clean, 150 engine/gateway/shared tests + 78 web tests all pass, working tree clean apart from the two harmless untracked files above). Nothing is mid-task. Next step: either (a) re-run /gsd-audit-milestone 1.0 to confirm the REQ-07-multitab gap is now closed and get a clean pass, then /gsd-complete-milestone 1.0, or (b) go straight to /gsd-complete-milestone 1.0 since the only other milestone gap (REQ-11, Fly.io never deployed) was already accepted as known/disclosed tech debt, not something this session was asked to close.",
+  "context_notes": "This session ran a full /gsd-resume-work -> gsd-stats -> cleanup-stale-artifacts -> /gsd-complete-milestone 1.0 arc. complete-milestone's pre-flight prompted for /gsd-audit-milestone first (user chose to run it). The audit found 9/11 requirements satisfied, one real regression (REQ-07-multitab, independently verified via grep+code read, not just trusted from the integration-checker subagent) and one known/disclosed gap (REQ-11 Fly.io deploy, not newly discovered). User chose 'close the gap inline' for REQ-07-multitab, which ran the full discuss->plan->plan-check->revise->execute chain for a new decimal Phase 07.1. Plan-checker caught two real test-design flaws in the first plan draft (a vacuous ordering assertion, and a same-playerId test scenario that doesn't correspond to any real production path) -- both were fixed in a revision round before execution. Execution (TDD RED->GREEN) completed cleanly, no deviations. The still-open milestone-completion step (re-audit or straight to /gsd-complete-milestone 1.0) was NOT yet resumed when /gsd-pause-work was invoked -- that's the actual next step, not a resume-mid-fix scenario."
+}

@@ -227,7 +227,9 @@ export class RoomManager {
 
     if (!targetPlayer || !oldPlayerId) return false;
 
-    if (oldPlayerId !== newPlayerId) {
+    const isMultiTabTakeover = oldPlayerId !== newPlayerId;
+
+    if (isMultiTabTakeover) {
       room.players.delete(oldPlayerId);
       targetPlayer.playerId = newPlayerId;
       room.players.set(newPlayerId, targetPlayer);
@@ -243,6 +245,21 @@ export class RoomManager {
     targetPlayer.reconnectedAt = now;
     room.lastActivityAt = now;
     await this.store.set(roomCode, room);
+
+    if (isMultiTabTakeover) {
+      await this.bridge.publishToGateway({
+        type: "send_to_client",
+        playerId: oldPlayerId,
+        payload: { type: "session_taken_over" },
+      });
+
+      await this.bridge.publishToGateway({
+        type: "disconnect_client",
+        playerId: oldPlayerId,
+        code: 1000,
+        reason: "Session taken over by another tab",
+      });
+    }
 
     await this.bridge.publishToGateway({
       type: "player_room_assigned",

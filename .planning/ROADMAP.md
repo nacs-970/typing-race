@@ -213,3 +213,17 @@ Plans:
 **Wave 3** *(blocked on Wave 2 completion)*
 
 - [x] 07-03: Cloud-Agnostic Containerization & End-to-End Verification (Wave 3)
+
+### Phase 07.1: Fix multi-tab session takeover regression (INSERTED)
+
+**Goal:** Restore the multi-tab session-takeover notify-then-evict behavior
+(a working Phase 4 deliverable) that was silently dropped during the Phase 7
+monolith-to-N-tier split — opening a second tab on the same session must
+notify and evict the first tab's socket, matching pre-Phase-7 behavior.
+**Requirements**: REQ-07
+**Depends on:** Phase 7
+**Plans:** 1 plan
+
+Plans:
+
+- [ ] 07.1-01-PLAN.md — Restore `session_taken_over` notify + `disconnect_client` evict in `RoomManager.rejoinPlayer()` on multi-tab rejoin, with regression test covering both the multi-tab fix and the same-tab no-regression case

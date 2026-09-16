@@ -1,30 +1,51 @@
 {
   "version": "1.0",
-  "timestamp": "2026-09-16T08:00:53.150Z",
-  "phase": "07.1",
-  "phase_name": "Fix multi-tab session takeover regression",
-  "phase_dir": ".planning/phases/07.1-fix-multi-tab-session-takeover-regression",
-  "plan": 1,
-  "task": 1,
-  "total_tasks": 1,
-  "status": "complete",
+  "timestamp": "2026-09-16T20:14:59.811Z",
+  "phase": "milestone-complete-1.0",
+  "phase_name": "Completing v1.0 milestone (mid-workflow pause)",
+  "phase_dir": ".planning",
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
+  "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Restore session_taken_over notify + evict on multi-tab rejoin", "status": "done", "commit": "d3c9a28"}
+    {"id": 1, "name": "Pre-close artifact audit", "status": "done", "commit": null},
+    {"id": 2, "name": "verify_readiness: chose automated goal-backward verification over UAT", "status": "done", "commit": null},
+    {"id": 3, "name": "Ran gsd-verifier against phases 01,03,04,05,06,07.1", "status": "done", "commit": null},
+    {"id": 4, "name": "User chose to fix all real bugs found before closing", "status": "done", "commit": null},
+    {"id": 5, "name": "Inserted decimal phases 03.1/04.1/05.1/06.1, delegated fixes to agy", "status": "done", "commit": "3c63acd,3faf66e,97a0e8e,cdd3a86,b834cbb"},
+    {"id": 6, "name": "Filled ROADMAP.md placeholder stubs for the 4 decimal phases", "status": "done", "commit": "ad78c2a"},
+    {"id": 7, "name": "Re-verified all 4 fixes with gsd-verifier", "status": "done", "commit": null},
+    {"id": 8, "name": "Found 03.1's UI premise violated D-13; reverted; found 04.1's trigger unreachable; retargeted", "status": "done", "commit": "f74b721"},
+    {"id": 9, "name": "Recorded clean 05.1/06.1 re-verification results", "status": "done", "commit": "daf9874"}
   ],
-  "remaining_tasks": [],
-  "blockers": [],
+  "remaining_tasks": [
+    {"id": 10, "name": "Get human sign-off on 03-VERIFICATION.md's two pending overrides (Gap A: D-11/D-12, Gap B: D-13)", "status": "not_started"},
+    {"id": 11, "name": "Re-run pre-close artifact audit (gsd_run query audit-open) fresh, since a lot of state changed since the original clean pass", "status": "not_started"},
+    {"id": 12, "name": "Re-run verify_readiness's init.manager check now that 03.1/04.1/05.1/06.1 exist with real content, decide closeout_type", "status": "not_started"},
+    {"id": 13, "name": "gather_stats, extract_accomplishments", "status": "not_started"},
+    {"id": 14, "name": "evolve_project_full_review — full PROJECT.md milestone-boundary review (Validated/Active/Out-of-Scope audit, Key Decisions table, Context update) — NOT yet done this cycle", "status": "not_started"},
+    {"id": 15, "name": "archive_milestone (gsd_run query milestone.complete), reorganize ROADMAP.md, safety commit, remove REQUIREMENTS.md (no-op — file doesn't exist in this project)", "status": "not_started"},
+    {"id": 16, "name": "write_retrospective, update_state, handle_branches (branching_strategy: none — skip), git_tag v1.0", "status": "not_started"},
+    {"id": 17, "name": "offer_next — point user at /gsd-new-milestone", "status": "not_started"}
+  ],
+  "blockers": [
+    {"description": "03-VERIFICATION.md has two override suggestions (Gap A: D-11/D-12 2-tone char model; Gap B: D-13 word-correctness server-data-model-only) both marked accepted_by: PENDING — human sign-off required before treating v1.0 as cleanly verified", "type": "human_action", "workaround": "present both to user, get explicit accept/reject before finalizing closeout_type as verified_closeout"}
+  ],
   "async_jobs": [],
-  "human_actions_pending": [],
+  "human_actions_pending": [
+    {"action": "Sign off (or reject) the two override suggestions in .planning/phases/03-race-track/03-VERIFICATION.md", "context": "Both are 'unused-but-intentional' deviations from ROADMAP success criteria, tied to documented Phase 3 decisions (D-11/D-12, D-13) — not defects, but need explicit acceptance before milestone close treats them as resolved rather than open gaps", "blocking": true},
+    {"action": "Confirm milestone-close should proceed now vs. wait", "context": "Session hit real scope expansion (2 extra reverts/pivots beyond the original 4 planned fixes) and a rate limit; user should have a chance to review before archival (git tag, ROADMAP collapse) which is harder to undo cleanly than the fixes themselves", "blocking": false}
+  ],
   "decisions": [
-    {"decision": "Inserted Phase 07.1 (decimal) after Phase 7 to close a milestone-audit gap rather than folding the fix into an existing phase", "rationale": "REQ-07-multitab regression was discovered post-hoc by /gsd-audit-milestone during v1.0 close; a decimal insertion preserves phase history without renumbering", "phase": "07.1"},
-    {"decision": "Skipped interactive discuss-phase for 07.1", "rationale": "Root cause, exact fix location, and exact fix mechanism were already fully diagnosed by the audit and independently re-verified (grep + direct code read) before context was written — no product-level gray areas remained", "phase": "07.1"},
-    {"decision": "Placed the two new bridge.publishToGateway calls after store.set(), not before/interleaved with the room.players reassignment", "rationale": "Matches the pre-Phase-7 reference implementation's ordering guarantee; plan-checker confirmed the underlying cross-instance race this ordering originally guarded against does not exist in this architecture (single engine instance, no docker-compose replicas), so it's retained as defense-in-depth/parity rather than a tested invariant", "phase": "07.1"},
-    {"decision": "Used local oldPlayerId variable, not targetPlayer.playerId, in the new publishes", "rationale": "targetPlayer is the same object reference stored in the map and gets mutated to newPlayerId a few lines earlier — using targetPlayer.playerId would silently target the wrong (new) player and produce a false-positive-passing test", "phase": "07.1"}
+    {"decision": "Chose 'run verification first' over proceeding with the passed-but-undocumented v1.0 audit", "rationale": "init.manager showed only 2/8 phases with formal VERIFICATION.md + verification_status=passed; audit had accepted UAT/SUMMARY as equivalent evidence but user wanted formal backfill", "phase": "milestone-complete-1.0"},
+    {"decision": "Chose automated goal-backward verification (gsd-verifier) over conversational UAT for the backfill", "rationale": "6 phases x live conversational UAT would be very long; automated verification against existing test/UAT evidence was faster and matched what the audit already relied on", "phase": "milestone-complete-1.0"},
+    {"decision": "Chose to fix all real bugs found by verification rather than accept them as tech debt", "rationale": "Verifiers found one genuinely production-breaking bug (06.1 draining latch) plus real UX gaps (04.1, 05.1) and one orphaned-code claim (03.1) — user opted to close them now rather than ship known bugs in v1.0", "phase": "milestone-complete-1.0"},
+    {"decision": "Delegated the 4 fixes to Antigravity (agy/Gemini) in parallel, in one shared (non-worktree-isolated) working tree", "rationale": "Matches this project's CLAUDE.md Claude=brain/agy=worker convention for well-scoped implementation work; NOT worktree-isolated, which caused real cross-contamination in agy's self-reports (see blocking constraint below) — worth using isolation next time", "phase": "milestone-complete-1.0"},
+    {"decision": "Reverted 03.1's UI-rendering work after finding decision D-13 (03-CONTEXT.md: 'Word-correctness aggregation in server data model, not UI')", "rationale": "Building the UI, even correctly, would have shipped a feature Phase 3's own pre-planning explicitly excluded. Consulted an advisor before committing to the revert given sunk cost of already-working code.", "phase": "03.1"},
+    {"decision": "Retargeted 04.1's ROOM_CLOSED broadcast from room.players.size===0 to size===1, kept room-teardown timing unchanged (still deletes at size===0)", "rationale": "A live in-memory harness (RoomManager+ClientManager+bindBridgeToGateway) proved size===0 has zero real recipients by construction (ClientManager tracks room.players 1:1, so the departing player's own already-untracked socket is the only one ever registered at that instant); size===1 has a real, reachable recipient with no new tracking concept needed", "phase": "04.1"}
   ],
-  "uncommitted_files": [
-    "?? .planning/phases/07.1-fix-multi-tab-session-takeover-regression/.gitkeep",
-    "?? .planning/v1.0-MILESTONE-AUDIT.md"
-  ],
-  "next_action": "Phase 07.1 is complete and independently re-verified this session (typecheck clean, 150 engine/gateway/shared tests + 78 web tests all pass, working tree clean apart from the two harmless untracked files above). Nothing is mid-task. Next step: either (a) re-run /gsd-audit-milestone 1.0 to confirm the REQ-07-multitab gap is now closed and get a clean pass, then /gsd-complete-milestone 1.0, or (b) go straight to /gsd-complete-milestone 1.0 since the only other milestone gap (REQ-11, Fly.io never deployed) was already accepted as known/disclosed tech debt, not something this session was asked to close.",
-  "context_notes": "This session ran a full /gsd-resume-work -> gsd-stats -> cleanup-stale-artifacts -> /gsd-complete-milestone 1.0 arc. complete-milestone's pre-flight prompted for /gsd-audit-milestone first (user chose to run it). The audit found 9/11 requirements satisfied, one real regression (REQ-07-multitab, independently verified via grep+code read, not just trusted from the integration-checker subagent) and one known/disclosed gap (REQ-11 Fly.io deploy, not newly discovered). User chose 'close the gap inline' for REQ-07-multitab, which ran the full discuss->plan->plan-check->revise->execute chain for a new decimal Phase 07.1. Plan-checker caught two real test-design flaws in the first plan draft (a vacuous ordering assertion, and a same-playerId test scenario that doesn't correspond to any real production path) -- both were fixed in a revision round before execution. Execution (TDD RED->GREEN) completed cleanly, no deviations. The still-open milestone-completion step (re-audit or straight to /gsd-complete-milestone 1.0) was NOT yet resumed when /gsd-pause-work was invoked -- that's the actual next step, not a resume-mid-fix scenario."
+  "uncommitted_files": [],
+  "next_action": "Re-run gsd_run query audit-open fresh (state has changed a lot since the original clean pass at session start), then re-run init.manager to check phase_complete/verification_status for all phases including 03.1/04.1/05.1/06.1, decide closeout_type, and resume the complete-milestone workflow from verify_readiness onward. Before finalizing, present the two pending 03-VERIFICATION.md overrides to the user for explicit accept/reject.",
+  "context_notes": "This is a /gsd-complete-milestone 1.0 run that expanded significantly beyond a simple archive: the original audit had passed, but the user asked for formal verification backfill, which surfaced real gaps, which the user asked to fix, which itself required two mid-flight pivots (03.1 revert per D-13, 04.1 retarget per an unreachable-trigger bug) discovered only by re-verifying the fixes rather than trusting their own passing tests. Working tree is fully clean and committed (5 commits this session: 3c63acd, 3faf66e, 97a0e8e, cdd3a86, b834cbb, ad78c2a, f74b721, daf9874). All typecheck/test suites green (153 backend, 84 web). Nothing is mid-edit. The actual milestone archival (ROADMAP collapse, MILESTONES.md, git tag) has NOT started yet — that's the next real chunk of work, and it's a good place to pause because it's the first genuinely-hard-to-undo step (git tag, ROADMAP.md rewritten in place) versus everything so far which was ordinary commits."
 }

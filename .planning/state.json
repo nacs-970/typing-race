@@ -1,0 +1,48 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": "v1.0",
+  "phases": [
+    {
+      "number": "1",
+      "name": "Foundation",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+      "name": "Race Engine",
+      "status": "complete"
+    },
+    {
+      "number": "3",
+      "name": "Race Track + WPM",
+      "status": "complete"
+    },
+    {
+      "number": "4",
+      "name": "Reconnect",
+      "status": "complete"
+    },
+    {
+      "number": "5",
+      "name": "Frontend Polish",
+      "status": "complete"
+    },
+    {
+      "number": "6",
+      "name": "Deploy + Hardening",
+      "status": "complete"
+    },
+    {
+      "number": "7",
+      "name": "Split into N-tier architecture",
+      "status": "complete"
+    }
+  ],
+  "next": {
+    "command": "/gsd:complete-milestone",
+    "label": "All phases complete — archive milestone",
+    "reason": "7 of 7 phases complete"
+  },
+  "updated_at": "2026-09-09T05:31:48.000Z"
+}

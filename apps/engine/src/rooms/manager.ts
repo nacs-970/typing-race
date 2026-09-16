@@ -145,6 +145,11 @@ export class RoomManager {
     });
 
     if (room.players.size === 0) {
+      await this.bridge.publishToGateway({
+        type: "broadcast_to_room",
+        roomCode: code,
+        payload: { type: "error", code: "ROOM_CLOSED", message: "All players have left. Room closed." },
+      });
       await this.store.delete(code);
       return;
     }

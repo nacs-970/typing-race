@@ -81,6 +81,15 @@ describe("removePlayer", () => {
     expect(await store.has(code)).toBe(false);
   });
 
+  test("9. removing the last player proactively broadcasts ROOM_CLOSED", async () => {
+    const { code } = await manager.createRoom("h", "Host");
+    await manager.removePlayer(code, "h");
+    const sawRoomClosed = gatewayEvents.some(
+      (e) => e.type === "broadcast_to_room" && e.roomCode === code && e.payload.type === "error" && e.payload.code === "ROOM_CLOSED",
+    );
+    expect(sawRoomClosed).toBe(true);
+  });
+
   test("7. when host leaves, next-joined player is promoted", async () => {
     const { code, room } = await manager.createRoom("h", "Host");
     await manager.addPlayer(code, "g1", "Guest1");

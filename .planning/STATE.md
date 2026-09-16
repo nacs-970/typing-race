@@ -4,14 +4,14 @@ milestone: v1.0
 current_phase: 06
 current_phase_name: Deploy + Hardening
 status: complete
-stopped_at: Phase 06 complete (4/4 plans) — all Phase 6 deliverables shipped
-last_updated: "2026-09-08T09:42:00.000Z"
+stopped_at: Phase 07.1 context gathered
+last_updated: "2026-09-16T06:52:14.245Z"
 last_activity: 2026-09-08
 last_activity_desc: Completed Phase 6 (06-02 bun-version pin, 06-04 client toast, 06-03 anti-cheat bypass tests + deploy docs + smoke test), committed 6a17b31
-state_head: 6a17b31f96a5544753c39f1643efb96c1fa180a1
+state_head: 45ff37f53224abf28d036080a991161eb982af7c
 progress:
-  total_phases: 7
-  completed_phases: 7
+  total_phases: 8
+  completed_phases: 2
   total_plans: 27
   completed_plans: 27
 milestone_name: milestone
@@ -85,6 +85,7 @@ Full log in PROJECT.md Key Decisions table. Recent decisions affecting current w
 
 - Phase 7 added: Split into N-tier architecture
 - 2026-09-08: STATE.md/ROADMAP.md/state.json were stale (last synced 2026-09-04) — reconciled against actual git history. Phases 1, 3, 4 were marked pending/not-started but SUMMARY.md files + commits confirm they shipped 2026-08-30 through 2026-09-03. Only Phase 6 (Deploy + Hardening) is genuinely unstarted — no phase directory, no CI workflow, no `.bun-version`, no anti-cheat regression suite. Note: SIGTERM handling (a Phase 6 deliverable) already exists ad-hoc in `apps/engine/src/index.ts` and `apps/gateway/src/index.ts`, done alongside the Phase 7 N-tier split.
+- Phase 07.1 inserted after Phase 7: Fix multi-tab session takeover regression — session_taken_over event dropped during Phase 7 N-tier split, found by v1.0 milestone audit (URGENT)
 
 ### Pending Todos
 
@@ -117,6 +118,6 @@ Items acknowledged and deferred, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-08T09:42:00.000Z
-Stopped at: Phase 06 complete — all 4 plans committed (da0f5c5, 9c4087f/9562982, cef145d, 6a17b31). All 7 phases now complete.
-Resume file: .planning/phases/06-deploy-hardening/06-03-SUMMARY.md
+Last session: 2026-09-16T06:52:11.148Z
+Stopped at: Phase 07.1 context gathered
+Resume file: .planning/phases/07.1-fix-multi-tab-session-takeover-regression/07.1-CONTEXT.md

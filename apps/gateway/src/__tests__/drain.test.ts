@@ -29,6 +29,8 @@ describe("Gateway drain", () => {
     manager = new ClientManager();
     unbind = bindBridgeToGateway(bridge, manager);
 
+    manager.markOwnDrainStarted();
+
     const ws = {
       data: { playerId: crypto.randomUUID() },
       send: mock(() => {}),
@@ -194,6 +196,34 @@ describe("Gateway drain", () => {
     const elapsed = Date.now() - start;
     expect(elapsed).toBeLessThan(300);
 
+    await inst.stop();
+  });
+
+  test("06.1: an independent engine-only restart (split mode) does not permanently wedge a healthy gateway's draining latch", async () => {
+    const manager = new ClientManager();
+    const inst = await startGateway({ mode: "split", port: 0, manager });
+
+    await inst.bridge.publishToGateway({ type: "draining" });
+    expect(inst.clientManager.isDraining()).toBe(true);
+
+    await inst.bridge.publishToGateway({ type: "drained" });
+    expect(inst.clientManager.isDraining()).toBe(false);
+
+    const ws = {
+      data: { playerId: crypto.randomUUID() },
+      send: mock(() => {}),
+    } as any;
+    inst.clientManager.addSocket(ws.data.playerId, ws);
+
+    let engineEvents = 0;
+    const unsubscribe = inst.bridge.onEngineEvent(() => { engineEvents++; });
+
+    dispatch(ws, JSON.stringify({ type: "create_room", nickname: "bob" }), inst.bridge, inst.clientManager);
+
+    expect(engineEvents).toBe(1);
+    expect(ws.send).not.toHaveBeenCalled();
+
+    unsubscribe();
     await inst.stop();
   });
 });

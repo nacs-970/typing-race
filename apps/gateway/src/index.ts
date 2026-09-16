@@ -126,6 +126,10 @@ export async function startGateway(
     if (drainPromise) return drainPromise;
     drainPromise = (async () => {
       manager.setDraining(true);
+      // marks that THIS gateway's own drain cycle has started, synchronously
+      // and before any await, so a concurrent unrelated 'drained' event cannot
+      // be mistaken for this cycle's own (06.1).
+      manager.markOwnDrainStarted();
 
       if (engineWorker && engineWorker.drain) {
         // The "draining" event published by engineWorker.drain() is delivered

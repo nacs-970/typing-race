@@ -7,6 +7,21 @@ export class ClientManager {
   private draining = false;
   private drained = false;
   private shuttingDownAnnounced = false;
+  private ownDrainStarted = false;
+
+  /**
+   * Records that THIS gateway process's own drain() cycle has begun, so
+   * bindBridgeToGateway's 'drained' handler can distinguish 'my own shutdown's
+   * drained event' from 'an unrelated, independent engine-only restart's
+   * drained event' (06.1, sibling of CR-B1's drained-latch fix).
+   */
+  markOwnDrainStarted(): void {
+    this.ownDrainStarted = true;
+  }
+
+  hasOwnDrainStarted(): boolean {
+    return this.ownDrainStarted;
+  }
 
   setDraining(v: boolean) {
     this.draining = v;
@@ -114,6 +129,7 @@ export class ClientManager {
     this.draining = false;
     this.drained = false;
     this.shuttingDownAnnounced = false;
+    this.ownDrainStarted = false;
   }
 }
 

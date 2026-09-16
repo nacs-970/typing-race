@@ -102,6 +102,16 @@ export function bindBridgeToGateway(
         // split/Redis mode the engine's own SIGTERM handler can publish
         // "drained" before the gateway's drain() has subscribed (CR-01).
         manager.setDrained(true);
+        // 06.1 (sibling of CR-B1): if THIS gateway never initiated its own
+        // drain() cycle, this "drained" event must belong to an independent,
+        // unrelated engine-only restart (split mode: the engine's own
+        // SIGTERM/crash-restart cycle under docker-compose's `restart:
+        // unless-stopped`). Reset the `draining` latch so a healthy gateway
+        // resumes accepting create_room/join_room/start_race instead of
+        // being permanently wedged.
+        if (!manager.hasOwnDrainStarted()) {
+          manager.setDraining(false);
+        }
         break;
       }
     }

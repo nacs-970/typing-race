@@ -147,13 +147,11 @@ describe("RaceClient", () => {
       serverTs: 1000,
       charStates: ["correct", "correct", "error"],
       wpm: 65,
-      words: [{ start: 0, end: 3, correct: false }],
     });
 
     expect(useCursorStore.getState().ownIndex).toBe(3);
     expect(useRaceStore.getState().ownWpm).toBe(65);
     expect(useRaceStore.getState().ownCharStates).toEqual(["correct", "correct", "error"]);
-    expect(useRaceStore.getState().ownWords).toEqual([{ start: 0, end: 3, correct: false }]);
 
     // Opponent cursor update
     client.dispatch({
@@ -168,34 +166,6 @@ describe("RaceClient", () => {
     expect(oppCursor).toBeDefined();
     expect(oppCursor?.index).toBe(5);
     expect(useRaceStore.getState().opponentWpm["p-opp"]).toBe(72);
-  });
-
-  it("dispatches rejoined_room and populates ownWords", () => {
-    const client = new RaceClient("ws://test/ws");
-
-    client.dispatch({
-      type: "rejoined_room",
-      roomCode: "XYZ123",
-      roomState: "racing",
-      passageId: "p-1",
-      passageText: "hello world",
-      startsAtServerMs: 1000,
-      graceEndsAtServerMs: null,
-      clockOffsetMs: 50,
-      you: {
-        playerId: "p-local",
-        nickname: "Me",
-        isHost: true,
-        progress: 5,
-        charStates: ["correct", "correct", "correct", "correct", "correct"],
-        wpm: 60,
-        uncorrectedErrors: 0,
-        words: [{ start: 0, end: 5, correct: true }],
-      },
-      players: [],
-    });
-
-    expect(useRaceStore.getState().ownWords).toEqual([{ start: 0, end: 5, correct: true }]);
   });
 
   it("dispatches race_end resetting cursors and populating results", () => {

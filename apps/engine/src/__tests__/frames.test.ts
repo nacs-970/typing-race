@@ -143,25 +143,12 @@ describe("frames builders", () => {
     p.currentWpm = 45;
     p.charStates = ["correct", "correct", "correct", "correct", "correct"];
 
-    const frame = buildCursorUpdateFrame(p, null, 1500);
+    const frame = buildCursorUpdateFrame(p, 1500);
     expect(frame.type).toBe("cursor_update");
     expect(frame.playerId).toBe("p1");
     expect(frame.index).toBe(5);
     expect(frame.serverTs).toBe(1500);
     expect(frame.wpm).toBe(45);
-    expect(frame.words).toEqual([]);
-  });
-
-  test("buildCursorUpdateFrame computes words when passageText is provided", () => {
-    const p = createFakePlayer("p1", "Alice");
-    p.charStates = ["correct", "correct", "correct", "pending", "pending", "pending", "pending", "pending"];
-    
-    // "hi there"
-    const frame = buildCursorUpdateFrame(p, "hi there", 1500);
-    expect(frame.words).toEqual([
-      { start: 0, end: 2, correct: true },
-      { start: 3, end: 8, correct: false },
-    ]);
   });
 
   test("buildRejoinedRoomFrame produces full race snapshot", () => {
@@ -180,7 +167,6 @@ describe("frames builders", () => {
     expect(frame.roomState).toBe("racing");
     expect(frame.passageId).toBe("p-1");
     expect(frame.you.charStates[2]).toBe("error"); // sanitized index < progress & pending -> error
-    expect(frame.you.words).toEqual([{ start: 0, end: 5, correct: false }]);
   });
 
   test("buildPlayerDisconnectedFrame and buildPlayerReconnectedFrame", () => {

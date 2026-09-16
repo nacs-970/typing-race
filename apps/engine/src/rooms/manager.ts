@@ -145,13 +145,28 @@ export class RoomManager {
     });
 
     if (room.players.size === 0) {
+      await this.store.delete(code);
+      return;
+    }
+
+    // Notify the one remaining player at the size===1 transition, not
+    // size===0: by construction, whoever's departure drops a room to zero
+    // is the room's last socket — ClientManager.roomMembers tracks
+    // room.players 1:1, so nobody is ever still registered to receive a
+    // broadcast at size===0. One player earlier, a real live recipient
+    // exists (04.1-VERIFICATION.md's reachability harness confirmed this
+    // empirically across sequential-leave, cascade-leave, and
+    // disconnect-then-evict scenarios).
+    if (room.players.size === 1) {
       await this.bridge.publishToGateway({
         type: "broadcast_to_room",
         roomCode: code,
-        payload: { type: "error", code: "ROOM_CLOSED", message: "All players have left. Room closed." },
+        payload: {
+          type: "error",
+          code: "ROOM_CLOSED",
+          message: "All other players have left this room.",
+        },
       });
-      await this.store.delete(code);
-      return;
     }
 
     if (room.hostId === playerId) {

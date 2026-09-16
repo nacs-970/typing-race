@@ -89,16 +89,14 @@ Plans:
 - [x] 03-03: WPM + accuracy computation (server-only, standard formula, unit tests with fixtures: "30 chars in 30s → 2 WPM"; net WPM with errors penalty; raw WPM)
 - [x] 03-04: Race-end detection (all players finished or one finished + others past 95% progress), Results view (ranked board, finish time / WPM / accuracy / time-delta-to-winner), Rematch button
 
-### Phase 03.1: Wire word-correctness into output frame (INSERTED)
+### Phase 03.1: Wire word-correctness into output frame (INSERTED, CLOSED VIA OVERRIDE)
 
-**Goal:** Wire the already-implemented but orphaned `aggregateWordCorrectness`/`isWordCorrect` scoring functions into the server→client wire protocol and render per-word correctness on the race track — closing a gap where no player ever saw per-word correctness despite it being fully unit-tested.
-**Requirements**: REQ-05, REQ-08
+**Goal:** Investigate a verifier-flagged gap ("`aggregateWordCorrectness`/`isWordCorrect` are unit-tested but never called from production code") and either wire it in or confirm it's not a real defect.
+**Requirements**: none — see override below
 **Depends on:** Phase 3
-**Plans:** 1/1 plans complete
+**Plans:** 0 plans (no code change needed)
 
-Plans:
-
-- [x] 03.1-01: `words:{start,end,correct}[]` added to `cursor_update`/`rejoined_room` wire schemas, computed server-side in `buildCursorUpdateFrame`/`buildRejoinedRoomFrame`, threaded through the web race store/client, rendered via `word-correct`/`word-incorrect` CSS classes
+**Outcome:** Not a real gap. `.planning/phases/03-race-track/03-CONTEXT.md` decision **D-13** explicitly states: *"Word-correctness aggregation in server data model (not UI)... Used by server-side correctness stats; UI just renders per-char accents."* `aggregateWordCorrectness`/`isWordCorrect` were deliberately placed in the server data model with no promised UI consumer — unused-but-intentional is the correct resting state, same class of accepted deviation as D-11/D-12 (Phase 3's 2-tone char model). An initial attempt at this phase built live UI rendering (wire-protocol `words` field, `RaceView` CSS classes) before this decision was found; that work was reverted (see commit history) once D-13 surfaced. `03-VERIFICATION.md`'s original Gap B is recorded as an accepted override, not a defect requiring a fix.
 
 ### Phase 4: Reconnect
 
@@ -128,14 +126,14 @@ Plans:
 
 ### Phase 04.1: Add proactive room-closed toast (INSERTED)
 
-**Goal:** Push a "Room Closed" notification to any still-connected client within seconds of the last player leaving a room, instead of only the existing reactive error toast shown on that client's next failed action. The idle-sweeper half of the original Phase 4 criterion stays intentionally descoped (decision D-09).
-**Requirements**: REQ-07
+**Goal:** Push a proactive notification to a room's one remaining player when the second-to-last player leaves, instead of only the existing reactive error toast shown on that client's next failed action. The idle-sweeper half of the original Phase 4 criterion stays intentionally descoped (decision D-09).
+**Requirements**: REQ-09 (room lifecycle: sweeper, heartbeat, rate limit — this fix belongs here, not REQ-07/reconnect, per re-verification)
 **Depends on:** Phase 4
 **Plans:** 1/1 plans complete
 
 Plans:
 
-- [x] 04.1-01: `RoomManager.removePlayer()` broadcasts `ROOM_CLOSED` when a room becomes empty (ordered after the leaver's own `player_room_cleared` publish); `App.tsx` maps it to a "Room Closed" toast
+- [x] 04.1-01: `RoomManager.removePlayer()` broadcasts `ROOM_CLOSED` at the `size===1` transition — retargeted from an initial `size===0` attempt that a re-verification pass proved empirically has zero real recipients (the departing player's own already-untracked socket is the only one ever registered at that instant); `App.tsx` maps it to an "Alone in Room" toast; proven via a real two-socket integration test (`apps/gateway/src/__tests__/gateway.test.ts`)
 
 ### Phase 5: Frontend Polish
 

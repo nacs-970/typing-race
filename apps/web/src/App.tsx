@@ -191,8 +191,8 @@ export function App(): React.ReactElement {
             body = "Room lost — connection expired. Return to lobby or create a new room.";
           }
         } else if (msg.code === "ROOM_CLOSED") {
-          title = "Room Closed";
-          body = "All players have left this room.";
+          title = "Alone in Room";
+          body = "All other players have left this room.";
         } else if (msg.code === "ROOM_FULL") {
           title = "Room Full";
           body = "This room is already at maximum capacity (8 players).";

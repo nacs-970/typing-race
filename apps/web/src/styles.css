@@ -375,16 +375,6 @@ h1 {
   border-radius: 2px;
 }
 
-.word-correct {
-  background-color: rgba(34, 139, 34, 0.08);
-  border-radius: 2px;
-}
-
-.word-incorrect {
-  background-color: rgba(220, 38, 38, 0.04);
-  border-radius: 2px;
-}
-
 .own-cursor {
   border-left: 2px solid var(--color-accent-clay);
   margin-left: -2px;

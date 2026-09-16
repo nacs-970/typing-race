@@ -183,7 +183,6 @@ export class RaceClient {
       const myId = useConnectionStore.getState().playerId;
       const charStates = (msg.charStates ?? []) as CharStateType[];
       const wpm = msg.wpm ?? 0;
-      const words = msg.words ?? [];
 
       if (msg.playerId === myId) {
         setCursorState((s) => {
@@ -208,7 +207,7 @@ export class RaceClient {
         for (let i = msg.index; i < mergedStates.length; i++) {
           mergedStates[i] = "pending";
         }
-        setRaceState({ ownCharStates: mergedStates, ownWpm: wpm, ownWords: words });
+        setRaceState({ ownCharStates: mergedStates, ownWpm: wpm });
       } else {
         setCursorState((s) => {
           const next = new Map(s.cursors);
@@ -274,12 +273,10 @@ export class RaceClient {
         const ownCharStates = rawCharStates.map((st, i) =>
           i < msg.you.progress && st === "pending" ? "error" : st,
         );
-        const ownWords = msg.you.words ?? [];
         setRaceState({
           passageText: msg.passageText,
           ownCharStates,
           ownWpm: msg.you.wpm,
-          ownWords,
           countdownStartsAtServerMs: msg.startsAtServerMs,
           lobbyPlayers: msg.players,
           graceBanner:

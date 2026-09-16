@@ -248,7 +248,6 @@ export const cursorUpdateSchema = z.object({
   serverTs: z.number().int(),
   charStates: z.array(z.enum(["pending", "correct", "error"])).optional(),
   wpm: z.number().nonnegative().optional(),
-  words: z.array(z.object({ start: z.number().int().nonnegative(), end: z.number().int().nonnegative(), correct: z.boolean() })).optional(),
 });
 
 /** Broadcast when a player leaves the room. */
@@ -315,7 +314,6 @@ export const rejoinedRoomSchema = z.object({
     charStates: z.array(z.enum(["pending", "correct", "error"])),
     wpm: z.number(),
     uncorrectedErrors: z.number().int().nonnegative(),
-    words: z.array(z.object({ start: z.number().int().nonnegative(), end: z.number().int().nonnegative(), correct: z.boolean() })),
   }),
   players: z.array(
     z.object({
@@ -326,7 +324,6 @@ export const rejoinedRoomSchema = z.object({
       charStates: z.array(z.enum(["pending", "correct", "error"])),
       wpm: z.number(),
       isDisconnected: z.boolean(),
-      words: z.array(z.object({ start: z.number().int().nonnegative(), end: z.number().int().nonnegative(), correct: z.boolean() })),
     }),
   ),
 });

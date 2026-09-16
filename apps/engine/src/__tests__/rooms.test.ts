@@ -81,13 +81,37 @@ describe("removePlayer", () => {
     expect(await store.has(code)).toBe(false);
   });
 
-  test("9. removing the last player proactively broadcasts ROOM_CLOSED", async () => {
+  test("9. removing the second-to-last player proactively broadcasts ROOM_CLOSED to notify the one remaining player", async () => {
+    // Fires at size===1, not size===0: whoever's departure drops a room to
+    // zero is, by construction, the room's own last socket (ClientManager
+    // tracks room.players 1:1) — nobody is ever still registered to receive
+    // a broadcast at that instant. One player earlier, a real recipient
+    // (the remaining player) exists.
     const { code } = await manager.createRoom("h", "Host");
-    await manager.removePlayer(code, "h");
+    await manager.addPlayer(code, "g", "Guest");
+    gatewayEvents = [];
+
+    await manager.removePlayer(code, "g");
+
     const sawRoomClosed = gatewayEvents.some(
       (e) => e.type === "broadcast_to_room" && e.roomCode === code && e.payload.type === "error" && e.payload.code === "ROOM_CLOSED",
     );
     expect(sawRoomClosed).toBe(true);
+  });
+
+  test("9b. removing the last remaining player does not re-broadcast ROOM_CLOSED (no recipient left)", async () => {
+    const { code } = await manager.createRoom("h", "Host");
+    await manager.addPlayer(code, "g", "Guest");
+    await manager.removePlayer(code, "g");
+    gatewayEvents = [];
+
+    await manager.removePlayer(code, "h");
+
+    const sawRoomClosed = gatewayEvents.some(
+      (e) => e.type === "broadcast_to_room" && e.payload.type === "error" && e.payload.code === "ROOM_CLOSED",
+    );
+    expect(sawRoomClosed).toBe(false);
+    expect(await store.has(code)).toBe(false);
   });
 
   test("7. when host leaves, next-joined player is promoted", async () => {

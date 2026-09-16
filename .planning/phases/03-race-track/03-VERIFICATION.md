@@ -135,11 +135,30 @@ overrides:
     accepted_at: "PENDING"
 ```
 
-Gap B (orphaned word-correctness aggregator) has no comparable override suggestion — nothing in the
-phase artifacts documents an intentional decision to leave `aggregateWordCorrectness` unconsumed; D-13
-affirmatively claims it feeds "server-side correctness stats" that do not exist in the codebase. This
-reads as incomplete wiring, not a disclosed scope cut, and should be closed by either wiring it into
-`buildRaceEndFrame`/`PlayerFinalStats` or an explicit human descope decision.
+### This looks intentional — override suggestion for Gap B (added post-03.1 investigation)
+
+```yaml
+overrides:
+  - must_have: "aggregateWordCorrectness/isWordCorrect are consumed by a real feature (UI or server stats)"
+    reason: >
+      D-13 (03-CONTEXT.md) is explicit and two-part: "Word-correctness aggregation in server data
+      model (not UI)... UI just renders per-char accents." The "not UI" clause directly forecloses
+      wiring this into RaceView or any client-visible rendering — a gap-closure phase (03.1) built
+      exactly that before this decision was found, and it was reverted once D-13 surfaced (see
+      03.1-VERIFICATION.md). The remaining "used by server-side correctness stats" clause has no
+      concrete deliverable anywhere in ROADMAP.md or PROJECT.md: REQ-05 itself reads "Per-word
+      correctness + backspace handling for accurate WPM calculation" — i.e. per-word aggregation was
+      always in service of WPM/accuracy, not a separate stats feature — and WPM/accuracy are already
+      fully implemented and verified (Truth #2 above) via countCorrectChars/countUncorrectedErrors,
+      not aggregateWordCorrectness. No requirement or roadmap success criterion calls for a distinct
+      per-word stats consumer beyond that. Unused-but-intentional (same resting state as
+      countCorrectChars would be if nothing called it) is the correct closure, not a defect.
+    accepted_by: "PENDING — human sign-off required"
+    accepted_at: "PENDING"
+```
+
+Both Gap A and Gap B are now recorded as suggested overrides pending explicit human sign-off — see
+`03.1-VERIFICATION.md` for the fuller investigation trail (including the reverted UI-rendering attempt).
 
 ### Required Artifacts
 

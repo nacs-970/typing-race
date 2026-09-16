@@ -132,10 +132,24 @@ describe("Gateway Unified Mode Integration", () => {
       const cursorUpdate = await client2.waitFor((m) => m.type === "cursor_update" && m.playerId === hello1.playerId);
       expect(cursorUpdate.index).toBe(1);
 
-      // 7. Bob leaves room -> Alice receives player_left
+      // 7. Bob leaves room -> Alice receives player_left AND a proactive
+      // ROOM_CLOSED notice (04.1: fires at size===1, the transition where a
+      // real remaining recipient exists — not size===0, where the departing
+      // player's own now-untracked socket would be the only one left).
       client2.ws.send(JSON.stringify({ type: "leave_room" }));
       const playerLeft = await client1.waitFor((m) => m.type === "player_left");
       expect(playerLeft.playerId).toBe(joined2.playerId);
+
+      const roomClosedNotice = await client1.waitFor(
+        (m) => m.type === "error" && m.code === "ROOM_CLOSED",
+      );
+      expect(roomClosedNotice).toBeDefined();
+
+      // Bob's own (already-departed) socket must never receive its own
+      // room's ROOM_CLOSED notice.
+      expect(client2.messages.some((m) => m.type === "error" && m.code === "ROOM_CLOSED")).toBe(
+        false,
+      );
 
       client1.ws.close();
       client2.ws.close();

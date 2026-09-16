@@ -30,6 +30,7 @@ export type LobbyPlayer = {
 export type RaceUiState = {
   ownCharStates: CharState[];
   ownWpm: number;
+  ownWords: {start: number; end: number; correct: boolean}[];
   opponentWpm: Record<string, number>;
   graceBanner: GraceBanner | null;
   raceEndResults: PlayerFinalStats[] | null;
@@ -46,6 +47,7 @@ export type RaceUiState = {
 export const useRaceStore = create<RaceUiState>(() => ({
   ownCharStates: [],
   ownWpm: 0,
+  ownWords: [],
   opponentWpm: {},
   graceBanner: null,
   raceEndResults: null,
@@ -72,6 +74,7 @@ export function resetRaceUi(): void {
   useRaceStore.setState({
     ownCharStates: [],
     ownWpm: 0,
+    ownWords: [],
     opponentWpm: {},
     graceBanner: null,
     raceEndResults: null,

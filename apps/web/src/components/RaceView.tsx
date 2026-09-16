@@ -36,9 +36,21 @@ export function RaceView({
   const localLayout = useMemo(() => passageLayout ?? new PassageLayout(), [passageLayout]);
 
   const ownCharStates = useRaceStore((s) => s.ownCharStates);
+  const ownWords = useRaceStore((s) => s.ownWords);
   const [charStates, setCharStates] = useState<readonly CharState[]>(() => localEngine.getCharStates());
   const ownIndex = useCursorStore((s) => s.ownIndex);
   const [localCoords, setLocalCoords] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  const wordClasses = useMemo(() => {
+    const arr = new Array(passageText.length).fill("");
+    for (const w of ownWords) {
+      const cls = w.correct ? " word-correct" : " word-incorrect";
+      for (let i = w.start; i < w.end; i++) {
+        if (i < arr.length) arr[i] = cls;
+      }
+    }
+    return arr;
+  }, [passageText.length, ownWords]);
 
   // Initialize engine and layout with passage text
   useEffect(() => {
@@ -170,7 +182,7 @@ export function RaceView({
           return (
             <span
               key={i}
-              className={`char char-${state}`}
+              className={`char char-${state}${wordClasses[i] || ""}`}
               data-state={state}
             >
               {ch}

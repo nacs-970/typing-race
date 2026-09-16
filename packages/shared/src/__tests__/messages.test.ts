@@ -267,7 +267,7 @@ describe("Anti-cheat invariants baked into schemas", () => {
     ).toBe(true);
   });
 
-  test("9. cursor_update with charStates + wpm parses; backwards-compat without them", () => {
+  test("9. cursor_update with charStates + wpm + words parses; backwards-compat without them", () => {
     // With new optional fields
     expect(
       serverToClientSchema.safeParse({
@@ -277,9 +277,10 @@ describe("Anti-cheat invariants baked into schemas", () => {
         serverTs: 1000,
         charStates: ["correct", "error", "pending"],
         wpm: 42,
+        words: [{ start: 0, end: 5, correct: true }],
       }).success,
     ).toBe(true);
-    // Backwards-compat: without charStates/wpm (Phase 2 style)
+    // Backwards-compat: without charStates/wpm/words (Phase 2 style)
     expect(
       serverToClientSchema.safeParse({
         type: "cursor_update",
@@ -288,6 +289,18 @@ describe("Anti-cheat invariants baked into schemas", () => {
         serverTs: 1000,
       }).success,
     ).toBe(true);
+  });
+
+  test("9b. cursor_update rejects invalid words array", () => {
+    expect(
+      serverToClientSchema.safeParse({
+        type: "cursor_update",
+        playerId: VALID_UUID,
+        index: 0,
+        serverTs: 1000,
+        words: [{ start: 0, end: 5 }], // missing correct field
+      }).success,
+    ).toBe(false);
   });
 
   test("10. cursor_update wpm negative rejected", () => {

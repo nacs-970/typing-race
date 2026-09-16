@@ -13,7 +13,7 @@ import type {
   Countdown,
 } from "@typing-race/shared";
 import type { Room, Player, CharState } from "./types.ts";
-import { computeAccuracy, countCorrectChars } from "./scoring.ts";
+import { computeAccuracy, countCorrectChars, aggregateWordCorrectness } from "./scoring.ts";
 
 export function buildLobbyStateFrame(room: Room): LobbyState {
   const players = [...room.players.values()].map((p) => ({
@@ -129,6 +129,7 @@ export function buildGraceCountdownFrame(
 
 export function buildCursorUpdateFrame(
   player: Player,
+  passageText: string | null,
   serverTs: number = Date.now(),
 ): CursorUpdate {
   return {
@@ -138,6 +139,7 @@ export function buildCursorUpdateFrame(
     serverTs,
     charStates: player.charStates,
     wpm: player.currentWpm,
+    words: passageText ? aggregateWordCorrectness(passageText, player.charStates).map(({ start, end, correct }) => ({ start, end, correct })) : [],
   };
 }
 
@@ -146,6 +148,11 @@ export function buildRejoinedRoomFrame(room: Room, player: Player): RejoinedRoom
   const isFinished = room.state === "finished";
   const sanitizeCharStates = (charStates: CharState[], progress: number) =>
     charStates.map((st, i) => (i < progress && st === "pending" ? ("error" as const) : st));
+
+  const computeWords = (charStates: CharState[]) =>
+    room.passageText && !isLobby
+      ? aggregateWordCorrectness(room.passageText, charStates).map(({ start, end, correct }) => ({ start, end, correct }))
+      : [];
 
   return {
     type: "rejoined_room",
@@ -166,6 +173,7 @@ export function buildRejoinedRoomFrame(room: Room, player: Player): RejoinedRoom
       charStates: sanitizeCharStates(player.charStates, player.progress),
       wpm: player.currentWpm,
       uncorrectedErrors: player.uncorrectedErrors,
+      words: computeWords(player.charStates),
     },
     players: [...room.players.values()].map((p) => ({
       playerId: p.playerId,
@@ -175,6 +183,7 @@ export function buildRejoinedRoomFrame(room: Room, player: Player): RejoinedRoom
       charStates: sanitizeCharStates(p.charStates, p.progress),
       wpm: p.currentWpm,
       isDisconnected: p.disconnectedAt !== null,
+      words: computeWords(p.charStates),
     })),
   };
 }

@@ -422,7 +422,7 @@ export class EngineWorker {
 
         await this.store.set(roomCode, room);
 
-        const cursorFrame = buildCursorUpdateFrame(player, serverTs);
+        const cursorFrame = buildCursorUpdateFrame(player, room.passageText, serverTs);
         await this.bridge.publishToGateway({
           type: "broadcast_to_room",
           roomCode,
@@ -479,7 +479,7 @@ export class EngineWorker {
         player.lastKeystrokeAt = serverTs;
         await this.store.set(roomCode, room);
 
-        const cursorFrame = buildCursorUpdateFrame(player, serverTs);
+        const cursorFrame = buildCursorUpdateFrame(player, room.passageText, serverTs);
         await this.bridge.publishToGateway({
           type: "broadcast_to_room",
           roomCode,

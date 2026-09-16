@@ -91,14 +91,14 @@ Plans:
 
 ### Phase 03.1: Wire word-correctness into output frame (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** Wire the already-implemented but orphaned `aggregateWordCorrectness`/`isWordCorrect` scoring functions into the server→client wire protocol and render per-word correctness on the race track — closing a gap where no player ever saw per-word correctness despite it being fully unit-tested.
+**Requirements**: REQ-05, REQ-08
 **Depends on:** Phase 3
-**Plans:** 0 plans
+**Plans:** 1/1 plans complete
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 03.1 to break down)
+- [x] 03.1-01: `words:{start,end,correct}[]` added to `cursor_update`/`rejoined_room` wire schemas, computed server-side in `buildCursorUpdateFrame`/`buildRejoinedRoomFrame`, threaded through the web race store/client, rendered via `word-correct`/`word-incorrect` CSS classes
 
 ### Phase 4: Reconnect
 
@@ -128,14 +128,14 @@ Plans:
 
 ### Phase 04.1: Add proactive room-closed toast (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** Push a "Room Closed" notification to any still-connected client within seconds of the last player leaving a room, instead of only the existing reactive error toast shown on that client's next failed action. The idle-sweeper half of the original Phase 4 criterion stays intentionally descoped (decision D-09).
+**Requirements**: REQ-07
 **Depends on:** Phase 4
-**Plans:** 0 plans
+**Plans:** 1/1 plans complete
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 04.1 to break down)
+- [x] 04.1-01: `RoomManager.removePlayer()` broadcasts `ROOM_CLOSED` when a room becomes empty (ordered after the leaver's own `player_room_cleared` publish); `App.tsx` maps it to a "Room Closed" toast
 
 ### Phase 5: Frontend Polish
 
@@ -167,18 +167,18 @@ Plans:
 **Wave 3** *(blocked on Wave 2 completion)*
 
 - [x] 05-03: Server-synced countdown UI, per-player "ready" lobby indicator, "Starting in 2s…" pause with synced timer, rematch flow polish
-- [x] 05-04: Reconnect progress bar (5s grace), distinct error toasts (4 cases: lost connection / server restart / rate limit / version mismatch), WPM display polish (integer + raw/net hover tooltip), time-delta-to-winner
+- [x] 05-04: Distinct error toasts (lost connection / server restart / rate limit), WPM display polish (integer + raw/net hover tooltip), time-delta-to-winner — reconnect progress bar was claimed here but never actually wired; closed in Phase 05.1
 
 ### Phase 05.1: Add reconnect progress bar, fix version-mismatch toast wiring (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** Add the local-client "Reconnecting… (5s)" progress bar that 05-04 claimed but never wired, and remove the version-mismatch toast case that was asserted only by a fixture-only test with no real `VERSION_MISMATCH` error code behind it anywhere in the codebase.
+**Requirements**: REQ-06
 **Depends on:** Phase 5
-**Plans:** 0 plans
+**Plans:** 1/1 plans complete
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 05.1 to break down)
+- [x] 05.1-01: `ReconnectBanner` component added and mounted in `App.tsx`, driven by `useConnectionStore`; unreachable version-mismatch toast case and its fixture-only test removed
 
 ### Phase 6: Deploy + Hardening
 
@@ -229,14 +229,14 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 ### Phase 06.1: Fix draining latch reset in split-mode topology (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** Fix a real production-breaking bug (flagged as CR-B1 in code review, never actually fixed): `ClientManager.isDraining()` never reset after an independent engine-only crash-restart in split-mode topology, permanently disabling room creation on an otherwise-healthy gateway.
+**Requirements**: REQ-12
 **Depends on:** Phase 6
-**Plans:** 0 plans
+**Plans:** 1/1 plans complete
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 06.1 to break down)
+- [x] 06.1-01: `ownDrainStarted` flag distinguishes the gateway's own drain cycle from an unrelated engine-only restart's `"drained"` event; only the latter resets the `draining` latch
 
 ### Phase 7: Split into N-tier architecture
 

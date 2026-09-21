@@ -131,8 +131,8 @@ overrides:
       phase discussion, before planning. Carried consistently through 03-02-PLAN.md must_haves,
       03-02-SUMMARY.md, and confirmed as expected/working behavior in 03-UAT.md Test 2 (result: pass).
       No hidden regression — the team chose this on purpose and verified it visually.
-    accepted_by: "PENDING — human sign-off required"
-    accepted_at: "PENDING"
+    accepted_by: "atithep_thepkit@cmu.ac.th"
+    accepted_at: "2026-09-21"
 ```
 
 ### This looks intentional — override suggestion for Gap B (added post-03.1 investigation)
@@ -153,8 +153,8 @@ overrides:
       not aggregateWordCorrectness. No requirement or roadmap success criterion calls for a distinct
       per-word stats consumer beyond that. Unused-but-intentional (same resting state as
       countCorrectChars would be if nothing called it) is the correct closure, not a defect.
-    accepted_by: "PENDING — human sign-off required"
-    accepted_at: "PENDING"
+    accepted_by: "atithep_thepkit@cmu.ac.th"
+    accepted_at: "2026-09-21"
 ```
 
 Both Gap A and Gap B are now recorded as suggested overrides pending explicit human sign-off — see

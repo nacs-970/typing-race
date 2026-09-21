@@ -95,17 +95,17 @@ describe("Passage helpers", () => {
     expect(z.string().uuid().safeParse(long.id).success).toBe(true);
   });
 
-  test("10. getRandomPassage selects passages respecting category word bounds", () => {
+  test("10. getRandomPassage selects passages respecting category character-length bounds", () => {
     const short = getRandomPassage("short");
-    expect(short.text.trim().split(/\s+/).length).toBeLessThanOrEqual(42);
+    expect(short.text.trim().length).toBeLessThanOrEqual(240);
 
     const mid = getRandomPassage("mid");
-    const midWc = mid.text.trim().split(/\s+/).length;
-    expect(midWc).toBeGreaterThanOrEqual(43);
-    expect(midWc).toBeLessThanOrEqual(49);
+    const midLen = mid.text.trim().length;
+    expect(midLen).toBeGreaterThan(240);
+    expect(midLen).toBeLessThan(281);
 
     const long = getRandomPassage("long");
-    expect(long.text.trim().split(/\s+/).length).toBeGreaterThanOrEqual(50);
+    expect(long.text.trim().length).toBeGreaterThanOrEqual(281);
   });
 
   test("11. getRandomCorpus routes between random_words and passage", () => {

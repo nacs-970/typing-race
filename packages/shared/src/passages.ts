@@ -171,16 +171,24 @@ export function generateRandomWords(category: CorpusCategory = "mid"): Passage {
   };
 }
 
+/** Base matching condition for passage length — character count, not word count. */
+const SHORT_MAX_CHARS = 240;
+const LONG_MIN_CHARS = 281;
+
+function classifyPassageLength(text: string): "short" | "mid" | "long" {
+  const chars = text.trim().length;
+  if (chars <= SHORT_MAX_CHARS) return "short";
+  if (chars >= LONG_MIN_CHARS) return "long";
+  return "mid";
+}
+
 export function getRandomPassage(
   category: CorpusCategory = "mid",
   excludeId?: string,
 ): Passage {
   const candidates = PASSAGES.filter((p) => {
     if (excludeId && p.id === excludeId && PASSAGES.length > 1) return false;
-    const words = p.text.trim().split(/\s+/).length;
-    if (category === "short") return words <= 42;
-    if (category === "mid") return words >= 43 && words <= 49;
-    return words >= 50;
+    return classifyPassageLength(p.text) === category;
   });
 
   const pool = candidates.length > 0 ? candidates : PASSAGES;
@@ -225,10 +233,8 @@ export function filterPassages(
 ): Passage[] {
   return passages.filter((p) => {
     if (criteria.length && criteria.length !== "all") {
-      const words = p.text.trim().split(/\s+/).length;
-      if (criteria.length === "short" && words > 45) return false;
-      if (criteria.length === "medium" && (words < 42 || words > 50)) return false;
-      if (criteria.length === "long" && words <= 50) return false;
+      const wanted = criteria.length === "medium" ? "mid" : criteria.length;
+      if (classifyPassageLength(p.text) !== wanted) return false;
     }
     if (criteria.punctuation !== undefined && criteria.punctuation !== null) {
       const hasComplexPunctuation = /[.,'"!?;:-]/.test(p.text);

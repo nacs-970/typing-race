@@ -134,20 +134,20 @@ describe("LobbyView", () => {
   it("filters passages correctly by length and punctuation", () => {
     const shortPassages = filterPassages(PASSAGES, { length: "short" });
     expect(shortPassages.length).toBeGreaterThan(0);
-    expect(shortPassages.every((p) => p.text.trim().split(/\s+/).length <= 45)).toBe(true);
+    expect(shortPassages.every((p) => p.text.trim().length <= 240)).toBe(true);
 
     const mediumPassages = filterPassages(PASSAGES, { length: "medium" });
     expect(mediumPassages.length).toBeGreaterThan(0);
     expect(
       mediumPassages.every((p) => {
-        const w = p.text.trim().split(/\s+/).length;
-        return w >= 42 && w <= 50;
+        const len = p.text.trim().length;
+        return len > 240 && len < 281;
       }),
     ).toBe(true);
 
     const longPassages = filterPassages(PASSAGES, { length: "long" });
     expect(longPassages.length).toBeGreaterThan(0);
-    expect(longPassages.every((p) => p.text.trim().split(/\s+/).length > 50)).toBe(true);
+    expect(longPassages.every((p) => p.text.trim().length >= 281)).toBe(true);
 
     const puncPassages = filterPassages(PASSAGES, { punctuation: true });
     expect(puncPassages.length).toBeGreaterThan(0);

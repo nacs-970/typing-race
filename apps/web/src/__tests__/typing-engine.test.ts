@@ -60,15 +60,87 @@ describe("TypingEngine", () => {
     expect(engine.getCharStates()[1]).toBe("pending");
     expect(correctionSpy).toHaveBeenCalledWith(1, expect.any(Number));
 
-    // Another backspace
-    engine.handleKeyDown(new KeyboardEvent("keydown", { key: "Backspace" }));
+    // Word "The" (indices 0-2) is still incomplete (only 2 of 3 chars typed),
+    // so it stays fully editable even though index 0 is "correct".
+    const handledOverCorrect = engine.handleKeyDown(
+      new KeyboardEvent("keydown", { key: "Backspace" }),
+    );
+    expect(handledOverCorrect).toBe(true);
     expect(engine.getOwnIndex()).toBe(0);
-    expect(engine.getCharStates()[0]).toBe("pending");
+  });
 
-    // Backspace at 0 does nothing and returns false
+  it("blocks backspace at index 0", () => {
     const handledAtZero = engine.handleKeyDown(new KeyboardEvent("keydown", { key: "Backspace" }));
     expect(handledAtZero).toBe(false);
     expect(engine.getOwnIndex()).toBe(0);
+  });
+
+  describe("corrected-word delete prevention", () => {
+    it("locks a word once it's fully typed with no error", () => {
+      const testEngine = new TypingEngine();
+      testEngine.init("old were");
+
+      // "old" typed correctly, then "were" typed correctly
+      for (const key of ["o", "l", "d", " ", "w", "e", "r", "e"]) {
+        testEngine.handleKeyDown(new KeyboardEvent("keydown", { key }));
+      }
+      expect(testEngine.getOwnIndex()).toBe(8);
+
+      // "were" is complete and error-free -> locked, can't reach back into "old"
+      expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "Backspace" }))).toBe(
+        false,
+      );
+      expect(testEngine.getOwnIndex()).toBe(8);
+    });
+
+    it("keeps a completed word editable if it contains any error", () => {
+      const testEngine = new TypingEngine();
+      testEngine.init("old were");
+
+      // Type "oxd" for "old" (middle char wrong)
+      testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "o" }));
+      testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "x" }));
+      testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "d" }));
+      expect(testEngine.getCharStates().slice(0, 3)).toEqual(["correct", "error", "correct"]);
+
+      // "old" is fully typed but has an error -> stays deletable all the way down
+      expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "Backspace" }))).toBe(
+        true,
+      );
+      expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "Backspace" }))).toBe(
+        true,
+      );
+      expect(testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "Backspace" }))).toBe(
+        true,
+      );
+      expect(testEngine.getOwnIndex()).toBe(0);
+
+      // Retype it correctly
+      for (const key of ["o", "l", "d"]) {
+        testEngine.handleKeyDown(new KeyboardEvent("keydown", { key }));
+      }
+      expect(testEngine.getCharStates().slice(0, 3)).toEqual(["correct", "correct", "correct"]);
+    });
+
+    it("keeps an incomplete word editable even if typed so far is all correct", () => {
+      const testEngine = new TypingEngine();
+      testEngine.init("old were");
+
+      // "oxd" for "old" (error), then "wer" for "were" (correct so far, but incomplete)
+      for (const key of ["o", "x", "d", " ", "w", "e", "r"]) {
+        testEngine.handleKeyDown(new KeyboardEvent("keydown", { key }));
+      }
+      expect(testEngine.getOwnIndex()).toBe(7);
+
+      // "were" isn't finished yet -> deletable straight through, and past the
+      // space, into "old" (which also has an error and stays deletable) too
+      for (let i = 0; i < 7; i++) {
+        expect(
+          testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "Backspace" })),
+        ).toBe(true);
+      }
+      expect(testEngine.getOwnIndex()).toBe(0);
+    });
   });
 
   it("discards modifier keys and non-character keys", () => {
@@ -216,9 +288,10 @@ describe("TypingEngine", () => {
     const testEngine = new TypingEngine();
     testEngine.init("Hello world");
 
-    testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "H" }));
-    testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "e" }));
-    testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "l" }));
+    // Wrong chars so backspace-over-correct prevention doesn't interfere with this test
+    testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "x" }));
+    testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "x" }));
+    testEngine.handleKeyDown(new KeyboardEvent("keydown", { key: "x" }));
     expect(testEngine.getOwnIndex()).toBe(3);
 
     // Repeated Backspace (held down) is accepted!

@@ -43,6 +43,19 @@ export class TypingEngine {
     this.consecutiveErrors = 0;
   }
 
+  private isCharDeletable(index: number): boolean {
+    if (this.passageText[index] === " ") return true;
+    let start = index;
+    while (start > 0 && this.passageText[start - 1] !== " ") start--;
+    let end = index;
+    while (end < this.passageText.length - 1 && this.passageText[end + 1] !== " ") end++;
+    if (index !== end) return true;
+    for (let i = start; i <= end; i++) {
+      if (this.charStates[i] === "error") return true;
+    }
+    return false;
+  }
+
   public handleKeyDown(ev: KeyboardEvent): boolean {
     if (this.isFinished) {
       return false;
@@ -55,6 +68,12 @@ export class TypingEngine {
     // Allow Backspace / Delete even when holding down (ev.repeat === true)
     if (ev.key === "Backspace" || ev.key === "Delete") {
       if (this.ownIndex <= 0) {
+        return false;
+      }
+      // Corrected-word delete prevention: once a whole word is fully typed AND
+      // has no error in it, it's locked. A word still in progress, or one that
+      // contains an error, stays editable so it can still be fixed.
+      if (!this.isCharDeletable(this.ownIndex - 1)) {
         return false;
       }
       this.ownIndex -= 1;

@@ -1,20 +1,20 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1.0
-current_phase: 07.1
-current_phase_name: Fix multi-tab session takeover regression
-status: complete
+status: Awaiting next milestone
 stopped_at: Completed 07.1-01-PLAN.md
-last_updated: "2026-09-16T07:58:38.033Z"
-last_activity: 2026-09-16
-last_activity_desc: Completed Phase 07.1 (07.1-01 restored session_taken_over notify+evict on multi-tab rejoin), committed d3c9a28
-state_head: d3c9a282c323f75a0d336527e219fd7db2c05480
+last_updated: "2026-09-22T20:45:12.006Z"
+last_activity: 2026-09-23
+last_activity_desc: Milestone v1.0 completed and archived
+state_head: cc415d0a6e533916d704d3e114cd877480bac8a1
 progress:
-  total_phases: 8
-  completed_phases: 8
+  total_phases: 12
+  completed_phases: 3
   total_plans: 28
   completed_plans: 28
 milestone_name: milestone
+current_phase: "07.1"
+current_phase_name: Fix multi-tab session takeover regression
 ---
 
 # Project State
@@ -28,12 +28,10 @@ See: .planning/PROJECT.md (updated 2026-08-30)
 
 ## Current Position
 
-Phase: 07.1 (Fix multi-tab session takeover regression) — COMPLETE (all 8 phases now complete)
-Plan: 1/1 complete
-Status: Ready for milestone completion / PR review
-Last activity: 2026-09-16 — Phase 07.1 finished (07.1-01: restored session_taken_over notify+evict on multi-tab rejoin), commits ac021f4 (test) + d3c9a28 (fix)
-
-Progress: [████████████████████] 100% (8/8 phases)
+Phase: Milestone v1.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-09-23 — Milestone v1.0 completed and archived
 
 ## Performance Metrics
 
@@ -127,3 +125,7 @@ Items acknowledged and deferred, most recent first:
 Last session: 2026-09-16T07:58:36.254Z
 Stopped at: Completed 07.1-01-PLAN.md
 Resume file: None
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

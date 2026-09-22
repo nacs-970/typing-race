@@ -140,7 +140,7 @@ describe("CursorManager", () => {
 
     const dom = manager.getElements().get("p1");
     expect(dom).toBeDefined();
-    expect(dom!.root.style.opacity).toBe("1.00");
+    expect(dom!.root.style.opacity).toBe("0.60");
     expect(dom!.root.style.visibility).toBe("visible");
 
     // Opponent p1 2 words ahead ('eight'): partially faded
@@ -192,7 +192,7 @@ describe("CursorManager", () => {
 
     const dom = manager.getElements().get("p1");
     expect(dom).toBeDefined();
-    expect(dom!.root.style.opacity).toBe("1.00");
+    expect(dom!.root.style.opacity).toBe("0.60");
     expect(dom!.root.style.visibility).toBe("visible");
 
     // Local player moves 5 words ahead ('five')

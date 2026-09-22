@@ -223,9 +223,10 @@ export class CursorManager {
 
       // Distance-based fading: slowly fade away as opponent distance (ahead or behind) approaches 5 words
       const wordDistance = this.calculateWordDistance(this.localProgress, renderIndex);
-      let opacity = 1.0;
+      const BASE_OPACITY = 0.6;
+      let opacity = BASE_OPACITY;
       if (wordDistance > 0) {
-        opacity = Math.max(0, 1 - wordDistance / CursorManager.MAX_DISTANCE_WORDS);
+        opacity = Math.max(0, BASE_OPACITY * (1 - wordDistance / CursorManager.MAX_DISTANCE_WORDS));
       }
       dom.root.style.opacity = opacity.toFixed(2);
       dom.root.style.visibility = opacity <= 0 ? "hidden" : "visible";

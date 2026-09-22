@@ -18,7 +18,12 @@ COPY packages/shared ./packages/shared
 COPY apps/web       ./apps/web
 
 WORKDIR /app/apps/web
-RUN bun run build
+# Vite-only build (skip `bun run build`'s `tsc --noEmit` — this build context
+# only copies apps/web + packages/shared, so a test file that reaches across
+# workspace boundaries to apps/engine's source fails to typecheck here even
+# though it's fine locally. Same precedent as the root Dockerfile: CI /
+# `bun run typecheck` is where cross-workspace typechecking actually happens.
+RUN bun x vite build
 
 # Stage 2: Serve static assets with Caddy
 FROM caddy:2-alpine AS runtime

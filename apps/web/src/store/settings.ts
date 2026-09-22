@@ -21,6 +21,61 @@ export const DEFAULT_SETTINGS: PlayerSettings = {
   colorText: "#151d10",
 };
 
+export type ThemeColors = Omit<PlayerSettings, "fontSize">;
+
+export interface ThemePreset {
+  name: string;
+  colors: ThemeColors;
+}
+
+/** fontSize is left untouched when a preset is applied — presets are color-only. */
+export const THEME_PRESETS: ThemePreset[] = [
+  {
+    name: "Olive",
+    colors: {
+      colorCorrect: "#1a4d10",
+      colorIncorrect: "#dc2626",
+      colorCursor: "#90a358",
+      colorAccent: "#90a358",
+      colorBackground: "#fefbe6",
+      colorText: "#151d10",
+    },
+  },
+  {
+    name: "Dark",
+    colors: {
+      colorCorrect: "#4ade80",
+      colorIncorrect: "#f87171",
+      colorCursor: "#60a5fa",
+      colorAccent: "#60a5fa",
+      colorBackground: "#1a1a19",
+      colorText: "#f0efec",
+    },
+  },
+  {
+    name: "High Contrast",
+    colors: {
+      colorCorrect: "#006400",
+      colorIncorrect: "#b91c1c",
+      colorCursor: "#000000",
+      colorAccent: "#000000",
+      colorBackground: "#ffffff",
+      colorText: "#000000",
+    },
+  },
+  {
+    name: "Ocean",
+    colors: {
+      colorCorrect: "#0f766e",
+      colorIncorrect: "#b91c1c",
+      colorCursor: "#0ea5e9",
+      colorAccent: "#0ea5e9",
+      colorBackground: "#eaf6fb",
+      colorText: "#072a3a",
+    },
+  },
+];
+
 const COOKIE_NAME = "typing_race_settings";
 
 function readSettingsCookie(): PlayerSettings {

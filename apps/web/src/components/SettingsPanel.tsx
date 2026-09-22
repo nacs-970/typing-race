@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { useSettingsStore, setSettings, resetSettings, DEFAULT_SETTINGS } from "../store/settings.ts";
+import {
+  useSettingsStore,
+  setSettings,
+  resetSettings,
+  DEFAULT_SETTINGS,
+  THEME_PRESETS,
+} from "../store/settings.ts";
 
 const COLOR_FIELDS = [
   { key: "colorCorrect", label: "Correct" },
@@ -36,6 +42,26 @@ export function SettingsPanel(): React.ReactElement {
             >
               Reset
             </button>
+          </div>
+
+          <label className="block text-xs text-[var(--color-text-muted)] mb-1">Theme</label>
+          <div className="flex gap-2 mb-3">
+            {THEME_PRESETS.map((preset) => (
+              <button
+                key={preset.name}
+                type="button"
+                title={preset.name}
+                aria-label={preset.name}
+                onClick={() => setSettings(preset.colors)}
+                className="w-7 h-7 rounded-full border border-[var(--color-border-subtle)] shrink-0"
+                style={{ background: preset.colors.colorBackground }}
+              >
+                <span
+                  className="block w-3 h-3 mx-auto rounded-full"
+                  style={{ background: preset.colors.colorAccent }}
+                />
+              </button>
+            ))}
           </div>
 
           <label className="block text-xs text-[var(--color-text-muted)] mb-1">

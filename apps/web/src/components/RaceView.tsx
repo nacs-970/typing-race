@@ -44,7 +44,7 @@ export function RaceView({
   useEffect(() => {
     localEngine.init(passageText);
     setCharStates([...localEngine.getCharStates()]);
-    localLayout.init(passageText, '16px "JetBrains Mono", monospace', 32);
+    localLayout.init(passageText, '16px "JetBrains Mono", "Fira Code", "SF Mono", ui-monospace, monospace', 32);
     localLayout.updateLayout(trackRef.current?.clientWidth || 800);
     localManager.setPassageText(passageText);
   }, [passageText, localEngine, localLayout, localManager]);

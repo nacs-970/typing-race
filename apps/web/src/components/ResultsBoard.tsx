@@ -64,7 +64,18 @@ export function ResultsBoard({
     );
   }
 
-  const winnerTimeMs = ranked[0]?.finishTimeMs ?? 0;
+  /**
+   * Rank #1 is the top-SCORE player (wpm*accuracy + finish bonus), not
+   * necessarily the fastest finisher — a slower, higher-wpm*accuracy player
+   * can outrank a faster one. "Fastest time" and "top rank" are therefore
+   * different players; deltas must anchor to the fastest finisher's time,
+   * never to ranked[0]'s time, or an actually-faster finisher would show a
+   * negative delta ("+-Ns") against a slower #1.
+   */
+  const finisherTimes = results
+    .filter((r) => finishedPlayerIds === undefined || finishedPlayerIds.includes(r.playerId))
+    .map((r) => r.finishTimeMs);
+  const fastestFinishMs = finisherTimes.length > 0 ? Math.min(...finisherTimes) : 0;
   const countdownStartsAtServerMs = useRaceStore((s) => s.countdownStartsAtServerMs);
 
   const getElapsedMs = (rawMs: number): number => {
@@ -72,7 +83,7 @@ export function ResultsBoard({
       if (countdownStartsAtServerMs && countdownStartsAtServerMs > 0) {
         return Math.max(0, rawMs - countdownStartsAtServerMs);
       }
-      return Math.max(0, rawMs - winnerTimeMs);
+      return Math.max(0, rawMs - fastestFinishMs);
     }
     return rawMs;
   };
@@ -137,11 +148,9 @@ export function ResultsBoard({
               const isMe = r.playerId === myId;
               const displayName =
                 nicknameMap.get(r.playerId) ?? `${r.playerId.slice(0, 8)}…`;
-              const deltaMs = r.finishTimeMs - winnerTimeMs;
-              const deltaText =
-                i === 0
-                  ? "Winner"
-                  : `+${(deltaMs / 1000).toFixed(1)}s`;
+              const isFastest = r.finishTimeMs === fastestFinishMs;
+              const deltaMs = r.finishTimeMs - fastestFinishMs;
+              const deltaText = isFastest ? "Fastest" : `+${(deltaMs / 1000).toFixed(1)}s`;
 
               let rankBadge: React.ReactNode;
               if (i === 0) {

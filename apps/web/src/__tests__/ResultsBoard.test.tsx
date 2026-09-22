@@ -61,6 +61,28 @@ describe("ResultsBoard", () => {
     expect(getByText("+5.0s")).toBeDefined();
   });
 
+  it("shows the actual fastest finisher's delta as non-negative even when a slower player outranks them by score", () => {
+    // B finishes slower but wins on score (wpm*accuracy); A is the fastest
+    // finisher but ranks below B. Regression test: delta must anchor to the
+    // fastest finish time, not the top-ranked (highest-score) player's time.
+    const results: PlayerFinalStats[] = [
+      { playerId: "player-A", finishTimeMs: 20000, wpm: 50, accuracy: 0.8 }, // score 1040
+      { playerId: "player-B", finishTimeMs: 25000, wpm: 90, accuracy: 0.99 }, // score 1089.1
+    ];
+
+    const { getByText, container, queryByText } = render(
+      <ResultsBoard results={results} isHost={false} />,
+    );
+
+    const rows = container.querySelectorAll('[data-testid="result-row"]');
+    expect(rows[0]?.getAttribute("data-player-id")).toBe("player-B"); // wins by score
+    expect(rows[1]?.getAttribute("data-player-id")).toBe("player-A"); // fastest, but ranked 2nd
+
+    expect(getByText("Winner")).toBeDefined(); // player-B, rank #1
+    expect(getByText("Fastest")).toBeDefined(); // player-A, actual fastest time
+    expect(queryByText(/\+-/)).toBeNull(); // no double-negative delta text
+  });
+
   it("highlights the local player row with (You) tag", () => {
     const { getByText, container } = render(
       <ResultsBoard results={sampleResults} isHost={false} />,

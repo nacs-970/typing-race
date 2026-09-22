@@ -76,7 +76,7 @@ Plans:
 
   1. Typing a passage with backspaces shows correct chars in green, errored-then-corrected chars in neutral, errored chars in red — word shows correct only when ALL chars end `correct`
   2. Server-computed WPM = `correctChars / 5 / minutesElapsed` matches a known fixture (e.g., 30 correct chars in 30s → 12 WPM) verified by unit test
-  3. When the first player finishes, all other players see a results board within 1s with finish times, WPM, accuracy, and ranking (finish time primary, WPM tiebreaker)
+  3. When the first player finishes, all other players see a results board within 1s with finish times, WPM, accuracy, and ranking (score = wpm × accuracy, plus a finish bonus so any finisher always outranks a DNF — changed post-v1.0 from the original finish-time-primary ordering; see PROJECT.md Key Decisions)
   4. Loading any room pulls a passage from a bundled JSON file (no network call), 30-60 words, no two consecutive races in the same room use the same passage
   5. Rematch button on results board starts a new race in the same room with a new passage; "Starting in 2s…" pause shows server-synced countdown
 

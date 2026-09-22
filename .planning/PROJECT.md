@@ -30,7 +30,9 @@ with a fair, identical WPM/accuracy score — nothing else matters.
 - [ ] Live opponent cursors on the typing track (interpolated for smoothness)
 - [ ] Per-word correctness + backspace handling for accurate WPM calculation
 - [ ] Reconnect mid-race without corrupting race state
-- [ ] Race-end screen: WPM + accuracy board, ranked by finish time then WPM
+- [ ] Race-end screen: WPM + accuracy board, ranked by score (wpm × accuracy
+      + finish bonus, so finishers always outrank DNFs) — changed post-v1.0
+      from the original finish-time-primary ordering
 - [ ] Rematch button (same room, new passage)
 - [ ] English passages only, bundled public-domain corpus (~50-100 short
       passages, ~30-60 words each)
@@ -93,6 +95,7 @@ with a fair, identical WPM/accuracy score — nothing else matters.
 | Server-authoritative keystroke counting | Anti-cheat foundation, even at best-effort level | — Pending |
 | 6-char room code + shareable link | Code for verbal share, link for one-click join. Both paths. | — Pending |
 | Best-effort anti-cheat (not hardcore) | Honest players see fair scores; no rate-limit / hash infra for v1 | — Pending |
+| Ranking by score (wpm × accuracy + finish bonus), not finish-time-primary | User-requested change post-v1.0-planning: finishers should always outrank DNFs regardless of partial wpm/accuracy at grace-timeout | ✓ Good (2026-09-23: fixed a "delta anchored to top-score, not fastest time" display bug this change introduced) |
 | 2-8 player cap | Sweet spot for fun multiplayer, keeps UI/scroll sane | — Pending |
 
 ## Evolution

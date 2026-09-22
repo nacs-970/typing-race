@@ -1,42 +1,33 @@
 ---
 phase: 01-foundation
-verified: 2026-09-16T22:45:00Z
-resolved: 2026-09-23T00:00:00Z
+verified: 2026-09-23T00:35:00Z
 status: closed_via_override
-score: 4/5 must-haves verified, remaining must-have closed via accepted override (server-dist, see below); image-size gap fixed 2026-09-23
+score: 5/5 must-haves verified (4 verified fresh, 1 carried-forward accepted override)
 covered_files: [".dockerignore", ".planning/PROJECT.md", ".planning/phases/01-foundation/01-01-PLAN.md", ".planning/phases/01-foundation/01-01-SUMMARY.md", ".planning/phases/01-foundation/01-02-PLAN.md", ".planning/phases/01-foundation/01-02-SUMMARY.md", ".planning/phases/01-foundation/01-03-PLAN.md", ".planning/phases/01-foundation/01-03-SUMMARY.md", ".planning/phases/01-foundation/01-UAT.md", ".planning/phases/01-foundation/01-VALIDATION.md", "Dockerfile", "apps/gateway/package.json", "apps/gateway/src/index.ts", "apps/web/src/App.tsx", "apps/web/src/net/ws.ts", "apps/web/vite.config.ts", "bunfig.toml", "fly.toml", "package.json", "packages/shared/src/index.ts", "packages/shared/src/messages.ts", "scripts/deploy.sh", "tsconfig.base.json"]
-covered_digest: "v1:sha256:23391379fa89322baf2a66d74d45cca34ccdadabc2805f68ce5582d310d88aa9"
+covered_digest: "v1:sha256:1ae6dc89f75835fd487b41cd712d946be1cb73531ddc9655cc860fd9d84246f5"
 behavior_unverified: 0
-overrides_applied: 0
-gaps:
-
-  - truth: "`bun run --filter '*' build` produces both a server-side `dist` (originally `apps/server/dist`, now the successor `apps/gateway`) and `apps/client`/`apps/web/dist`"
-    status: failed
-    reason: "The web half is real and verified (`apps/web/dist/index.html` + hashed, precompressed assets). The server half was never produced at any point in the project's life. apps/server/package.json (Phase 1) declared a `build` script (`bun build src/index.ts --target=bun --outdir=dist`) but the root `package.json` build script never called it (`\"build\": \"bun run --cwd apps/web build\"` at Phase 1 completion, unchanged in spirit today). 01-03-SUMMARY.md self-admits this under 'Symbols referenced but NOT created (owned by later phases): apps/server/dist/'. No later phase (through Phase 7's gateway/engine split) ever added a server build step or produced apps/gateway/dist or apps/engine/dist — grep for a \"build\" script in apps/gateway/package.json and apps/engine/package.json returns nothing. In production (Dockerfile ENTRYPOINT and local `bun run start`), the server always runs directly from TypeScript source via Bun's native TS execution — never from a bundled dist. This is architecturally consistent and functionally proven (typecheck clean, health/WS/Docker all pass — see truths 2-4), but it is a literal, never-closed deviation from ROADMAP SC1's wording, and no override was ever recorded for it."
-    artifacts:
-      - path: "apps/gateway/package.json"
-        issue: "No `build` script; server runs from source (`bun run apps/gateway/src/index.ts`), never bundled to dist"
-      - path: "package.json"
-        issue: "Root `build` script only builds `apps/web` (`bun run --cwd apps/web build`); never builds a server/gateway artifact"
-    missing: []
-    overrides:
-      - must_have: "`bun run --filter '*' build` produces both a server-side dist and a client dist"
-        reason: >
-          Bun executes .ts files natively — no transpile/bundle step needed, unlike a Node.js
-          deployment target. The Dockerfile ENTRYPOINT and `bun run start` both run
-          apps/gateway/src/index.ts directly from source; this has been true and functionally
-          proven (typecheck clean, health/WS/Docker all pass) since Phase 1. Only apps/web needs
-          a build step (browsers can't execute TS/JSX). ROADMAP SC1's wording predates this and
-          was never updated once the Bun-native approach settled.
-        accepted_by: "atithep_thepkit@cmu.ac.th"
-        accepted_at: "2026-09-23"
-  - truth: "`docker run --rm typing-race:test du -sh /app` reports under 200MB (Plan 03 must-have, verbatim)"
-    status: fixed
-    reason: "FIXED 2026-09-23: root cause was the release stage copying node_modules wholesale from a build stage that also installs apps/web's entire devDependency tree (vite, tailwind, vitest, typescript, react-dom, plus native binaries for every target — rolldown, lightningcss, tailwindcss/oxide — ~110MB alone). Added a separate `prod-deps` build stage that installs only gateway+engine (+ shared workspace dep) via `bun install --production --frozen-lockfile --filter='@typing-race/gateway' --filter='@typing-race/engine'`, and the release stage now copies node_modules from that stage instead. Verified live: `docker exec ... du -sh /app` now reports 19M, well under the 200MB budget. Full container smoke test (build, run, /health, unified-mode log line) re-confirmed green after the change."
-    artifacts:
-      - path: "Dockerfile"
-        issue: "RESOLVED — added `prod-deps` stage; release now copies node_modules from it instead of the client-build-inclusive `deps` stage"
-    missing: []
+overrides_applied: 1
+overrides:
+  - must_have: "bun run --filter '*' build produces both a server-side dist and a client dist"
+    reason: >
+      Bun executes .ts files natively — no transpile/bundle step needed, unlike a Node.js
+      deployment target. The Dockerfile ENTRYPOINT and `bun run start` both run
+      apps/gateway/src/index.ts directly from source; this has been true and functionally
+      proven (typecheck clean, health/WS/Docker all pass) since Phase 1. Only apps/web needs
+      a build step (browsers can't execute TS/JSX). ROADMAP SC1's wording predates this and
+      was never updated once the Bun-native approach settled.
+    accepted_by: "atithep_thepkit@cmu.ac.th"
+    accepted_at: "2026-09-23"
+re_verification:
+  previous_status: closed_via_override
+  previous_score: "4/5 verified + 1 override (image-size gap already recorded fixed in prior file, but not independently re-measured until this pass)"
+  gaps_closed:
+    - "Container image under the 200MB budget — independently re-measured this session at 19M /app (both a BuildKit-cached build and a from-scratch `--no-cache` rebuild), confirming the prior file's 221M->19M fix claim first-hand rather than trusting it"
+  gaps_remaining: []
+  regressions: []
+advisory: []
+gaps: []
+deferred: []
 audit_acknowledged:
   milestone: v1.0
   at: 2026-09-22
@@ -47,27 +38,34 @@ audit_acknowledged:
 
 **Phase Goal:** Establish a bun-workspace monorepo with shared Zod schemas, a Bun+Hono server skeleton with `/health`, a Vite+React client, and a working single-process Bun static + WS pipeline that can be deployed to Fly.io. Validate the full deploy pipeline end-to-end before any game logic.
 
-**Verified:** 2026-09-16T22:45:00Z
-**Status:** gaps_found
-**Re-verification:** No — initial verification (no prior `01-VERIFICATION.md` existed)
+**Verified:** 2026-09-23T00:35:00Z
+**Status:** closed_via_override
+**Re-verification:** Yes — independent fresh pass, not a re-read of the prior file's claims. Docker build (both cached AND `--no-cache` from-scratch)/run/measure and a direct non-Docker dev-mode boot were all executed in this session's own process; results below were not copied from `01-VERIFICATION.md`'s prior text.
 
 ## Important framing: this phase has since been superseded by Phase 7
 
 Phase 1 shipped `apps/server` (a single Bun+Hono process) and `apps/web`. Phase 7
-("split-into-n-tier-architecture", per `.planning/v1.0-MILESTONE-AUDIT.md`) later
-retired `apps/server` entirely (commit `802ba24`, "monorepo orchestration scripts
-and legacy cutover") and replaced it with `apps/gateway` + `apps/engine`, connected
-via an EventBridge in `packages/shared/src/bridge.ts`. `apps/web` and
-`packages/shared` persist unbroken from Phase 1 through today.
+("split-into-n-tier-architecture") later retired `apps/server` entirely and
+replaced it with `apps/gateway` + `apps/engine`, connected via an EventBridge in
+`packages/shared/src/bridge.ts`. `apps/web` and `packages/shared` persist
+unbroken from Phase 1 through today. Per the original verification's framing,
+this supersession is expected and is not counted as a failure — the checks below
+verify the foundational patterns still hold in the current, evolved codebase.
 
-Per the task brief, **this supersession is expected and is not counted as a
-failure.** Verification below checks two things: (1) what Phase 1 itself actually
-delivered at completion (commit `80fa149`, "Phase 1 complete, Phase 2 plans
-ready"), verified against the historical git tree, and (2) whether the
-foundational patterns Phase 1 established (shared Zod schemas as single source of
-truth, single-process static+WS serving, non-root Docker, fly.toml shape) still
-hold in the current, evolved codebase — since that is the actual state a reader
-of "is Phase 1 goal achieved" cares about.
+## What changed since the 2026-09-16 initial verification
+
+1. **Server-dist deviation** — formally accepted via override by
+   `atithep_thepkit@cmu.ac.th` on 2026-09-23. Not re-litigated below; carried
+   forward as `PASSED (override)`.
+2. **Image-size gap** — the root `Dockerfile` gained a new `prod-deps` build
+   stage (commit `d6042c4`, "fix(docker): shrink runtime image by excluding
+   apps/web's devDependencies") that installs only `apps/gateway` +
+   `apps/engine` production deps via `bun install --production --frozen-lockfile
+   --filter='@typing-race/gateway' --filter='@typing-race/engine'`, and the
+   `release` stage now copies `node_modules` from that stage instead of the
+   client-build-inclusive `deps` stage. This was **independently rebuilt (both
+   cached and from-scratch `--no-cache`), run, and measured in this
+   verification session** (not read off the prior file) — see Truth 5 below.
 
 ## Goal Achievement
 
@@ -75,153 +73,108 @@ of "is Phase 1 goal achieved" cares about.
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | `bun install` succeeds; `bun run --filter '*' build` (or its successor) produces both a client dist and a server dist | ✗ FAILED | `bun install` exits 0 today (243 installs, no changes). `bun run --cwd apps/web build` produces `apps/web/dist/index.html` + hashed `.js`/`.css` + `.gz`/`.br` siblings (reproduced live during this verification) — client half verified. **The server half was never produced, at any point in the project's history** — see `gaps` in frontmatter. |
-| 2 | `bun run dev` (or per-package dev) serves client + server with `/health` returning success | ✓ VERIFIED | Live smoke test this session: `MODE=unified bun run --cwd apps/gateway start` → `curl http://localhost:8080/health` → `{"ok":true,"timestamp":...,"uptime":...}`. Historically (Phase 1, `apps/server/src/routes.ts`) `/health` returned bare text `ok`, not `{ok:true}` — a minor SC2 wording deviation at the time, since closed by later phases which now literally return `{ok:true}`. Port is `:8080` (both then and now), not ROADMAP's stated `:3000` — a deliberate, consistently-applied deviation baked into `env.ts`/Dockerfile `EXPOSE`/`fly.toml internal_port` triple-match, never `:3000` at any point in the project. |
-| 3 | `fly deploy` produces a public URL... (NOTE: descoped 2026-09-16, verify Dockerfile/fly.toml exist + are smoke-tested instead) | ✓ VERIFIED | `Dockerfile`, `fly.toml`, `.dockerignore`, `scripts/deploy.sh` all exist at repo root today. **Live re-verification this session** (against the *current* Dockerfile — COPY `apps/gateway`+`apps/engine`, not the Phase-1-era COPY `apps/server` variant, which no longer exists to rebuild): `docker build -t typing-race:verify .` succeeded end-to-end (multi-stage: base → deps → client-build → release). `docker run` → `curl :8081/health` → `{"ok":true,...}`; `curl :8081/` → contains `id="root"` (SPA served); Node WS client → `ws://localhost:8081/ws` → received `{"type":"hello","playerId":"<uuid>","serverTs":...}`; `docker exec ... whoami` → `bun` (non-root, UID 1000). This proves the deploy pipeline builds and serves correctly **today**; the Phase-1-era Dockerfile's own build was never confirmed on its original host (01-03-SUMMARY.md reported a Docker bridge-networking failure at that time) and cannot be retroactively re-tested since that file no longer exists. `fly deploy` itself intentionally never runs — confirmed descoped 2026-09-16 per `.planning/PROJECT.md` Out of Scope and `.planning/v1.0-MILESTONE-AUDIT.md`. |
-| 4 | `packages/shared` exports Zod schemas and both server + client import them — no duplicate type definitions | ✓ VERIFIED | `packages/shared/src/messages.ts` (13.7K today, grown from Phase 1's smaller version) exports `clientToServerSchema` / `serverToClientSchema` Zod discriminated unions; `packages/shared/src/index.ts` barrels `messages`, `race`, `codes`, `passages`. All three current apps (`apps/gateway`, `apps/engine`, `apps/web`) declare `"@typing-race/shared": "workspace:*"` and — critically — actually **import** it: `grep -rn "@typing-race/shared" apps/gateway/src apps/engine/src apps/web/src` returns 37 real import sites. `grep -rl "discriminatedUnion" apps/gateway/src apps/engine/src apps/web/src` returns **zero matches** — no app defines its own competing wire-contract union; `packages/shared` is the sole source. `bun run typecheck` (root, all 4 workspaces) exits 0 with no output — clean. |
-| 5 | (Plan 03 must-have) `docker run --rm typing-race:test du -sh /app` reports under 200MB | ✗ FAILED | Live measurement this session: `docker exec typing-race-verify du -sh /app` → **221M**. Over the declared budget by ~10%. Non-root user, multi-stage build, and functional serving are all otherwise fine — this is purely a size-threshold miss. See `gaps` in frontmatter. |
+| 1 | `bun install` succeeds; `bun run --filter '*' build` (or its successor) produces both a client dist and a server dist | PASSED (override) | `bun install` re-run live this session: "Checked 243 installs across 288 packages (no changes)". `apps/web/dist/index.html` + hashed `index-BLbnqgo5.css`/`index-DzsCSOr-.js` + `.gz`/`.br` precompressed siblings confirmed present on disk this session — client half genuinely produced (also re-produced via the `--no-cache` Docker rebuild's `client-build` stage). Server half is never bundled to dist (`grep '"build"' package.json apps/gateway/package.json apps/engine/package.json` shows only the root `"build": "bun run --cwd apps/web build"`, unchanged) — this is the literal ROADMAP SC1 deviation, now formally accepted. Override: Bun executes TS source natively — accepted by atithep_thepkit@cmu.ac.th on 2026-09-23. |
+| 2 | `bun run dev` (or per-package dev) serves client + server with `/health` returning success | ✓ VERIFIED | Verified two independent ways this session: (a) containerized unified-mode — `curl http://localhost:18099/health` → `{"ok":true,"timestamp":1790097472182,"uptime":3.553848177}`; (b) **direct, non-Docker** boot — `MODE=unified PORT=18097 ENGINE_PORT=18096 bun run --cwd apps/gateway start`, then `curl http://localhost:18097/health` → `{"ok":true,"timestamp":1790098025258,"uptime":2.003067015}` (uptime ~2s confirms a freshly-started process, not a stale listener). Note: the host's default port 8080 was found already occupied by an ambient listener outside this session's process tree at test time (not started by any command in this session, invisible to `ps`/`lsof` in this sandboxed environment) — worked around by using an explicit alternate `PORT`; this is an environment quirk, not a code defect, and does not affect the truth being verified. As previously documented, the server listens on `:8080` (fixed via `env.ts`/Dockerfile `EXPOSE`/`fly.toml internal_port`), not ROADMAP's stated `:3000`/client `:5173` — a deliberate, consistently-applied deviation, unchanged since Phase 1, not a new regression. |
+| 3 | `fly deploy` / Docker deploy pipeline produces a working, publicly-servable container (descoped from actual `fly deploy` 2026-09-16) | ✓ VERIFIED | Rebuilt and run **twice** this session, once cached and once genuinely from scratch: (a) `docker build -t typing-race:reverify .` (BuildKit cache hit on every layer since the tree was clean) → ran, confirmed unified-mode log line, `/health`, SPA root, WS `hello` frame, non-root `whoami`; (b) **`docker build --no-cache -t typing-race:reverify-nocache .`** — full from-scratch rebuild (base→deps→client-build→prod-deps→release, `bun install` re-ran fresh: "472 packages installed", `vite build` re-ran fresh: "✓ 149 modules transformed... built in 2.23s") — this rules out a stale/cached image masking a broken pipeline. Ran the from-scratch image: logs show `"[gateway] Running in UNIFIED mode (Gateway + Engine in single process)"` and `"listening"` on `0.0.0.0:8080`; `curl :18098/health` → `{"ok":true,...}`; `docker exec tr-nocache whoami` → `bun`. Both containers and both images removed after testing. |
+| 4 | `packages/shared` exports Zod schemas and both server + client import them — no duplicate type definitions | ✓ VERIFIED | `grep -rn "@typing-race/shared" apps/gateway/src apps/engine/src apps/web/src` → 37 real import sites (re-counted live this session). `grep -rl "discriminatedUnion" apps/gateway/src apps/engine/src apps/web/src` → 0 matches outside `packages/shared` (re-checked live, exit 1/no match). `bun run typecheck` (root, 4 workspaces: shared, web, gateway, engine) → exit 0, no errors (re-run live this session). |
+| 5 | (Plan 03 must-have) `docker run --rm typing-race:test du -sh /app` reports under 200MB | ✓ VERIFIED (fix confirmed independently, twice) | **This session's own measurement**, not the prior file's claim, taken from two separate containers: cached build → `docker exec tr-reverify du -sh /app` → **19M**; from-scratch `--no-cache` build → `docker exec tr-nocache du -sh /app` → **19M** (identical, confirming the cached result wasn't an artifact of stale layers). Well under the 200MB budget (was 221M at the 2026-09-16 pass). Note on scope: Plan 03's must-have is verbatim `du -sh /app` (the app directory inside the container), not the full Docker image — for completeness, the full image (`docker images` on the `--no-cache` tag) reports **281MB** total, most of which is the `oven/bun:1.3.2-slim` base layer; the must-have being verified is specifically the `/app` payload, and 19M is the correct, literal figure against it. Root cause and fix independently traced in the current `Dockerfile`: a new `prod-deps` stage (`bun install --production --frozen-lockfile --filter='@typing-race/gateway' --filter='@typing-race/engine'`) excludes `apps/web`'s devDependency tree (vite, tailwind, vitest, typescript, react-dom, native binaries for rolldown/lightningcss/tailwind-oxide) from the runtime image; `release` now copies `node_modules` from `prod-deps` instead of `deps`. Confirmed via `git log --oneline -- Dockerfile` (commit `d6042c4`, "fix(docker): shrink runtime image by excluding apps/web's devDependencies") and by reading the current file's own inline comments describing this exact rationale. |
 
-**Score:** 3/5 truths cleanly verified (2 genuine gaps: server build artifact never produced; container image over the declared 200MB budget).
+**Score:** 5/5 truths verified (4 independently re-verified live — 3 of them with redundant cached + from-scratch evidence — 1 carried forward as an accepted, human-signed override).
 
 ### Deferred Items
 
-None — neither gap was ever scheduled for a later phase; both are either an
-architectural non-requirement (server dist, under Bun's native-TS execution
-model) or an unaddressed numeric threshold (image size) that no phase revisited.
+None.
+
+### Advisory (New Scope, Unevidenced)
+
+None. `git log --since=2026-09-16T22:45:00Z` on all `covered_files` shows only two files changed since the prior pass: `Dockerfile` (the image-size fix, in-contract — matches the prior file's recorded gap) and `apps/web/src/App.tsx` (3 commits: player-customizable colors/font size, WPM×accuracy scoring change, dead-room URL cleanup — all later-phase feature work, unrelated to Phase 1's foundation truths, no debt markers found, no new Step 7 blockers raised).
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `package.json` (root) | Workspace manifest, `apps/*` + `packages/*` | ✓ VERIFIED | `workspaces: ["apps/*","packages/*"]`; scripts evolved (now orchestrates web/gateway/engine) but pattern intact |
+| `package.json` (root) | Workspace manifest, `apps/*` + `packages/*` | ✓ VERIFIED | `workspaces: ["apps/*","packages/*"]` unchanged; `bun install` clean |
 | `tsconfig.base.json` | Shared compilerOptions | ✓ VERIFIED | Present, extended by all packages; `bun run typecheck` (4 workspaces) exits 0 |
-| `packages/shared/src/messages.ts` | Zod discriminated unions, REQ-13 SoT | ✓ VERIFIED | Present, substantive (13.7K), real Zod schemas, imported everywhere |
-| `packages/shared/src/index.ts` | Barrel export | ✓ VERIFIED | `export * from "./messages/race/codes/passages.ts"` |
-| `apps/server/src/index.ts` (Phase 1) → superseded by `apps/gateway/src/index.ts` | Bun.serve skeleton, `/health`, `/ws` upgrade | ✓ VERIFIED (via supersession) | Historical `apps/server/src/index.ts` at commit `80fa149` was substantive (native `Bun.serve<WsData>`, WS knobs, SIGTERM handler) — not a stub. Current `apps/gateway/src/index.ts` continues the exact same pattern (verified live: `/health` responds, `/ws` upgrades and sends `hello`) |
-| `apps/web/src/App.tsx` | Renders "Hello Typing Race" + WS status | ✓ VERIFIED (evolved) | Historical version had the literal string + status pill (confirmed via `01-01-SUMMARY.md` D4/D7 coverage + UAT test 2 "pass"). Current `App.tsx` has evolved far beyond hello-world (full lobby/race UI) — expected evolution, not a stub regression |
-| `apps/web/src/net/ws.ts` | `WsConnection` class, Zod-validated inbound | ✓ VERIFIED | Present at Phase 1 and today; dev/prod URL branch (`import.meta.env.DEV`) confirmed in source |
-| `Dockerfile` | Multi-stage, non-root, WORKDIR fix | ✓ VERIFIED | Multi-stage (base→deps→client-build→release) at Phase 1 and today (updated to COPY `apps/gateway`+`apps/engine` instead of `apps/server`); `USER bun` present; live `docker build` + `docker run` this session confirms non-root `whoami` → `bun` |
-| `fly.toml` | Single-process, WS-tuned config | ✓ VERIFIED | All required keys present: `internal_port = 8080`, `auto_stop_machines = "stop"`, `concurrency.type = "connections"`, `path = "/health"`, `kill_signal = "SIGTERM"`, `memory = "256mb"` |
-| `scripts/deploy.sh` | Pre-flight only, never auto-deploys | ✓ VERIFIED | Executable, 5-step pre-flight, prints would-be `fly deploy --strategy immediate --remote-only` but never executes it (`! grep -q "^fly deploy"` holds). **Process note:** this file existed on disk since Phase 1 execution but was not `git add`ed until a much later backfill commit (`8fe46d7`, 2026-09-16) — a repo-hygiene gap, not a functional one; content matches the Plan 03 must-have verbatim. |
+| `packages/shared/src/messages.ts` | Zod discriminated unions, REQ-13 SoT | ✓ VERIFIED | Present, substantive, real Zod schemas, imported at 37 sites |
+| `packages/shared/src/index.ts` | Barrel export | ✓ VERIFIED | Present, unchanged |
+| `apps/gateway/src/index.ts` (successor to Phase 1's `apps/server/src/index.ts`) | Bun.serve skeleton, `/health`, `/ws` upgrade | ✓ VERIFIED | Live this session, both containerized and via direct `bun run` boot: `/health` responds with real uptime; `/ws` upgrades and sends `hello` with a real UUID |
+| `apps/web/src/App.tsx` | Renders client UI + WS status | ✓ VERIFIED (evolved) | Confirmed current file serves via the built SPA (`index.html` → hashed JS/CSS bundle) in the running container; 3 unrelated feature commits since 2026-09-16, no regressions, no debt markers |
+| `apps/web/src/net/ws.ts` | `WsConnection` class, Zod-validated inbound | ✓ VERIFIED | Present, unchanged since prior pass |
+| `Dockerfile` | Multi-stage, non-root, WORKDIR fix, prod-deps stage | ✓ VERIFIED | Multi-stage (base→deps→client-build→prod-deps→release); `USER bun` present; live `docker build` (cached AND `--no-cache`)+`docker run` this session confirms non-root `whoami` → `bun` and 19M `/app` both times |
+| `fly.toml` | Single-process, WS-tuned config | ✓ VERIFIED | Unchanged; all required keys present |
+| `scripts/deploy.sh` | Pre-flight only, never auto-deploys | ✓ VERIFIED | Unchanged since prior pass |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
-| `apps/gateway`/`apps/engine`/`apps/web` package.json | `packages/shared` | `workspace:*` dependency | ✓ WIRED | All 3 declared; `bun install` resolves via symlinks (verified: `bun install` completed with 243 installs, no unresolved workspace errors) |
-| App source files | `packages/shared` schemas | Real imports | ✓ WIRED | 37 import sites across `apps/gateway/src`, `apps/engine/src`, `apps/web/src`; zero duplicate `discriminatedUnion` definitions found outside `packages/shared` |
-| `Bun.serve` fetch handler | `/ws` upgrade → WS dispatch | Native upgrade, not Hono's `upgradeWebSocket` | ✓ WIRED | Live test: WS client received `hello` frame with real UUID `playerId` + `serverTs` both via direct dev server and via the built Docker container |
-| Vite dev proxy | Bun server | `/api`, `/ws`, `/health` proxy entries | ✓ WIRED (historical + pattern preserved) | Phase 1 `vite.config.ts` proxy config confirmed present in PLAN/SUMMARY diffs; UAT test 2 (dev proxy + WS handshake) recorded `pass` |
-| Dockerfile `WORKDIR` | `static.ts`'s `import.meta.dir` math | Path resolution (Pitfall 4 fix) | ✓ WIRED | Live container test: SPA served correctly from `/app/apps/web/dist` via the WORKDIR-relative path, both then (`apps/server`) and now (`apps/gateway`) |
+| `apps/gateway`/`apps/engine`/`apps/web` package.json | `packages/shared` | `workspace:*` dependency | ✓ WIRED | `bun install` resolves via symlinks (re-confirmed live: "243 installs, no changes") |
+| App source files | `packages/shared` schemas | Real imports | ✓ WIRED | 37 import sites re-counted live; zero duplicate `discriminatedUnion` definitions |
+| `Bun.serve` fetch handler | `/ws` upgrade → WS dispatch | Native upgrade | ✓ WIRED | Live WS test this session received real `hello` frame via the built Docker container |
+| Vite dev proxy | Bun server | `/api`, `/ws`, `/health` proxy entries | ✓ WIRED (pattern preserved) | Direct non-Docker gateway boot (`bun run --cwd apps/gateway start`) confirmed `/health` live this session, proving the server half of the dev pipeline runs standalone; Vite's proxy config itself unchanged since Phase 1 and not separately re-exercised (client dev-server proxy layer, distinct from the server process just proven) |
+| Dockerfile `WORKDIR` / `prod-deps` stage | `apps/gateway` runtime resolution | Multi-stage COPY chain | ✓ WIRED | Live container test (cached + from-scratch): SPA served from `/app/apps/web/dist`, gateway resolves `@typing-race/shared` and `@typing-race/engine` correctly from the `prod-deps`-sourced `node_modules` — proven by the process actually starting and serving, not just file presence |
+
+### Data-Flow Trace (Level 4)
+
+| Artifact | Data Variable | Source | Produces Real Data | Status |
+|----------|---------------|--------|---------------------|--------|
+| `/health` response | `uptime`, `timestamp` | `process.uptime()` / server clock inside the running gateway process | Yes — uptime observed at multiple distinct small values across independent fresh process starts (2.0s, 2.8s, 3.5s), never static | ✓ FLOWING |
+| `/ws` `hello` frame | `playerId`, `serverTs` | Server-generated UUID + server clock at connection time | Yes — distinct real UUID each connection (`fedb720e-28d8-...`) | ✓ FLOWING |
+| `docker exec du -sh /app` | image size | Actual filesystem measurement inside the running container, not a cached/reported number | Yes — independently executed against two separately-built containers (cached + `--no-cache`), both returning 19M | ✓ FLOWING |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
 | `bun install` succeeds | `bun install` | "Checked 243 installs across 288 packages (no changes)" | ✓ PASS |
-| `bun run typecheck` (4 workspaces) | `bun run typecheck` | Exit 0, no errors, all 4 `tsc --noEmit` runs clean | ✓ PASS |
-| Unified server `/health` | `curl http://localhost:8080/health` (live `bun run --cwd apps/gateway start`, MODE=unified) | `{"ok":true,"timestamp":...,"uptime":...}` | ✓ PASS |
-| `docker build` (full pipeline, current Dockerfile) | `docker build -t typing-race:verify .` | Succeeded, multi-stage, Vite build embedded, precompressed `.gz` assets emitted | ✓ PASS |
-| `docker run` — health, SPA, WS, non-root | `curl :8081/health`, `curl :8081/`, Node WS client, `docker exec whoami` | `{"ok":true,...}`; `id="root"` present; `hello` frame with UUID received; `whoami` → `bun` | ✓ PASS |
-| `docker exec du -sh /app` | image size check | `221M` | ✗ FAIL — over Plan 03's "under 200MB" must-have by ~10%; see gaps |
+| `bun run typecheck` (4 workspaces) | `bun run typecheck` | Exit 0, no errors | ✓ PASS |
+| `docker build` (cached, current Dockerfile) | `docker build -t typing-race:reverify .` | Succeeded, multi-stage including `prod-deps` | ✓ PASS |
+| `docker build --no-cache` (from-scratch rebuild) | `docker build --no-cache -t typing-race:reverify-nocache .` | Succeeded fresh: `bun install` re-ran ("472 packages installed"), `vite build` re-ran ("✓ 149 modules transformed... built in 2.23s") | ✓ PASS |
+| `docker run` (both builds) — unified mode, health, SPA, WS, non-root | `docker logs`, `curl :18099|18098/health`, `curl :18099/`, Node WS client, `docker exec whoami` | Unified-mode log line present both times; `{"ok":true,...}` both times; valid SPA HTML; real `hello` WS frame; `whoami` → `bun` both times | ✓ PASS |
+| Direct (non-Docker) dev-mode boot | `MODE=unified PORT=18097 bun run --cwd apps/gateway start` + `curl :18097/health` | `{"ok":true,"uptime":2.0...}` — fresh process, not the container path | ✓ PASS |
+| `docker exec du -sh /app` (both builds) | image size check | **19M** (cached build) and **19M** (from-scratch build) | ✓ PASS — well under the 200MB budget, confirmed twice |
 | Duplicate wire-contract definitions | `grep -rl discriminatedUnion apps/*/src` | 0 matches outside `packages/shared` | ✓ PASS |
-| No debt markers in deploy/wire-contract files | `grep -E "TBD|FIXME|XXX|TODO|HACK|PLACEHOLDER"` on Dockerfile/fly.toml/deploy.sh/messages.ts/App.tsx | Only legitimate HTML `placeholder=` attributes found | ✓ PASS |
+| No debt markers in deploy/wire-contract files | `grep -E "TBD|FIXME|XXX|TODO|HACK|PLACEHOLDER"` on Dockerfile/fly.toml/deploy.sh/.dockerignore/App.tsx | None (App.tsx's two `placeholder=` hits are legitimate CSS/HTML attributes, not debt markers) | ✓ PASS |
 
 ### Probe Execution
 
-`find scripts -path '*/tests/probe-*.sh' -type f` returned no matches, and neither
-PLAN nor SUMMARY files for this phase reference a `probe-*.sh` convention.
-Step 7c: **SKIPPED (no probes declared for this phase)**.
+`find scripts -path '*/tests/probe-*.sh' -type f` returned no matches; no PLAN/SUMMARY for this phase references a `probe-*.sh` convention. Step 7c: **SKIPPED (no probes declared for this phase)**.
 
 ### Requirements Coverage
 
-Per task instructions, cross-referenced against `.planning/PROJECT.md` (no
-`REQUIREMENTS.md` in this project) and the phase's declared `requirements:`
-frontmatter.
-
 | Requirement | Source Plan | Description | Status | Evidence |
 |-------------|------------|--------------|--------|----------|
-| REQ-13 | 01-01, 01-02 | Shared TS types (single source of truth via Zod) | ✓ SATISFIED | `packages/shared` is the sole definer of wire-contract discriminated unions; 37 real import sites across all 3 current apps; typecheck clean; zero duplicate schema definitions found |
-| REQ-12 | 01-02, 01-03 | Fly.io single-process deploy (descoped from "deploy" to "build + smoke-test" 2026-09-16) | ⚠️ PARTIALLY SATISFIED (as descoped) | Dockerfile/fly.toml/.dockerignore/scripts/deploy.sh all exist and are now live-smoke-tested (this session): build succeeds, container serves SPA+WS+/health, runs non-root — this fully satisfies the descoped bar. However the underlying Plan 03 must-have on image size (<200MB) fails at 221M; see gaps. `fly deploy` itself correctly never executed, matching the 2026-09-16 descope decision recorded in `.planning/PROJECT.md` Out of Scope |
+| REQ-13 | 01-01, 01-02 | Shared TS types (single source of truth via Zod) | ✓ SATISFIED | `packages/shared` sole definer of wire-contract unions; 37 real import sites; typecheck clean; zero duplicate schema definitions |
+| REQ-12 | 01-02, 01-03 | Fly.io single-process deploy (descoped 2026-09-16 to build + smoke-test) | ✓ SATISFIED (as descoped, and now fully within budget) | Dockerfile/fly.toml/.dockerignore/scripts/deploy.sh all exist and are live-smoke-tested this session (cached + from-scratch): build succeeds, container serves SPA+WS+/health, runs non-root, and now measures 19M `/app` both times — the one previously-open sub-clause (image size) is closed and confirmed reproducible. `fly deploy` itself correctly never executed, per the 2026-09-16 descope decision |
 
-No orphaned requirements found for Phase 1 in `.planning/PROJECT.md`.
+No orphaned requirements found for Phase 1.
 
 ### Decision Coverage
 
-No `01-CONTEXT.md` exists for this phase (checked `.planning/phases/01-foundation/*-CONTEXT.md` — none found), so the decision-coverage gate is a clean skip; nothing to report.
+No `01-CONTEXT.md` exists for this phase — clean skip, nothing to report.
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `apps/gateway/package.json`, `apps/engine/package.json` | n/a | No `build` script exists for either; server always runs from TS source, never bundled | ⚠️ Warning | Root cause of gap 1 (server dist never produced). Architecturally sound (Bun native TS execution) but never reconciled against the roadmap's literal wording via an accepted override |
-| Docker image (current build) | n/a | `/app` measures 221M inside the running container | ⚠️ Warning | Exceeds Plan 03's "under 200MB" must-have (~10% over) — tracked as gap 2 |
-| `scripts/deploy.sh` | n/a | File existed on disk since Phase 1 execution but was not committed to git until backfill commit `8fe46d7` (2026-09-16, same day as this verification) | ℹ️ Info | Process/hygiene gap only — content is correct and matches the plan's must-have verbatim; no functional impact |
+| `apps/gateway/package.json`, `apps/engine/package.json` | n/a | No `build` script; server always runs from TS source, never bundled | ℹ️ Info | Root cause of the SC1 deviation — now formally covered by an accepted, human-signed override (not an open gap) |
 
-No 🛑 Blocker-level anti-patterns (debt markers, stubs, hollow props) found in any file covered by this phase.
+No 🛑 Blocker-level anti-patterns found in any covered file. No new-scope findings (Convergence Evidence Gate, `is_re_verification=true`): the only files that changed since the prior pass are `Dockerfile` (in-contract — matches the prior file's recorded gap) and `apps/web/src/App.tsx` (unrelated later-phase feature commits, clean of debt markers).
 
 ### Human Verification Required
 
-N/A — Infrastructure/foundation phase with no user-facing elements requiring
-manual judgment beyond what `01-UAT.md` already discharged (5/5 tests passed:
-cold-start smoke, dev proxy + WS handshake with visible "Hello Typing Race" +
-playerId in DOM, prod single-process SPA serving with compression headers,
-deploy-infra files present + `deploy.sh` dry-run, and the wire-tracer's
-Zod-validated `hello` frame). All items in `01-UAT.md` remain valid evidence and
-are not re-litigated here per the infra-phase human-verification scoping rule.
+N/A — Infrastructure/foundation phase with no user-facing elements requiring manual judgment. All truths in this pass were verified programmatically, including live container build/run/measure (cached and from-scratch) and a direct non-Docker dev-mode boot, all executed independently in this session (not inferred from SUMMARY.md or the prior VERIFICATION.md's claims).
 
 ### Gaps Summary
 
-Two genuine, never-closed gaps, both non-blocking to the phase's actual demoed
-functionality but real deviations from declared must-haves:
+No open gaps remain. Both items from the 2026-09-16 initial verification are closed:
 
-**Gap 1 — server build artifact never produced.** The ROADMAP's literal SC1
-wording ("`bun run --filter '*' build` produces both `apps/server/dist` and
-`apps/client/dist`") was never fully satisfied. The client half (`apps/web/dist`)
-is real, substantive, and verified with precompressed asset siblings. The server
-half was never produced — not at Phase 1 completion, not in any of the 7
-subsequent phases, including the Phase 7 gateway/engine split. The server has
-always run directly from TypeScript source via Bun's native execution model
-(confirmed live: `bun run apps/gateway/src/index.ts` and the Dockerfile
-`ENTRYPOINT` both run source, not a bundled artifact). This is very likely the
-*correct* engineering call — Bun doesn't require transpilation to run TS, unlike
-a Node.js deployment target — but it was never formally reconciled against the
-roadmap text via an accepted override. Neither `.planning/v1.0-MILESTONE-AUDIT.md`
-(which declares "10 of 10 in-scope requirements fully satisfied" at the REQ
-level) nor any prior phase verification addresses this specific sub-clause by
-name.
+1. **Server-dist deviation** — closed via a formally accepted, human-signed override (`atithep_thepkit@cmu.ac.th`, 2026-09-23). Not re-litigated; carried forward verbatim.
+2. **Image-size budget miss (221M vs 200MB)** — closed by an actual code fix (`Dockerfile` `prod-deps` stage, commit `d6042c4`), and this fix is now **independently confirmed twice** in this session — once from a BuildKit-cached rebuild and once from a genuine `--no-cache` from-scratch rebuild (fresh `bun install`, fresh `vite build`) — both measuring `/app` at 19M via `docker exec du -sh /app`. Also confirmed: live health check (`{"ok":true,...}`) on both containers plus a direct non-Docker dev-mode boot, live WS handshake (real `hello` frame), and non-root user confirmation (`whoami` → `bun`). None of this was read off the prior file's claim — every number here was re-executed and re-measured first-hand in this session.
 
-**Gap 2 — container image over the declared 200MB budget.** Live measurement
-this session: `du -sh /app` inside the running container reports 221M, against
-Plan 03's explicit must-have of "under 200MB." Everything else about the
-container (non-root user, multi-stage build, correct serving of SPA+WS+/health)
-checks out; this is purely a size-threshold miss, newly discovered by this
-verification (the original Phase 1 execution never got a live measurement due to
-a host Docker networking failure).
-
-**This looks intentional (gap 1) / minor and likely fixable (gap 2).** To accept
-these deviations, add to this file's frontmatter:
-
-```yaml
-overrides:
-
-  - must_have: "bun run --filter '*' build produces apps/server/dist"
-    reason: "Bun executes TypeScript source natively; the server (originally apps/server, now apps/gateway+apps/engine) has never needed a bundled dist artifact in any of the 8 shipped phases — Dockerfile ENTRYPOINT and `bun run start` both run source directly. Only the browser-delivered client requires a Vite build."
-    accepted_by: "{your name}"
-    accepted_at: "{current ISO timestamp}"
-  - must_have: "docker run --rm typing-race:test du -sh /app reports under 200MB"
-    reason: "Accept current 221M size, OR prune image before accepting — developer's call."
-    accepted_by: "{your name}"
-    accepted_at: "{current ISO timestamp}"
-```
-
-Then re-run verification to apply. Everything else — the shared Zod
-single-source-of-truth (REQ-13), the single-process static+WS pipeline, and the
-deploy infrastructure build/run/WS/non-root path (freshly re-verified live this
-session, resolving the "environment limitation" the original Phase 1 execution
-hit) — is genuinely proven.
+Phase 1's goal — a bun-workspace monorepo with shared Zod schemas, a working single-process Bun static+WS pipeline, and a deployable (build+run) container — is achieved. Status is `closed_via_override` (not a clean `passed`) only because one accepted deviation (server-dist) remains on record, per this project's established convention.
 
 ---
 
-_Verified: 2026-09-16T22:45:00Z_
+_Verified: 2026-09-23T00:35:00Z_
 _Verifier: Claude (gsd-verifier)_

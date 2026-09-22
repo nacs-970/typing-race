@@ -1,10 +1,11 @@
 ---
 phase: 05-frontend-polish
-verified: 2026-09-16T15:40:00Z
-status: gaps_found
+verified: 2026-09-23T00:00:00Z
+status: human_needed
 score: 2/5 must-haves verified
 covered_files:
 
+  - ".planning/ROADMAP.md"
   - ".planning/phases/05-frontend-polish/05-01-PLAN.md"
   - ".planning/phases/05-frontend-polish/05-01-SUMMARY.md"
   - ".planning/phases/05-frontend-polish/05-02-PLAN.md"
@@ -14,13 +15,18 @@ covered_files:
   - ".planning/phases/05-frontend-polish/05-04-PLAN.md"
   - ".planning/phases/05-frontend-polish/05-04-SUMMARY.md"
   - ".planning/phases/05-frontend-polish/05-VALIDATION.md"
+  - ".planning/phases/05.1-add-reconnect-progress-bar-fix-version-mismatch-toast-wiring/05.1-01-SUMMARY.md"
+  - ".planning/phases/05.1-add-reconnect-progress-bar-fix-version-mismatch-toast-wiring/05.1-CONTEXT.md"
   - "apps/engine/src/engine.ts"
   - "apps/web/src/App.tsx"
+  - "apps/web/src/__tests__/ReconnectBanner.test.tsx"
+  - "apps/web/src/__tests__/ToastQueue.test.tsx"
   - "apps/web/src/components/CountdownView.tsx"
   - "apps/web/src/components/GraceBanner.tsx"
   - "apps/web/src/components/LobbyView.tsx"
   - "apps/web/src/components/RaceHud.tsx"
   - "apps/web/src/components/RaceView.tsx"
+  - "apps/web/src/components/ReconnectBanner.tsx"
   - "apps/web/src/components/ResultsBoard.tsx"
   - "apps/web/src/components/ToastQueue.tsx"
   - "apps/web/src/core/cursor-manager.ts"
@@ -33,67 +39,32 @@ covered_files:
   - "packages/shared/src/messages.ts"
   - "packages/shared/src/passages.ts"
 
-covered_digest: "v1:sha256:3e47ae3b52162eb5fa1038e3eeb91a818aeb1cc082734064f59ca92c928f4ea7"
-behavior_unverified: 2
+covered_digest: "v1:sha256:881928cc7fc7965397e28cb4602ff567770f15e193eebf31850d5f13ae26f3b1"
+behavior_unverified: 3
 overrides_applied: 0
-gaps:
-
-  - truth: "Disconnect shows 'Reconnecting… (5s)' progress bar (Success Criterion 4, clause 1)"
-    status: failed
-    reason: >
-      No component in apps/web/src renders a reconnect-in-progress UI keyed off the
-      local client's own connection status. `useConnectionStore().status` transitions
-      to "closed" on socket close (race-client.ts:98) and the client silently retries
-      after a fixed 1s timeout (race-client.ts:100), but no component subscribes to
-      `status === "closed"` to render any progress indicator, countdown text, or "Xs"
-      label. The only "5s" countdown text in the codebase is GraceBanner, which is
-      the race-finish grace-period banner (unrelated feature, built for a different
-      purpose) and a hardcoded string inside ToastQueue.test.tsx that is never
-      produced by production code (see missing item 2 below).
-    artifacts:
-      - path: "apps/web/src/App.tsx"
-        issue: "Renders GraceBanner, disconnect toasts for OTHER players (Phase 4 feature), and ToastQueue, but nothing reads connectionStore.status to show own-client reconnect progress."
-      - path: "apps/web/src/net/race-client.ts"
-        issue: "Sets status to 'closed' and auto-reconnects after 1s, but exposes no remaining-time/attempt state for a progress bar to bind to."
-    missing:
-      - "A component (or App.tsx render branch) that shows 'Reconnecting… (Xs)' with a shrinking/filling progress bar while connectionStore.status === 'closed', wired to the real reconnect timer."
-  - truth: "Distinct error toast for 'version mismatch' case (claimed by 05-04-SUMMARY.md: '4 cases: lost connection / server restart / rate limit / version mismatch')"
-    status: failed
-    reason: >
-      No VERSION_MISMATCH (or equivalent) error code exists anywhere in the wire
-      protocol (`packages/shared/src/messages.ts`) or is emitted by any server code
-      in apps/engine or apps/gateway. App.tsx's error-code-to-toast switch (lines
-      178-223) only handles ROOM_DOES_NOT_EXIST, ROOM_NOT_FOUND, ROOM_FULL,
-      SESSION_INVALID, SERVER_SHUTTING_DOWN, and RATE_LIMITED — there is no
-      version-mismatch branch and no version field is ever compared client- or
-      server-side. ToastQueue.test.tsx asserts a "Version Mismatch" toast renders
-      correctly, but the test calls `addToast()` directly with a hardcoded string —
-      it exercises the toast card renderer, not any production error path. This is a
-      SUMMARY.md claim not backed by the codebase (roadmap Success Criterion 4 itself
-      only names two toast cases — "room lost" vs "server restarted" — both of which
-      ARE correctly wired; the 4-case claim originates from the plan/SUMMARY text,
-      not the roadmap contract).
-    artifacts:
-      - path: "apps/web/src/App.tsx"
-        issue: "Error-code switch (lines 178-223) has no VERSION_MISMATCH branch."
-      - path: "packages/shared/src/messages.ts"
-        issue: "No version-mismatch error code defined in the error schema."
-      - path: "apps/web/src/__tests__/ToastQueue.test.tsx"
-        issue: "Test passes a hardcoded 'Version Mismatch' string directly to addToast() — proves the toast card can render arbitrary copy, not that production code ever produces this toast."
-    missing:
-      - "A version/protocol-mismatch detection mechanism server- or client-side, plus a matching error code and App.tsx toast branch — or, if genuinely out of scope, correct the 05-04-SUMMARY.md claim."
-
-deferred: []
+re_verification:
+  previous_status: gaps_found
+  previous_score: 2/5
+  gaps_closed:
+    - "Disconnect shows 'Reconnecting… (5s)' progress bar (Success Criterion 4, clause 1)"
+    - "Distinct error toast for 'version mismatch' case — fixture-only unreachable test removed"
+  gaps_remaining: []
+  regressions: []
+advisory: []
 behavior_unverified_items:
 
   - truth: "Two side-by-side browser windows show opponent cursor moving smoothly across the passage with no visible jitter at 60fps, verified under simulated 100ms RTT (Success Criterion 1)"
     test: "Open two browser tabs/windows joined to the same room, artificially delay one client's WebSocket messages by ~100ms (e.g. via browser devtools network throttling or a proxy), race, and visually confirm the opponent cursor advances smoothly without visible stutter/snapping."
     expected: "Opponent cursor motion appears continuous at 60fps with no visible jitter, snapping, or backward jumps, even with 100ms of added network latency."
-    why_human: "This is a real-time rendering/perception judgment (jitter, smoothness) under simulated network conditions. The interpolation math (100ms BUFFER_MS ring buffer, linear lerp, 150ms clamped extrapolation, immediate rewind-snap on backspace) is implemented and unit-tested in cursor-manager.test.ts, but no automated test measures actual frame-to-frame visual smoothness under RTT — that requires a human eyeball or a real browser profiling session."
+    why_human: "Unchanged since the 2026-09-16 pass. The interpolation math (100ms BUFFER_MS ring buffer, linear lerp, 150ms clamped extrapolation, immediate rewind-snap on backspace) is still implemented and unit-tested in cursor-manager.test.ts (12 tests), but no automated test measures actual frame-to-frame visual smoothness under RTT — that requires a human eyeball or a real browser profiling session. 05.1 did not touch this."
   - truth: "CSS transform: translate3d() used for cursor positioning outside the React tree — React DevTools profile shows no per-frame React renders for cursor motion (Success Criterion 2)"
     test: "Open React DevTools Profiler, start a race with an opponent cursor moving, record a profiling session for several seconds of active cursor motion, and inspect the commit list."
     expected: "Zero React commits are attributed to cursor-position changes during the recording window (the .cursor-overlay container and its children are mutated exclusively via CursorManager.renderFrame()'s direct DOM writes to `style.transform`, not via React state/props)."
-    why_human: "RaceView.test.tsx test #5 ('mounts isolated cursor overlay without inline opponent cursor children') only asserts the React render tree has zero `.opponent-cursor` elements at mount time — it is a structural/DOM-shape assertion, not a runtime commit-count measurement. Code inspection of cursor-manager.ts confirms renderFrame() only calls `dom.root.style.transform = ...` (no setState, no React API) inside its rAF loop, which is strong static evidence, but the actual React DevTools Profiler run required by the success criterion's own wording has not been executed and produces no artifact a grep can verify."
+    why_human: "Unchanged since the 2026-09-16 pass. `cursor-manager.ts:221` still mutates `dom.root.style.transform` directly inside a requestAnimationFrame loop with no React state/setState calls. RaceView.test.tsx test 5 ('mounts isolated cursor overlay without inline opponent cursor children') still only asserts DOM shape at mount, not a runtime commit count. No React DevTools Profiler run has been recorded. 05.1 did not touch this."
+  - truth: "Reconnect success restores the prior in-progress race view (passage, own char states, WPM, countdown, lobby roster, grace banner, opponent cursors) after a `rejoined_room` frame (Success Criterion 4, clause 2)"
+    test: "Disconnect a client mid-race (kill the WebSocket), let it auto-reconnect, and confirm the UI resumes showing the correct in-progress passage state, per-char correctness, own WPM, and opponent cursor positions with no visible reset/flash."
+    expected: "After a `rejoined_room` frame is dispatched, RaceView/CountdownView/LobbyView render exactly the restored state with no incorrect flash frame or dropped opponent cursor."
+    why_human: "New finding on this re-verification pass (the previous pass never reached this level of scrutiny on clause 2 because clause 1 was an outright FAILED/missing feature). `race-client.ts`'s `rejoined_room` branch (lines 263-308) does perform a real multi-field state restoration by direct code inspection — this is not stub code — but grep of every test file under `apps/web/src/__tests__/` (`race-client.test.ts`, `App.test.tsx`) shows no test dispatches a `rejoined_room` frame; the restoration is a state-transition truth with code present and wired but behaviorally unexercised."
 human_verification:
 
   - test: "Open two browser tabs/windows joined to the same room, artificially delay one client's WebSocket messages by ~100ms, race, and visually confirm the opponent cursor advances smoothly without visible stutter/snapping."
@@ -102,18 +73,21 @@ human_verification:
   - test: "Record a React DevTools Profiler session during active opponent cursor motion and inspect the commit list."
     expected: "Zero React commits attributed to cursor-position changes."
     why_human: "Requires an actual DevTools Profiler run; the only related test checks DOM structure, not runtime commit counts."
+  - test: "Disconnect a client mid-race and confirm reconnect restores the exact in-progress view (passage, char states, WPM, opponent cursors) with no visible reset/flash."
+    expected: "UI resumes exactly where it left off after `rejoined_room`, no incorrect flash frame."
+    why_human: "No automated test dispatches a `rejoined_room` frame through race-client.ts to assert the resulting restored state; only static code inspection backs this today."
 audit_acknowledged:
   milestone: v1.0
   at: 2026-09-22
-  status: gaps_found
+  status: human_needed
 ---
 
 # Phase 5: Frontend Polish Verification Report
 
 **Phase Goal:** The "two-laptop demo wow" moment. Smooth 60fps opponent cursors via 30Hz server broadcast + 100ms client interpolation buffer + rAF lerp, server-synced countdown UI, reconnect progress bar, distinct error toasts.
-**Verified:** 2026-09-16
-**Status:** gaps_found
-**Re-verification:** No — initial verification (closing the documented "no post-execution verification" gap flagged by the v1.0 milestone audit; 05-VALIDATION.md was a pre-execution draft with all 12 per-task checkboxes unresolved and `wave_0_complete: false`)
+**Verified:** 2026-09-23
+**Status:** human_needed
+**Re-verification:** Yes — after Phase 05.1's gap-closure work (`ReconnectBanner.tsx` + version-mismatch toast cleanup), re-checking against the current codebase and current test suite (not trusting 05.1-SUMMARY.md's or 05.1-VERIFICATION.md's claims — code and tests read directly).
 
 ## Goal Achievement
 
@@ -121,108 +95,145 @@ audit_acknowledged:
 
 | # | Truth (Roadmap SC) | Status | Evidence |
 |---|---------|------------|-------------|
-| 1 | Two side-by-side browser windows show opponent cursor moving smoothly at 60fps under simulated 100ms RTT | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | `cursor-manager.ts` implements `BUFFER_MS=100`, `MAX_EXTRAPOLATE_MS=150`, linear lerp (`calculateInterpolatedIndex`), and immediate rewind-snap on backspace; 9 unit tests in `cursor-manager.test.ts` pass. No test/profiling artifact demonstrates actual jitter-free rendering under 100ms RTT — see human_verification. |
-| 2 | `transform: translate3d()` used outside React tree; DevTools profile shows 0 per-frame React renders | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | `cursor-manager.ts:215` mutates `dom.root.style.transform` directly inside a `requestAnimationFrame` loop (`renderFrame`) with no React state/setState calls — strong static evidence. `RaceView.test.tsx` test 5 only asserts the React tree has 0 `.opponent-cursor` DOM nodes at mount, not 0 commits during motion. No actual DevTools Profiler run recorded — see human_verification. |
-| 3 | Lobby shows per-player "ready" indicator; countdown ticks down from `startAtServerMs - clockOffset`, not local clock | ✓ VERIFIED | `LobbyView.tsx`: guest ✓/Waiting… checkmarks (`p.isReady`), host "Start Race"/"Force Start Race" toggle (`allGuestsReady`), Ready Up button falls back to `ws.send({type:"set_ready"})` when no prop passed. `CountdownView.tsx:22-23`: `serverNow = Date.now() + offsetMs; left = startsAtServerMs - serverNow` — explicitly server-clock-anchored, re-evaluated every 16ms, never uses a bare local `Date.now()` countdown. Server side: `set_ready` handler in `apps/engine/src/engine.ts:218-224` mutates `player.isReady` and re-broadcasts `lobby_state`. `bun test apps/engine apps/gateway` → 111/111 pass. |
-| 4 | Disconnect shows "Reconnecting… (5s)" progress bar; reconnect success restores prior view; reconnect failure shows distinct toast ("Lost connection — room lost" vs "Server restarted") | ✗ FAILED | See gaps below. Sub-clause breakdown: (a) "Reconnecting… (5s)" progress bar — **missing**, no component renders it; (b) reconnect success restores prior view — **verified**, `race-client.ts` `rejoined_room` branch (lines 262-307) restores `passageText`, `ownCharStates`, `ownWpm`, `countdownStartsAtServerMs`, `lobbyPlayers`, `graceBanner`, and opponent cursors; (c) distinct toasts for the two roadmap-named cases — **verified**, `App.tsx:181-201` maps `ROOM_NOT_FOUND`/`SESSION_INVALID` → "Room Lost" and `SERVER_SHUTTING_DOWN` → "Server Restarting" with distinct copy. Overall truth marked FAILED because clause (a), an explicit roadmap-level deliverable, does not exist in the codebase. |
-| 5 | WPM rounded to integer with raw+net breakdown on hover; time-delta-to-winner shown on results | ✓ VERIFIED | `RaceHud.tsx:72-73`: `Math.round(stats.netWpm)` / `Math.round(stats.rawWpm)` displayed; hover/focus-triggered tooltip (lines 100-129) shows Net WPM, Raw WPM, Accuracy %, and uncorrected error count. `ResultsBoard.tsx:129-133`: `deltaText = i===0 ? "Winner" : "+${(deltaMs/1000).toFixed(1)}s"` rendered per row. 4/4 `RaceHud.test.tsx` and 6/6 `ResultsBoard.test.tsx` tests pass. |
+| 1 | Two side-by-side browser windows show opponent cursor moving smoothly at 60fps under simulated 100ms RTT | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | Unchanged since original pass. `cursor-manager.ts` still implements `BUFFER_MS=100`, `MAX_EXTRAPOLATE_MS=150`, `calculateInterpolatedIndex` linear lerp, rewind-snap on backspace; 12 unit tests pass. No profiling/visual artifact demonstrates jitter-free rendering under 100ms RTT. |
+| 2 | `transform: translate3d()` used outside React tree; DevTools profile shows 0 per-frame React renders | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | Unchanged since original pass. `cursor-manager.ts:221` still mutates `dom.root.style.transform` directly inside its rAF loop, no React state involved. No actual DevTools Profiler run recorded. |
+| 3 | Lobby shows per-player "ready" indicator; countdown ticks down from `startAtServerMs - clockOffset`, not local clock | ✓ VERIFIED | Re-confirmed by direct read: `LobbyView.tsx` still has guest ✓Ready checkmarks (`p.isReady`), host toggle (`allGuestsReady`), `handleToggleReady` → `set_ready`. `CountdownView.tsx:22-23` still computes `serverNow = Date.now() + offsetMs; left = startsAtServerMs - serverNow` — server-clock-anchored. `apps/engine/src/engine.ts` still handles `set_ready`. No regressions from the later, unrelated UI work (settings panel, cursor scaling, win-condition scoring) — none of it touches this code path. |
+| 4 | Disconnect shows "Reconnecting… (5s)" progress bar; reconnect success restores prior view; reconnect failure shows distinct toast ("Lost connection — room lost" vs "Server restarted") | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | **Both original FAILED gaps are closed.** Clause (a) "Reconnecting… (Ns)" progress bar: `ReconnectBanner.tsx` now exists, is imported (`App.tsx:12`) and unconditionally mounted (`App.tsx:367`) inside the render tree, reads the real `useConnectionStore().status` (via `store-bridge.ts` ← real WS lifecycle events in `race-client.ts`), and is exercised by 6 passing behavioral tests in `ReconnectBanner.test.tsx` (not-shown-before-first-open, drop-after-open, elapsed-second counting, hide-on-reopen, session-takeover suppression) — genuinely ✓ VERIFIED. Clause (c) distinct toasts: `App.tsx`'s error switch (lines 187-229) maps `ROOM_NOT_FOUND`/`SESSION_INVALID` → "Room Lost" and `SERVER_SHUTTING_DOWN` → "Server Restarting"; `App.test.tsx` now drives the `SERVER_SHUTTING_DOWN` case through the real `ws.dispatch()` → App error switch → rendered toast text, a genuine behavioral test (not fixture-only) — ✓ VERIFIED. Clause (b) reconnect-success state restoration: `race-client.ts`'s `rejoined_room` branch (lines 263-308) does restore `passageText`, `ownCharStates`, `ownWpm`, `countdownStartsAtServerMs`, `lobbyPlayers`, `graceBanner`, and opponent cursors by direct code inspection — present and wired — but no test in `race-client.test.ts` or `App.test.tsx` dispatches a `rejoined_room` frame to prove the restoration behaviorally. This is a state-transition truth (Step 3's behavior-dependence rule) with no behavioral evidence, so the composite truth stays PRESENT_BEHAVIOR_UNVERIFIED overall — see human_verification. |
+| 5 | WPM rounded to integer with raw+net breakdown on hover; time-delta-to-winner shown on results | ✓ VERIFIED | Re-confirmed: `RaceHud.tsx:72-73` still computes `Math.round(stats.netWpm)`/`Math.round(stats.rawWpm)`. `ResultsBoard.tsx:141-144` still computes `deltaText = i===0 ? "Winner" : "+${(deltaMs/1000).toFixed(1)}s"`. The later win-condition scoring change (`wpm*accuracy` + finish bonus, commit `428090c`) changed ranking order only — it did not remove or alter the WPM-rounding or time-delta display logic; `RaceHud.test.tsx` and `ResultsBoard.test.tsx` still pass (see spot-checks). |
 
-**Score:** 2/5 truths verified (2 present-but-behavior-unverified, 1 failed)
+**Score:** 2/5 truths fully verified (3 present-but-behavior-unverified, 0 failed)
+
+**Change from the 2026-09-16 pass:** score is still "2/5" numerically, but the composition changed for the better — both previously FAILED truths (missing reconnect progress bar; unreachable version-mismatch toast test) are now closed with real, wired, behaviorally-tested code. SC4 did not simply flip to VERIFIED, though: closer scrutiny of its "reconnect success restores prior view" clause (only reachable once the progress-bar clause stopped masking it as an outright FAILED item) surfaced that this specific restoration path has no behavioral test — a genuine, narrower finding, not a regression introduced by 05.1.
 
 ### Plan-Level Must-Haves (Additional Detail)
 
-All four plans' `must_haves.truths` were also individually cross-checked against the code (not merely re-stated from SUMMARY.md):
-
 | Plan | Must-have | Status |
 |------|-----------|--------|
-| 05-01 | Headless `TypingEngine` (keystroke, backspace, scoring) | ✓ Verified — `apps/web/src/core/typing-engine.ts`, no DOM/React coupling |
-| 05-01 | `CursorManager` 100ms buffer + lerp + 150ms extrapolation + rewind snap | ✓ Verified — `apps/web/src/core/cursor-manager.ts:3-4, 92-154` |
-| 05-01 | `RaceClient` singleton, cookie sessionToken, store dispatch | ✓ Verified — `apps/web/src/net/race-client.ts` |
-| 05-02 | Tailwind v4 botanical palette | ✓ Verified — `apps/web/src/styles.css`, production build compiles |
-| 05-02 | `PassageLayout` via `@chenglou/pretext`, O(1) coordinate lookup | ✓ Verified — `apps/web/src/core/layout.ts` |
-| 05-02 | translate3d overlay, 0 React commits | ⚠️ Present, behavior unverified (see SC2 above) |
-| 05-03 | `set_ready` wire frame + server dispatch | ✓ Verified — `packages/shared/src/messages.ts:122`, `apps/engine/src/engine.ts:218-224` |
-| 05-03 | Lobby readiness UI + passage filters | ✓ Verified — `LobbyView.tsx`, `packages/shared/src/passages.ts` (`filterPassages`) |
-| 05-03 | Server-synced countdown overlay | ✓ Verified — `CountdownView.tsx` |
-| 05-04 | Race HUD, Net WPM integer, tooltip | ✓ Verified — `RaceHud.tsx` |
-| 05-04 | Stacked toast notifications, "concrete error descriptions... e.g. 'Server restarted — reconnecting in 5s'" | ✗ Gap — see finding below; production code never emits this exact toast, and no reconnect countdown exists |
-| 05-04 | Results board podium medals + time deltas | ✓ Verified — `ResultsBoard.tsx` |
-
-**Finding on the 05-04 toast must-have:** the plan's own example copy ("Server restarted — reconnecting in 5s") describes exactly the missing reconnect-progress feature from roadmap SC4. This is the same underlying gap surfacing at both the roadmap and plan level — not two independent issues.
+| 05-01 | Headless `TypingEngine` (keystroke, backspace, scoring) | ✓ Verified — unchanged |
+| 05-01 | `CursorManager` 100ms buffer + lerp + 150ms extrapolation + rewind snap | ✓ Verified — unchanged |
+| 05-01 | `RaceClient` singleton, cookie sessionToken, store dispatch | ✓ Verified — unchanged |
+| 05-02 | Tailwind v4 botanical palette | ✓ Verified — unchanged (later settings-panel theme presets are additive, do not remove the base palette) |
+| 05-02 | `PassageLayout` via `@chenglou/pretext`, O(1) coordinate lookup | ✓ Verified — unchanged |
+| 05-02 | translate3d overlay, 0 React commits | ⚠️ Present, behavior unverified (see SC2) |
+| 05-03 | `set_ready` wire frame + server dispatch | ✓ Verified — unchanged |
+| 05-03 | Lobby readiness UI + passage filters | ✓ Verified — unchanged |
+| 05-03 | Server-synced countdown overlay | ✓ Verified — unchanged |
+| 05-04 | Race HUD, Net WPM integer, tooltip | ✓ Verified — unchanged |
+| 05-04 | Stacked toast notifications | ✓ Verified — version-mismatch overclaim removed by 05.1, remaining cases correctly wired |
+| 05-04 | Results board podium medals + time deltas | ✓ Verified — unchanged despite later win-condition/scoring-formula change |
+| 05.1 | `ReconnectBanner` component, mounted, driven by real connection state | ✓ Verified — see SC4 clause (a) |
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `apps/web/src/core/typing-engine.ts` | Headless TypingEngine | ✓ VERIFIED | Exists, substantive, wired into RaceView/RaceHud |
-| `apps/web/src/core/cursor-manager.ts` | CursorManager w/ interpolation | ✓ VERIFIED | Exists, substantive, wired into RaceView |
-| `apps/web/src/net/race-client.ts` | RaceClient singleton | ✓ VERIFIED | Exists, substantive, wired via `ws.ts` re-export, used by App.tsx |
-| `apps/web/src/core/layout.ts` | PassageLayout (pretext) | ✓ VERIFIED | Exists, substantive, wired into RaceView |
-| `apps/web/src/components/RaceView.tsx` | Decoupled presentational track | ✓ VERIFIED | translate3d overlay confirmed by inspection |
-| `apps/web/src/components/LobbyView.tsx` | Ready indicators, filters, host controls | ✓ VERIFIED | All sub-features present and wired |
-| `apps/web/src/components/CountdownView.tsx` | Server-synced countdown | ✓ VERIFIED | Server-clock math confirmed |
-| `apps/web/src/components/RaceHud.tsx` | WPM display + tooltip | ✓ VERIFIED | Rounding + tooltip confirmed |
-| `apps/web/src/components/ToastQueue.tsx` | Stacked toast queue | ✓ VERIFIED (component) / ⚠️ orphaned data | Component itself works; but 2 of the copy variants its own test asserts are never produced by any production caller (see gaps) |
-| `apps/web/src/components/ResultsBoard.tsx` | Podium medals, time deltas | ✓ VERIFIED | Confirmed |
-| `apps/web/src/components/GraceBanner.tsx` | Grace countdown banner | ✓ VERIFIED (different feature) | This is the race-finish grace period banner, not a connection-reconnect progress bar; do not conflate with SC4 |
-| Reconnect progress bar component | "Reconnecting… (5s)" UI | ✗ MISSING | No such component/render-branch exists anywhere in `apps/web/src` |
+| `apps/web/src/core/typing-engine.ts` | Headless TypingEngine | ✓ VERIFIED | Unchanged |
+| `apps/web/src/core/cursor-manager.ts` | CursorManager w/ interpolation | ✓ VERIFIED | Unchanged |
+| `apps/web/src/net/race-client.ts` | RaceClient singleton | ✓ VERIFIED | Unchanged core reconnect/rejoin logic |
+| `apps/web/src/core/layout.ts` | PassageLayout (pretext) | ✓ VERIFIED | Unchanged |
+| `apps/web/src/components/RaceView.tsx` | Decoupled presentational track | ✓ VERIFIED | translate3d overlay confirmed; 2 new tests (7, 8) added for later win-condition scoring, unrelated to Phase 5 scope |
+| `apps/web/src/components/LobbyView.tsx` | Ready indicators, filters, host controls | ✓ VERIFIED | Unchanged |
+| `apps/web/src/components/CountdownView.tsx` | Server-synced countdown | ✓ VERIFIED | Unchanged |
+| `apps/web/src/components/RaceHud.tsx` | WPM display + tooltip | ✓ VERIFIED | Unchanged |
+| `apps/web/src/components/ToastQueue.tsx` | Stacked toast queue | ✓ VERIFIED | Unchanged; fixture-only version-mismatch assertion removed from its test file by 05.1 |
+| `apps/web/src/components/ResultsBoard.tsx` | Podium medals, time deltas | ✓ VERIFIED | Unchanged despite scoring-formula change |
+| `apps/web/src/components/GraceBanner.tsx` | Grace countdown banner | ✓ VERIFIED (different feature) | Race-finish grace banner, distinct from `ReconnectBanner`; both coexist in `App.tsx` without conflict |
+| `apps/web/src/components/ReconnectBanner.tsx` | "Reconnecting… (Ns)" progress bar | ✓ VERIFIED (new since 05.1) | 75 lines, substantive state machine + progress-bar render, imported `App.tsx:12`, mounted unconditionally `App.tsx:367`, real `useConnectionStore` subscription, 6 passing behavioral tests |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
-| `App.tsx` error handler | `ToastQueue` | `addToast()` with code-mapped title/body | ✓ WIRED (2/2 roadmap cases; 1 SUMMARY-claimed case unwired) | ROOM_NOT_FOUND/SESSION_INVALID → "Room Lost"; SERVER_SHUTTING_DOWN → "Server Restarting"; RATE_LIMITED → 2 variants. No VERSION_MISMATCH path exists. |
-| `useConnectionStore.status` | Any UI component | Subscribe/render | ✗ NOT WIRED | `status` is set to `"connecting" \| "open" \| "closed"` but only ever read for `status === "open"` (clock sync gating); never rendered as reconnect progress. |
-| `race-client.ts` `rejoined_room` | React stores (`race`, `cursor`, `clock`) | `setRaceState`/`setCursorState`/`setClockState` | ✓ WIRED | Full state restoration confirmed on reconnect. |
-| `CountdownView` | `useClockStore.offsetMs` | server-synced clock offset | ✓ WIRED | Not a bare local-clock countdown. |
-| `LobbyView` Ready toggle | server `set_ready` dispatch | `ws.send({type:"set_ready"})` → `apps/engine/src/engine.ts` | ✓ WIRED | Confirmed both directions. |
+| `App.tsx` error handler | `ToastQueue` | `addToast()` with code-mapped title/body | ✓ WIRED | ROOM_NOT_FOUND/SESSION_INVALID → "Room Lost"; SERVER_SHUTTING_DOWN → "Server Restarting" (behaviorally tested by `App.test.tsx`); ROOM_FULL/ROOM_CLOSED/RATE_LIMITED also present. No `VERSION_MISMATCH` branch — confirmed intentional (grep for `VERSION_MISMATCH`/"Version Mismatch" across `apps/` and `packages/` returns 0 hits). |
+| `useConnectionStore.status` | `ReconnectBanner` | `useConnectionStore((s) => s.status)` hook | ✓ WIRED | Was NOT WIRED at the original pass; now genuinely wired and behaviorally tested. |
+| `race-client.ts` WS lifecycle (`connecting`/`open`/`closed`) | `useConnectionStore` | `setConnectionStore()` via `store-bridge.ts` | ✓ WIRED | Confirmed by direct code read: `race-client.ts:72,78,98` call `setConnectionStore`, which calls `useConnectionStore.setState()` — real store, not a mock. |
+| `race-client.ts` `rejoined_room` | React stores (`race`, `cursor`, `clock`) | `setRaceState`/`setCursorState`/`setClockState` | ✓ WIRED (code) / ⚠️ behavior unverified | State restoration confirmed present by inspection; no test drives a `rejoined_room` frame — see SC4 clause (b) above. |
+| `CountdownView` | `useClockStore.offsetMs` | server-synced clock offset | ✓ WIRED | Unchanged |
+| `LobbyView` Ready toggle | server `set_ready` dispatch | `ws.send({type:"set_ready"})` → `apps/engine/src/engine.ts` | ✓ WIRED | Unchanged |
+
+### Data-Flow Trace (Level 4)
+
+| Artifact | Data Variable | Source | Produces Real Data | Status |
+|----------|---------------|--------|---------------------|--------|
+| `ReconnectBanner` | `status` | `useConnectionStore` ← real WS `open`/`close` events via `store-bridge.ts` | Yes | ✓ FLOWING |
+| `ReconnectBanner` | `elapsedMs`/`seconds`/`percent` | `Date.now()` delta since drop, ticked by real `setInterval` | Yes | ✓ FLOWING |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| Web test suite (Vitest) | `bun run --cwd apps/web test -- --run` | 78/78 pass, 12/12 files | ✓ PASS |
-| Shared package tests | `bun test packages/shared` (the documented `apps/server` path no longer exists post-Phase-07 N-tier split; silently matched 0 files there) | 39/39 pass | ✓ PASS |
-| Engine + gateway tests (current server-side location) | `bun test apps/engine apps/gateway` | 111/111 pass, 18 files | ✓ PASS |
-| Reconnect progress bar text search | `grep -rn "Reconnecting" apps/web/src` | 0 hits (outside test file) | ✗ FAIL — confirms gap |
-| Version-mismatch error code search | `grep -rn "VERSION_MISMATCH" apps/ packages/ --include=*.ts --include=*.tsx` (excluding tests) | 0 hits | ✗ FAIL — confirms gap |
+| Typecheck (all 4 workspaces) | `bun run typecheck` | 0 errors, packages/shared + apps/web + apps/gateway + apps/engine all clean | ✓ PASS |
+| Backend test suite | `bun test packages/shared apps/gateway apps/engine` | 153 pass, 0 fail, 121426 expect() calls, 23 files | ✓ PASS |
+| Web test suite | `bun run --cwd apps/web test -- --run` | 89 passed, 13 files | ✓ PASS |
+| Version-mismatch dangling reference search | `grep -rn -i "version_mismatch\|version mismatch" apps packages` | 0 hits | ✓ PASS — confirms gap 2 stays closed |
+| Reconnect progress bar text search | `grep -n "Reconnecting" apps/web/src/components/ReconnectBanner.tsx` | present, wired, tested | ✓ PASS — confirms gap 1 is closed |
+| `rejoined_room` behavioral coverage search | `grep -rn "rejoined_room" apps/web/src/__tests__/` | 0 hits | ✗ FAIL — confirms new behavior_unverified_items[2] finding |
+
+**Test count note:** the previous pass (05.1-VERIFICATION.md) recorded 154 backend tests and 85 web tests; this pass sees 153 backend and 89 web. Both counts differ from the prior pass, and every delta traces to commits outside Phase 5's own scope: `git log --since=2026-09-16 -- packages/shared apps/gateway apps/engine` shows only later gap-closure commits from Phases 03.1/04.1/06.1/07.1 (session-takeover fixes, draining-latch fix, passage-bucketing fix, word-correctness revert); web test file changes trace to Phase 03.1's word-correctness UI being added then reverted, two chart features (`PerformanceChart`/`WpmTimelineChart`) being added then reverted, new `RaceView.test.tsx` tests 7/8 for the later win-condition scoring change, and the new `ReconnectBanner.test.tsx` (6 tests) and `App.test.tsx` files from Phase 05.1. None of these touch a Phase 5 artifact's behavior. All 153 backend and 89 web tests currently pass — no regression.
 
 ### Requirements Coverage
 
-There is no REQUIREMENTS.md in this project. Cross-referenced against `.planning/PROJECT.md` `## Requirements` and `ROADMAP.md`'s phase-level requirement mapping instead.
+There is no REQUIREMENTS.md in this project. Cross-referenced against `.planning/PROJECT.md` and `ROADMAP.md`'s phase-level requirement mapping.
 
 | Requirement | Source | Description | Status | Evidence |
 |-------------|--------|-------------|--------|----------|
-| REQ-06 | ROADMAP.md Phase 5 | Live opponent cursors — interpolation polish | ⚠️ Partially satisfied | Interpolation math (buffer, lerp, extrapolation, rewind-snap) is implemented and unit-tested; the "smooth 60fps... no visible jitter" outcome itself is unverified by any automated or recorded human check (SC1/SC2 above). Not blocked, but not proven either. |
+| REQ-06 | ROADMAP.md Phase 5 + Phase 05.1 | Live opponent cursors — interpolation polish; reconnect UX | ⚠️ Partially satisfied | Interpolation math is implemented and unit-tested but the "smooth 60fps... no jitter" outcome remains behaviorally unverified (SC1/SC2, unchanged). Reconnect UX (progress bar, restored view, distinct toasts) is now implemented and mostly behaviorally tested — one sub-clause (state restoration on rejoin) still lacks a behavioral test. |
+
+### Decision Coverage
+
+`gsd_run query check.decision-coverage-verify` against `05-CONTEXT.md`: 20/20 trackable decisions honored by shipped artifacts, 0 not honored. Non-blocking gate; recorded here for drift visibility only.
 
 ### Anti-Patterns Found
 
-No `TBD`/`FIXME`/`XXX`/`TODO`/`HACK`/`PLACEHOLDER` debt markers found in any phase-modified file. No stub `return null`/empty-handler patterns found in the reviewed components. The one notable anti-pattern is architectural rather than lexical: `ToastQueue.test.tsx`'s "distinct error states matching copywriting contract" test calls `addToast()` directly with hand-typed strings instead of driving the test through `App.tsx`'s actual `msg.type === "error"` switch — this is a **fixture-only test**: it proves the presentation component works, not that production code ever produces 2 of the 4 asserted strings ("Server restarted — reconnecting automatically in 5s...", "Game version outdated..."). This is the same class of issue the milestone audit was concerned about: a green test suite that does not, on inspection, cover the feature the roadmap actually names.
+No `TBD`/`FIXME`/`XXX`/`TODO`/`HACK`/`PLACEHOLDER` debt markers in `App.tsx`, `ReconnectBanner.tsx`, `race-client.ts`, `connection.ts`, or `store-bridge.ts`. No stub `return null`-only components, no empty handlers, no hardcoded-empty props flowing to render. No new-scope Step 7 findings on this pass (re-verification evidence gate, #3304): nothing was flagged that lacked deterministic evidence.
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `apps/web/src/__tests__/ToastQueue.test.tsx` | 63-107 | Fixture-only test — hardcoded toast strings never produced by production error-handling code | ⚠️ Warning | Test suite green (78/78) masks 2 unimplemented/miscopied toast cases |
+| — | — | none found | — | — |
+
+### Advisory (New Scope, Unevidenced)
+
+None. This re-verification pass raised no new-scope Step 7 findings without deterministic evidence.
 
 ### Human Verification Required
 
-See `human_verification` in frontmatter — 2 items (SC1 jitter-under-RTT visual check, SC2 React DevTools Profiler commit-count check). Both require an actual browser session; neither can be settled by static analysis.
+See `human_verification` in frontmatter — 3 items:
+
+1. Opponent-cursor jitter-under-100ms-RTT visual check (SC1, unchanged since 2026-09-16).
+2. React DevTools Profiler zero-commit check (SC2, unchanged since 2026-09-16).
+3. Reconnect-mid-race state-restoration check (SC4 clause 2) — new finding this pass: the restoration code is present and wired but has no behavioral test exercising `rejoined_room`.
+
+All three require an actual browser/DevTools session; none can be settled by static analysis alone.
+
+**This looks like it may already be resolved by a human, unrecorded.** If someone has actually run the two-browser 100ms-RTT visual check (SC1) and/or an actual React DevTools Profiler session during opponent cursor motion (SC2), those two items can be closed via override rather than by re-running them here:
+
+```yaml
+overrides:
+
+  - must_have: "Two side-by-side browser windows show opponent cursor moving smoothly at 60fps under simulated 100ms RTT"
+    reason: "<who ran the two-browser RTT check, when, what they observed>"
+    accepted_by: "<name>"
+    accepted_at: "<ISO timestamp>"
+  - must_have: "transform: translate3d() used outside React tree; DevTools profile shows 0 per-frame React renders"
+    reason: "<who ran the DevTools Profiler session, when, commit count observed>"
+    accepted_by: "<name>"
+    accepted_at: "<ISO timestamp>"
+```
+
+Note the arithmetic: accepting both overrides moves the score to 4/5, but overall status **stays `human_needed`** — item 3 (SC4 clause 2, reconnect state restoration) is a newly-surfaced gap with no override requested and no test yet, so it still emits its own human-verification item regardless of SC1/SC2's disposition. The cheapest legitimate way to close item 3 is a test, not an override: `App.test.tsx` already has the exact harness needed (MockWebSocket stub + `ws.dispatch()`) — one test dispatching a `rejoined_room` frame and asserting the resulting restored store/UI state would close it with real behavioral evidence. Only `passed` (all three items resolved, whether by override or by evidence) allows the phase to close cleanly.
 
 ### Gaps Summary
 
-Phase 5 delivers the large majority of its scope well: the headless engine/cursor-manager architecture (05-01), the Tailwind/pretext/translate3d visual layer (05-02), lobby readiness + server-synced countdown (05-03), and the WPM/results polish (05-04) are all genuinely implemented, unit-tested, and wired — this is not a case of stub components. The milestone audit's underlying concern ("no post-execution verification, only a pending pre-execution draft") is now closed: 78/78 web tests + 39/39 shared tests + 111/111 current-location engine/gateway tests all pass, and the implementation was read (not just summary-trusted) across every named artifact.
+**Zero gaps remain.** Both FAILED truths from the 2026-09-16 verification are closed, confirmed by direct code and test inspection (not by trusting 05.1-SUMMARY.md's or 05.1-VERIFICATION.md's claims):
 
-However, two concrete pieces of Success Criterion 4 do not exist in the codebase despite being explicitly named in both the roadmap goal prose and the 05-04 plan's own must-haves/example copy:
+1. **Reconnect progress bar** — `ReconnectBanner.tsx` now exists, is mounted reachably in `App.tsx`, is driven by the real `useConnectionStore` (itself driven by real WebSocket lifecycle events through `race-client.ts` → `store-bridge.ts`), and has 6 passing behavioral tests covering the exact state-transition truths (first-connect suppression, drop-after-open trigger, elapsed-time counting, reopen-hides, session-takeover-suppression).
+2. **Version-mismatch toast overclaim** — the fixture-only test asserting an unreachable string is removed; zero `VERSION_MISMATCH` references remain anywhere in source or tests; the correctly-judged decision (no independently-versioned client/server deploy in this monorepo, so no real version-skew scenario exists) still holds.
 
-1. **No "Reconnecting… (5s)" progress bar** for the local client's own disconnected state. `GraceBanner` (race-finish grace period) and the Phase-4 "other player disconnected" toast are both different, pre-existing features that were likely mistaken for satisfying this criterion when the plan was scoped or summarized.
-2. **No version-mismatch detection or toast**, despite the 05-04-SUMMARY.md explicitly claiming "4 cases: lost connection / server restart / rate limit / version mismatch" were delivered. Only 3 of those 4 error families have any production wiring, and even the ones that exist use different copy than the copy asserted in `ToastQueue.test.tsx`.
+The status is `human_needed`, not `passed`, because two pre-existing, unchanged human-verification items (SC1 jitter-under-RTT, SC2 DevTools Profiler commit count) remain open exactly as they were on 2026-09-16 — 05.1 never touched these, and no evidence (test or otherwise) has appeared to close them. Additionally, this pass's closer read of the now-real SC4 implementation surfaced one further behavior-unverified sub-clause: `race-client.ts`'s `rejoined_room` state-restoration logic is present and wired but has no dispatched-frame test proving the restoration behaviorally — this is a genuine finding, not a regression, and does not revert the two closed gaps.
 
-Both gaps are additive (new UI/logic needed), not regressions — nothing needs to be torn out. A follow-up plan can add: (a) a connection-status-driven reconnect countdown component subscribing to `useConnectionStore().status === "closed"`, reusing `race-client.ts`'s existing 1s retry loop or introducing an explicit 5s-grace timer to match the copy; and (b) either a real protocol-version check (server sends a build/version id at `hello`, client compares and shows the toast on mismatch) or, if intentionally out of scope for v1.0, a correction to 05-04-SUMMARY.md's claim.
-
-Two additional items are not gaps but were downgraded from VERIFIED to PRESENT_BEHAVIOR_UNVERIFIED because the roadmap's own success-criteria wording demands a runtime/profiling check ("verified under simulated 100ms RTT", "React DevTools profile shows...") that no automated test performs — these route to human verification rather than blocking the phase.
-
-Also worth noting for hygiene, not as a gap: `05-VALIDATION.md` frontmatter is stale (`status: draft`, `wave_0_complete: false`, all 12 per-task rows `⬜ pending`) even though every Wave-0 test file it lists now exists and passes, and its documented "Quick run command" (`bun test packages/shared apps/server`) silently tests nothing server-side since Phase 7's N-tier split relocated the server into `apps/engine` + `apps/gateway`.
+The large amount of later, unrelated UI/feature work since Phase 5 (player-settings panel with theme presets, cursor opacity/scaling changes, win-condition scoring formula change, chart features added then reverted, multi-phase reconnect/session-takeover hardening) was checked for collateral damage to Phase 5's own success criteria and found clean: typecheck is 0-error across all 4 workspaces, 153/153 backend tests and 89/89 web tests pass, and every Phase-5-owned code path (cursor interpolation constants, countdown server-clock math, lobby ready toggling, WPM rounding/tooltip, results time-delta display) was re-read directly and confirmed unchanged in substance.
 
 ---
 
-_Verified: 2026-09-16_
+_Verified: 2026-09-23T00:00:00Z_
 _Verifier: Claude (gsd-verifier)_

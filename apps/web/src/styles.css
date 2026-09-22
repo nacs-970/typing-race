@@ -401,6 +401,7 @@ h1 {
   height: calc(var(--app-font-size) * 1.375);
   background: var(--color-cursor-own);
   box-shadow: 0 0 10px var(--color-cursor-own);
+  opacity: 0.6;
   z-index: 20;
   pointer-events: none;
   border-radius: 9999px;

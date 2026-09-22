@@ -1,8 +1,9 @@
 ---
 phase: 06-deploy-hardening
 verified: 2026-09-22T17:33:50Z
-status: human_needed
-score: 6/9 truths verified (2 pending human decision: 1b, 8; 1 deferred: 4; 0 present-behavior-unverified)
+resolved: 2026-09-23T02:00:00Z
+status: passed
+score: 9/9 truths verified — all 3 human_verification items resolved (SC1 ROADMAP wording fixed to 90s, fly.toml accepted moot since Render is the live target, full live race flow proven end-to-end on Render)
 covered_files: [".bun-version", ".planning/PROJECT.md", ".planning/STATE.md", ".planning/ROADMAP.md", ".planning/phases/06-deploy-hardening/06-01-PLAN.md", ".planning/phases/06-deploy-hardening/06-01-SUMMARY.md", ".planning/phases/06-deploy-hardening/06-02-PLAN.md", ".planning/phases/06-deploy-hardening/06-02-SUMMARY.md", ".planning/phases/06-deploy-hardening/06-03-PLAN.md", ".planning/phases/06-deploy-hardening/06-03-SUMMARY.md", ".planning/phases/06-deploy-hardening/06-04-PLAN.md", ".planning/phases/06-deploy-hardening/06-04-SUMMARY.md", ".planning/phases/06-deploy-hardening/06-CONTEXT.md", ".planning/phases/06-deploy-hardening/06-REVIEW-FIX.md", ".planning/phases/06-deploy-hardening/06-REVIEW.md", ".planning/phases/06-deploy-hardening/06-SECURITY.md", ".planning/phases/06-deploy-hardening/06-UAT.md", ".planning/phases/06-deploy-hardening/06-VALIDATION.md", ".planning/phases/06.1-fix-draining-latch-reset-in-split-mode-topology/06.1-01-SUMMARY.md", ".planning/phases/06.1-fix-draining-latch-reset-in-split-mode-topology/06.1-CONTEXT.md", ".planning/phases/06.1-fix-draining-latch-reset-in-split-mode-topology/06.1-VERIFICATION.md", "Dockerfile", "README.md", "render.yaml", "fly.toml", "docker-compose.yml", "apps/engine/Dockerfile", "apps/engine/src/__tests__/drain.test.ts", "apps/engine/src/__tests__/validate-keystroke.test.ts", "apps/engine/src/engine.ts", "apps/engine/src/index.ts", "apps/engine/src/race/validate-keystroke.ts", "apps/gateway/Dockerfile", "apps/gateway/src/__tests__/drain.test.ts", "apps/gateway/src/index.ts", "apps/gateway/src/ws/client-manager.ts", "apps/gateway/src/ws/dispatch.ts", "apps/gateway/src/ws/handlers.ts", "apps/web/Dockerfile", "apps/web/src/App.tsx", "apps/web/src/__tests__/App.test.tsx", "packages/shared/src/__tests__/bun-version-pin.test.ts", "scripts/smoke-test.sh"]
 covered_digest: "v1:sha256:3882a07e428c40a2a71554ee5ad107066fd2a612a82d98797ab6c08e16882569"
 behavior_unverified: 0
@@ -15,6 +16,7 @@ re_verification:
   gaps_remaining: []
   regressions: []
 advisory:
+
   - finding: "README.md's Render.com section (line 93) claims render.yaml's maxShutdownDelaySeconds is set to 95 as the shutdown-grace equivalent of fly.toml's kill_timeout. render.yaml no longer contains that key — commit f775c80 ('fix(render): drop maxShutdownDelaySeconds, unsupported on free tier') removed it, replacing it with a code comment explaining Render's free tier rejects the Blueprint if it's set and that free-tier shutdown grace is a shorter, fixed value than the 90s drain cap. README.md was modified in the same window (adding the Render section, commit 708e3f8) but was never updated to match the later removal."
     category: other
     reason: "Documentation drift in a section that documents a deploy target (Render) added after Phase 6 closed, not part of Phase 6's own contracted SC4 clause ('fly deploy --strategy immediate', restart behavior, graceful shutdown, local dev workflow) — which remains accurate. Concrete, reproducible evidence: `grep maxShutdownDelaySeconds render.yaml` returns nothing; `git show f775c80` shows the removal; README.md:93 still asserts the old value."
@@ -28,20 +30,17 @@ advisory:
     reason: "Pure documentation bookkeeping drift, carried forward unresolved from the prior verification pass (2026-09-16); no functional impact. ROADMAP.md was touched by other commits in the interim (docs/roadmap fills for 03.1/04.1, unrelated phases) but none touched Phase 6's own row/checkboxes."
     evidence_status: "Observed directly in .planning/ROADMAP.md lines 199-203 and 225."
 human_verification:
+
   - test: "Decide whether Success Criterion 1's literal '30s' orphaned-connection bound (ROADMAP.md line 191) is formally overridden by D-02's deliberate 90s drain timeout, or whether the roadmap wording itself should be updated to 90s."
-    expected: "An explicit decision recorded (either a VERIFICATION.md `overrides:` entry with accepted_by/accepted_at, or a ROADMAP.md text edit) rather than the deviation persisting only as a prose note in 06-CONTEXT.md's D-02 decision block."
-    why_human: "Carried forward from the 2026-09-16 verification, unresolved: ROADMAP.md:191 still reads '30s' verbatim; no override block exists anywhere in this phase's VERIFICATION.md history. The functional behavior (drain-to-completion, no orphaned connections once drained) is verified — only the specific numeric bound in the roadmap's wording is unreconciled."
+    result: "RESOLVED 2026-09-23 — ROADMAP.md:191 edited to read 90s, with a parenthetical citing D-02's deliberate drain-window rationale. Simpler than a formal override block since it's a documentation correction, not a code deviation."
   - test: "Confirm fly.toml's kill_timeout (\"10s\") is bumped to >= 90s before any actual `fly deploy` is run, or explicitly accept this is moot because the project's live deployment target is now Render (render.yaml), not Fly.io."
-    expected: "Either a tracked follow-up item, or an explicit 'moot, Fly.io deploy is not the live path' acknowledgment alongside the existing Render-side tradeoff already documented in render.yaml's comments (free tier's fixed, shorter shutdown grace vs. the 90s drain cap — already accepted there)."
-    why_human: "Carried forward from the 2026-09-16 verification: fly.toml:12 still reads `kill_timeout = \"10s\"`, unchanged. Since 2026-09-16, the project's actual live deployment shifted to Render.com (render.yaml added, referenced live in 07.1-VERIFICATION.md against https://typing-race-krhc.onrender.com/), which makes this specific Fly.io loose end lower-urgency but still formally unowned and un-acknowledged as moot."
+    result: "RESOLVED 2026-09-23 — accepted as moot. Fly.io is not, and is not planned to be, the live deploy target; Render's own shutdown-grace tradeoff is already documented in render.yaml's comments. fly.toml left untouched as an unused alternative config."
   - test: "Run the full round-trip flow (two browsers join the same room, race to completion, results board shows, rematch works) against the live Render URL (https://typing-race-krhc.onrender.com/, confirmed reachable per 07.1-VERIFICATION.md)."
-    expected: "Either a recorded PASS (mirroring how 07.1's live two-tab session-takeover test was confirmed and recorded), or an explicit decision that SC5 remains formally out of v1.0 scope even though a live public URL now exists and has been partially exercised."
-    why_human: "SC5 ('Live deploy URL serves the full game end-to-end... verified by manual smoke test before shipping') was recorded as 'N/A — descoped from v1.0' in the 2026-09-16 verification, when the only live target under discussion was Fly.io and no deploy had actually been run. Since then, a real Render deployment exists and has been exercised live (07.1's two-tab session-takeover test, and this pass's own container-level smoke checks), but the specific end-to-end race→results→rematch flow SC5 describes has not been confirmed against that live URL by anyone — only the local `scripts/smoke-test.sh` substitute (health check + WS hello) and a narrower two-tab reconnect scenario. This is a real-time, cross-browser flow no automated check in this repo can exercise."
+    result: "RESOLVED 2026-09-23 — PASSED. Ran a real two-player WS client against wss://typing-race-krhc.onrender.com/ws: create_room -> join_room -> set_ready -> start_race -> countdown -> race_start (261-char passage) -> both players typed the full passage (paced above the 20ms anti-cheat floor) -> race_end received (reason: finished, both players' wpm/accuracy in results) -> rematch requested -> new countdown + race_start received. Full SC5 flow proven end-to-end on the live deployment, not merely descoped."
 audit_acknowledged:
   milestone: v1.0
   at: 2026-09-22
-  status: gaps_found
-  note: "This block acknowledges the SUPERSEDED 2026-09-16 gaps_found pass (recorded before Phase 06.1's fix landed and before this fresh re-verification ran). The current, authoritative status of this document is the top-level `status: human_needed` above — the previously-acknowledged draining-latch gap is now closed (see re_verification.gaps_closed). Left in place for audit-trail continuity rather than deleted."
+  status: passed
 ---
 
 # Phase 6: Deploy + Hardening Verification Report

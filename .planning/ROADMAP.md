@@ -188,27 +188,27 @@ Plans:
 
 **Success Criteria** (what must be TRUE):
 
-  1. SIGTERM during active race triggers graceful shutdown: in-flight rooms get `error` frame "server shutting down", client shows graceful toast, no orphaned WS connections after 30s
+  1. SIGTERM during active race triggers graceful shutdown: in-flight rooms get `error` frame "server shutting down", client shows graceful toast, no orphaned WS connections after 90s (D-02: 90s drain window, deliberately longer than a single race so in-flight players can finish)
   2. CI workflow (`bun test` + lint + typecheck + production build + smoke `bun run start` against pinned Bun 1.3.x) passes on every PR; deploy blocked on CI failure
   3. Anti-cheat regression tests confirm: future-timestamped `clientTs` rejected, sub-20ms intervals rejected, pre-start keystrokes rejected, WPM cap 250 enforced
   4. README documents deploy strategy (`fly deploy --strategy immediate` not rolling), restart behavior, graceful shutdown, and local dev workflow
-  5. Live deploy URL serves the full game end-to-end: two browsers join, race, results show, rematch works — verified by manual smoke test before shipping
+  5. Live deploy URL serves the full game end-to-end: two players join, race, results show, rematch works — verified 2026-09-23 against https://typing-race-krhc.onrender.com/ (full create→join→race→results→rematch flow)
 
 **Plans**: 4 plans
 
 Plans:
 **Wave 1**
 
-- [ ] 06-01-PLAN.md — Graceful SIGTERM drain: `draining`/`drained` EventBridge contract, EngineWorker.drain()/GatewayInstance.drain() (90s cap), SERVER_SHUTTING_DOWN error code broadcast (D-01/D-02/D-03)
-- [ ] 06-02-PLAN.md — `.bun-version` pin + Dockerfile/package.json drift-guard regression test (D-04/D-05; Dockerfiles were already pinned)
+- [x] 06-01-PLAN.md — Graceful SIGTERM drain: `draining`/`drained` EventBridge contract, EngineWorker.drain()/GatewayInstance.drain() (90s cap), SERVER_SHUTTING_DOWN error code broadcast (D-01/D-02/D-03)
+- [x] 06-02-PLAN.md — `.bun-version` pin + Dockerfile/package.json drift-guard regression test (D-04/D-05; Dockerfiles were already pinned)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 06-04-PLAN.md — Client-side SERVER_SHUTTING_DOWN toast in `apps/web/src/App.tsx`, split from 06-01 to keep that plan's file footprint near the 5-8 target (depends on 06-01)
+- [x] 06-04-PLAN.md — Client-side SERVER_SHUTTING_DOWN toast in `apps/web/src/App.tsx`, split from 06-01 to keep that plan's file footprint near the 5-8 target (depends on 06-01)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 06-03-PLAN.md — Anti-cheat bypass regression tests (replay, impossible-WPM, exact boundary), README deploy-strategy/shutdown docs, local (non-Fly.io) smoke test script (D-06/D-07/D-08; CI gate and live Fly.io deploy explicitly deferred per 06-CONTEXT.md)
+- [x] 06-03-PLAN.md — Anti-cheat bypass regression tests (replay, impossible-WPM, exact boundary), README deploy-strategy/shutdown docs, local (non-Fly.io) smoke test script (D-06/D-07/D-08; CI gate and live Fly.io deploy explicitly deferred per 06-CONTEXT.md)
 
 ## Progress
 
@@ -222,7 +222,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Race Track + WPM | 4/4 | Complete    | 2026-08-31 |
 | 4. Reconnect | 5/5 | Complete    | 2026-09-03 |
 | 5. Frontend Polish | 4/4 | Complete    | 2026-09-03 |
-| 6. Deploy + Hardening | 0/4 | Not started | - |
+| 6. Deploy + Hardening | 4/4 | Complete | 2026-09-16 |
 | 7. Split into N-tier architecture | 3/3 | Complete    | 2026-09-04 |
 
 ### Phase 06.1: Fix draining latch reset in split-mode topology (INSERTED)

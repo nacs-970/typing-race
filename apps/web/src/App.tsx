@@ -219,6 +219,16 @@ export function App(): React.ReactElement {
               "Keystroke rate limit exceeded (<20ms interval or race start grace).";
           }
         }
+        if (
+          typeof window !== "undefined" &&
+          (msg.code === "ROOM_DOES_NOT_EXIST" ||
+            msg.code === "ROOM_NOT_FOUND" ||
+            msg.code === "SESSION_INVALID")
+        ) {
+          // Dead room/session — clear the URL hash so a stale room code
+          // doesn't linger and re-trigger the same failed rejoin on reload.
+          window.location.hash = "";
+        }
         addToast({
           type: "error",
           title,

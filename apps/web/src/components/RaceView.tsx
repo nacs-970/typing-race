@@ -53,6 +53,7 @@ export function RaceView({
     );
     localLayout.updateLayout(trackRef.current?.clientWidth || 800);
     localManager.setPassageText(passageText);
+    localManager.setFontSize(fontSize);
     setLocalCoords(localLayout.getCoordinates(useCursorStore.getState().ownIndex));
   }, [passageText, fontSize, localEngine, localLayout, localManager]);
 

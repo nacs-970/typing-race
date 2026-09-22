@@ -3,6 +3,11 @@ import type { PassageLayout } from "./layout";
 export const BUFFER_MS = 100;
 export const MAX_EXTRAPOLATE_MS = 150;
 
+// Same 22px/5px-at-16px ratios as .local-cursor in styles.css, so the
+// opponent caret scales with the font-size setting the same way.
+const CARET_HEIGHT_RATIO = 22 / 16;
+const CARET_MARGIN_TOP_RATIO = 5 / 16;
+
 export const PASTEL_RAINBOW_COLORS = [
   "var(--color-cursor-slot-1)",
   "var(--color-cursor-slot-2)",
@@ -34,6 +39,7 @@ export class CursorManager {
   private playerNicknames: Map<string, string> = new Map();
   private localProgress: number = 0;
   private passageText: string = "";
+  private fontSize: number = 16;
 
   // DOM overlay properties
   private container: HTMLElement | null = null;
@@ -272,6 +278,15 @@ export class CursorManager {
     this.passageText = text;
   }
 
+  /** Scales the opponent caret to match the local player's font-size setting. */
+  public setFontSize(fontSize: number): void {
+    this.fontSize = fontSize;
+    for (const dom of this.elements.values()) {
+      dom.caret.style.height = `${fontSize * CARET_HEIGHT_RATIO}px`;
+      dom.caret.style.marginTop = `${fontSize * CARET_MARGIN_TOP_RATIO}px`;
+    }
+  }
+
   public getPassageText(): string {
     return this.passageText;
   }
@@ -301,8 +316,9 @@ export class CursorManager {
     tag.style.color = "#ffffff";
 
     const caret = document.createElement("div");
-    caret.className = "cursor-caret w-[2px] h-[22px] rounded-full transition-shadow duration-300";
-    caret.style.marginTop = "5px";
+    caret.className = "cursor-caret w-[2px] rounded-full transition-shadow duration-300";
+    caret.style.height = `${this.fontSize * CARET_HEIGHT_RATIO}px`;
+    caret.style.marginTop = `${this.fontSize * CARET_MARGIN_TOP_RATIO}px`;
     caret.style.backgroundColor = color;
     caret.style.boxShadow = `0 0 8px ${color}`;
 

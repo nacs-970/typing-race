@@ -394,10 +394,11 @@ h1 {
 
 .local-cursor {
   position: absolute;
-  top: 5px;
+  /* Same 5px/2px/22px-at-16px ratios cursor-manager.ts uses for the opponent caret. */
+  top: calc(var(--app-font-size) * 0.3125);
   left: 0;
-  width: 2px;
-  height: 22px;
+  width: calc(var(--app-font-size) * 0.125);
+  height: calc(var(--app-font-size) * 1.375);
   background: var(--color-cursor-own);
   box-shadow: 0 0 10px var(--color-cursor-own);
   z-index: 20;

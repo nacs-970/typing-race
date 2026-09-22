@@ -34,8 +34,6 @@ export type RaceUiState = {
   graceBanner: GraceBanner | null;
   raceEndResults: PlayerFinalStats[] | null;
   raceEndFinishedIds: string[] | null;
-  /** WPM samples over the race, keyed by playerId, from the live cursor_update stream. */
-  wpmHistory: Record<string, Array<{ t: number; wpm: number }>>;
   hostPickedPassagePreview: string | null;
   hostGraceSeconds: number;
   corpusType: CorpusType;
@@ -53,7 +51,6 @@ export const useRaceStore = create<RaceUiState>(() => ({
   graceBanner: null,
   raceEndResults: null,
   raceEndFinishedIds: null,
-  wpmHistory: {},
   hostPickedPassagePreview: null,
   hostGraceSeconds: 5,
   corpusType: "passage",
@@ -81,7 +78,6 @@ export function resetRaceUi(): void {
     graceBanner: null,
     raceEndResults: null,
     raceEndFinishedIds: null,
-    wpmHistory: {},
     passageText: null,
     countdownStartsAtServerMs: null,
   });

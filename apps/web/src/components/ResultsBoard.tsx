@@ -4,7 +4,6 @@ import { ws } from "../net/ws.ts";
 import { useConnectionStore } from "../store/connection.ts";
 import { useRaceStore } from "../store/race.ts";
 import { PerformanceChart } from "./PerformanceChart.tsx";
-import { WpmTimelineChart } from "./WpmTimelineChart.tsx";
 
 /**
  * Score dominates any wpm*accuracy product for a player who didn't finish
@@ -37,7 +36,6 @@ export function ResultsBoard({
 }: ResultsBoardProps): React.ReactElement {
   const myId = useConnectionStore((s) => s.playerId);
   const lobbyPlayers = useRaceStore((s) => s.lobbyPlayers);
-  const wpmHistory = useRaceStore((s) => s.wpmHistory);
 
   const nicknameMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -215,7 +213,6 @@ export function ResultsBoard({
       </div>
 
       <PerformanceChart ranked={ranked} nicknameMap={nicknameMap} myId={myId} />
-      <WpmTimelineChart ranked={ranked} nicknameMap={nicknameMap} wpmHistory={wpmHistory} />
 
       {isHost ? (
         <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t border-[var(--color-border-subtle)]">

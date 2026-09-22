@@ -4,6 +4,7 @@ verified: 2026-09-16T15:40:00Z
 status: gaps_found
 score: 2/5 must-haves verified
 covered_files:
+
   - ".planning/phases/05-frontend-polish/05-01-PLAN.md"
   - ".planning/phases/05-frontend-polish/05-01-SUMMARY.md"
   - ".planning/phases/05-frontend-polish/05-02-PLAN.md"
@@ -31,10 +32,12 @@ covered_files:
   - "apps/web/src/store/toast.ts"
   - "packages/shared/src/messages.ts"
   - "packages/shared/src/passages.ts"
+
 covered_digest: "v1:sha256:3e47ae3b52162eb5fa1038e3eeb91a818aeb1cc082734064f59ca92c928f4ea7"
 behavior_unverified: 2
 overrides_applied: 0
 gaps:
+
   - truth: "Disconnect shows 'Reconnecting… (5s)' progress bar (Success Criterion 4, clause 1)"
     status: failed
     reason: >
@@ -79,8 +82,10 @@ gaps:
         issue: "Test passes a hardcoded 'Version Mismatch' string directly to addToast() — proves the toast card can render arbitrary copy, not that production code ever produces this toast."
     missing:
       - "A version/protocol-mismatch detection mechanism server- or client-side, plus a matching error code and App.tsx toast branch — or, if genuinely out of scope, correct the 05-04-SUMMARY.md claim."
+
 deferred: []
 behavior_unverified_items:
+
   - truth: "Two side-by-side browser windows show opponent cursor moving smoothly across the passage with no visible jitter at 60fps, verified under simulated 100ms RTT (Success Criterion 1)"
     test: "Open two browser tabs/windows joined to the same room, artificially delay one client's WebSocket messages by ~100ms (e.g. via browser devtools network throttling or a proxy), race, and visually confirm the opponent cursor advances smoothly without visible stutter/snapping."
     expected: "Opponent cursor motion appears continuous at 60fps with no visible jitter, snapping, or backward jumps, even with 100ms of added network latency."
@@ -90,12 +95,17 @@ behavior_unverified_items:
     expected: "Zero React commits are attributed to cursor-position changes during the recording window (the .cursor-overlay container and its children are mutated exclusively via CursorManager.renderFrame()'s direct DOM writes to `style.transform`, not via React state/props)."
     why_human: "RaceView.test.tsx test #5 ('mounts isolated cursor overlay without inline opponent cursor children') only asserts the React render tree has zero `.opponent-cursor` elements at mount time — it is a structural/DOM-shape assertion, not a runtime commit-count measurement. Code inspection of cursor-manager.ts confirms renderFrame() only calls `dom.root.style.transform = ...` (no setState, no React API) inside its rAF loop, which is strong static evidence, but the actual React DevTools Profiler run required by the success criterion's own wording has not been executed and produces no artifact a grep can verify."
 human_verification:
+
   - test: "Open two browser tabs/windows joined to the same room, artificially delay one client's WebSocket messages by ~100ms, race, and visually confirm the opponent cursor advances smoothly without visible stutter/snapping."
     expected: "Opponent cursor motion appears continuous at 60fps with no visible jitter under 100ms simulated RTT."
     why_human: "Real-time visual smoothness judgment; no automated test measures this."
   - test: "Record a React DevTools Profiler session during active opponent cursor motion and inspect the commit list."
     expected: "Zero React commits attributed to cursor-position changes."
     why_human: "Requires an actual DevTools Profiler run; the only related test checks DOM structure, not runtime commit counts."
+audit_acknowledged:
+  milestone: v1.0
+  at: 2026-09-22
+  status: gaps_found
 ---
 
 # Phase 5: Frontend Polish Verification Report

@@ -8,6 +8,7 @@ covered_digest: "v1:sha256:918362df070379a4c9c3586fbee89f63a1ab3fa4a2a3a7fe01581
 behavior_unverified: 0
 overrides_applied: 0
 gaps:
+
   - truth: "Gateway rejects new room joins/creation ONLY during an actual drain, not permanently after unrelated events"
     status: failed
     reason: "ClientManager.isDraining() has no cycle-scoped reset. setDraining(true) fires from bindBridgeToGateway's \"draining\" bridge-event handler AND from drain(); the only setDraining(false) in the codebase is inside ClientManager.clear(), which only runs from GatewayInstance.stop() (i.e. after the gateway itself has fully shut down). In split/Redis mode — the topology docker-compose.yml actually uses, with restart: unless-stopped on the engine — any single engine-side SIGTERM (crash-restart, independent engine redeploy) causes EngineWorker.drain() to publish a \"draining\" event that the long-lived gateway process latches forever. From that point on, dispatch.ts permanently rejects create_room/join_room/start_race with SERVER_SHUTTING_DOWN for the rest of the gateway's uptime, even though the gateway itself never received a shutdown signal and is otherwise healthy. This is not a hypothetical: it was explicitly identified in 06-REVIEW.md's CR-B1 finding (the parenthetical at lines 124-131) as 'a pre-existing... issue in the same code path' with 'the identical staleness problem' as the drained-latch bug that WAS fixed. 06-REVIEW-FIX.md declares findings_in_scope: 2 and fixes only the isDrained()/setDrained() latch (CR-B1) and the duplicate-broadcast bug (WR-A1) — the isDraining()/setDraining() latch was left unaddressed, is not covered by any regression test (drain.test.ts only asserts isDraining() flips to true, never that it resets), and is not recorded anywhere as an accepted risk or deferred item (06-SECURITY.md's T-06-01 covers a different threat — the async-forwarding race during an active, legitimate drain — not this permanent-latch defect)."
@@ -19,7 +20,9 @@ gaps:
     missing:
       - "Scope the draining latch to a shutdown cycle the same way CR-B1 scoped the drained latch (e.g. reset via instance.clientManager.setDraining(false) before this gateway's own onShutdown runs its actual drain, or track a freshness timestamp), so an engine-only restart in split mode cannot permanently disable room creation on a healthy gateway."
       - "A regression test that publishes a \"draining\" bridge event from a simulated independent engine restart (no corresponding SIGTERM on the gateway itself) and asserts the gateway's own dispatch.ts still accepts create_room once that unrelated engine cycle completes."
+
 deferred:
+
   - truth: "CI workflow (bun test + lint + typecheck + production build + smoke bun run start against pinned Bun 1.3.x) passes on every PR; deploy blocked on CI failure"
     addressed_in: "future deploy-focused phase (not yet scheduled)"
     evidence: "06-CONTEXT.md Phase Boundary: 'the CI/deploy-gate item ... is explicitly OUT of scope for this pass, per user direction' and Deferred Ideas: 'CI gate ... explicitly deferred out of this phase per user direction.' STATE.md: '.github/ CI workflow and fly deploy execution remain explicitly out of scope (deferred to a future deploy-focused pass).'"
@@ -27,17 +30,23 @@ deferred:
     addressed_in: "N/A — explicitly descoped from v1.0, not deferred to a later phase"
     evidence: "PROJECT.md Out of Scope: 'Public deployment to Fly.io — infra built and smoke-tested (Dockerfile, fly.toml, scripts/deploy.sh, graceful shutdown/drain), but fly deploy never run. Removed from v1.0 scope 2026-09-16 per user decision; local-run demo is sufficient for the resume/demo goal.' Verified instead via scripts/smoke-test.sh, executed live during this verification: exit 0, 'SMOKE OK'."
 advisory:
+
   - finding: "ROADMAP.md still shows Phase 6 and its 4 plan checkboxes as unchecked ([ ]) at lines 14, 171, 172, 176, 180, despite all 4 plans being complete, reviewed, security-verified, and validated per SUMMARY/REVIEW/SECURITY/VALIDATION/STATE.md ('Phase 6 COMPLETE')."
     category: other
     reason: "Documentation bookkeeping drift, not a functional gap — does not affect phase-goal achievement, but could mislead other tooling/agents reading ROADMAP.md as the source of truth for phase status."
     evidence_status: "observed directly in .planning/ROADMAP.md; no fix applied"
 human_verification:
+
   - test: "Decide whether Success Criterion 1's '30s' orphaned-connection bound (ROADMAP.md) is formally overridden by D-02's deliberate 90s drain timeout, or whether the roadmap wording itself should be updated to 90s."
     expected: "An explicit decision recorded (either a VERIFICATION.md override entry with accepted_by/accepted_at, or a ROADMAP.md edit) rather than the deviation persisting only as a prose note in 06-CONTEXT.md's D-02 decision block."
     why_human: "06-CONTEXT.md documents D-02 as a deliberate, reversible decision made by the user directly ('the user typed this value directly as a deliberate choice'), but no VERIFICATION.md override block or roadmap update has formally reconciled it against the original Success Criterion text. The functional behavior itself (drain-to-completion, no orphaned connections once drain completes) is verified via UAT and drain.test.ts — only the specific '30s' bound in the roadmap's wording is unreconciled."
   - test: "Confirm fly.toml's kill_timeout (\"10s\") is bumped to >= 90s before any actual fly deploy is ever run, given no phase or roadmap entry currently owns this follow-up."
     expected: "Either a tracked follow-up item (backlog/roadmap phase) or an explicit acceptance that this is moot because live Fly.io deploy is out of v1.0 scope entirely."
     why_human: "README.md, STATE.md, and 06-SECURITY.md (R-06-04 accepted-risk entry) all flag this three times as something 'whoever performs the actual deploy work must' fix, but no phase in the current ROADMAP.md owns it, and it doesn't qualify as Step 9b 'deferred' since no later milestone phase's goal/success-criteria text covers it. Low practical urgency since fly deploy itself is descoped from v1.0, but it is an unowned loose end."
+audit_acknowledged:
+  milestone: v1.0
+  at: 2026-09-22
+  status: gaps_found
 ---
 
 # Phase 6: Deploy + Hardening Verification Report

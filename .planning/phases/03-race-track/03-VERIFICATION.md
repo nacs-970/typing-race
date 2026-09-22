@@ -5,6 +5,7 @@ resolved: 2026-09-21T00:00:00Z
 status: closed_via_override
 score: 4/5 must-haves verified, remaining must-have closed via accepted override (Gap A + Gap B, see below)
 covered_files:
+
   - .planning/phases/03-race-track/03-01-PLAN.md
   - .planning/phases/03-race-track/03-01-SUMMARY.md
   - .planning/phases/03-race-track/03-02-PLAN.md
@@ -40,10 +41,12 @@ covered_files:
   - apps/engine/src/__tests__/char-states.test.ts
   - apps/engine/src/__tests__/corpus.test.ts
   - packages/shared/src/__tests__/passages.test.ts
+
 covered_digest: "unavailable — installed gsd-tools.cjs (.hermes/gsd-core/bin/gsd-tools.cjs) does not expose a `verification.fingerprint` subcommand (query verification --help lists only: status, resolve-file). Not hand-written per #4155; left absent rather than fabricated."
 behavior_unverified: 0
 overrides_applied: 0
 gaps:
+
   - truth: "Errored-then-corrected chars render in a visually distinct 'neutral' state, separate from first-try-correct chars (ROADMAP SC1, clause 1)"
     status: failed
     reason: >
@@ -85,9 +88,14 @@ gaps:
         issue: "buildRaceEndFrame()/PlayerFinalStats carry only finishTimeMs/wpm/accuracy — no per-word or word-count field"
     missing:
       - "Wire aggregateWordCorrectness into buildRaceEndFrame (or a results-facing field) so word-correctness is observable to at least one client, OR obtain an explicit human decision to descope per-word correctness display from v1 and record it as an override."
+
 deferred: []
 advisory: []
 human_verification: []
+audit_acknowledged:
+  milestone: v1.0
+  at: 2026-09-22
+  status: closed_via_override
 ---
 
 # Phase 3: Race Track + WPM Verification Report
@@ -125,6 +133,7 @@ paths, not their original `apps/server` paths.
 
 ```yaml
 overrides:
+
   - must_have: "Errored-then-corrected chars render in a visually distinct 'neutral' state, separate from first-try-correct chars (ROADMAP SC1, clause 1)"
     reason: >
       Deliberate, disclosed simplification captured in 03-CONTEXT.md decisions D-11 ("char color,
@@ -140,6 +149,7 @@ overrides:
 
 ```yaml
 overrides:
+
   - must_have: "aggregateWordCorrectness/isWordCorrect are consumed by a real feature (UI or server stats)"
     reason: >
       D-13 (03-CONTEXT.md) is explicit and two-part: "Word-correctness aggregation in server data

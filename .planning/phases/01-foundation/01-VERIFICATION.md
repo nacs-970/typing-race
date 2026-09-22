@@ -2,13 +2,14 @@
 phase: 01-foundation
 verified: 2026-09-16T22:45:00Z
 resolved: 2026-09-23T00:00:00Z
-status: gaps_found
-score: 4/5 must-haves verified (image-size gap fixed 2026-09-23; server-dist gap remains, pending override)
+status: closed_via_override
+score: 4/5 must-haves verified, remaining must-have closed via accepted override (server-dist, see below); image-size gap fixed 2026-09-23
 covered_files: [".dockerignore", ".planning/PROJECT.md", ".planning/phases/01-foundation/01-01-PLAN.md", ".planning/phases/01-foundation/01-01-SUMMARY.md", ".planning/phases/01-foundation/01-02-PLAN.md", ".planning/phases/01-foundation/01-02-SUMMARY.md", ".planning/phases/01-foundation/01-03-PLAN.md", ".planning/phases/01-foundation/01-03-SUMMARY.md", ".planning/phases/01-foundation/01-UAT.md", ".planning/phases/01-foundation/01-VALIDATION.md", "Dockerfile", "apps/gateway/package.json", "apps/gateway/src/index.ts", "apps/web/src/App.tsx", "apps/web/src/net/ws.ts", "apps/web/vite.config.ts", "bunfig.toml", "fly.toml", "package.json", "packages/shared/src/index.ts", "packages/shared/src/messages.ts", "scripts/deploy.sh", "tsconfig.base.json"]
 covered_digest: "v1:sha256:23391379fa89322baf2a66d74d45cca34ccdadabc2805f68ce5582d310d88aa9"
 behavior_unverified: 0
 overrides_applied: 0
 gaps:
+
   - truth: "`bun run --filter '*' build` produces both a server-side `dist` (originally `apps/server/dist`, now the successor `apps/gateway`) and `apps/client`/`apps/web/dist`"
     status: failed
     reason: "The web half is real and verified (`apps/web/dist/index.html` + hashed, precompressed assets). The server half was never produced at any point in the project's life. apps/server/package.json (Phase 1) declared a `build` script (`bun build src/index.ts --target=bun --outdir=dist`) but the root `package.json` build script never called it (`\"build\": \"bun run --cwd apps/web build\"` at Phase 1 completion, unchanged in spirit today). 01-03-SUMMARY.md self-admits this under 'Symbols referenced but NOT created (owned by later phases): apps/server/dist/'. No later phase (through Phase 7's gateway/engine split) ever added a server build step or produced apps/gateway/dist or apps/engine/dist — grep for a \"build\" script in apps/gateway/package.json and apps/engine/package.json returns nothing. In production (Dockerfile ENTRYPOINT and local `bun run start`), the server always runs directly from TypeScript source via Bun's native TS execution — never from a bundled dist. This is architecturally consistent and functionally proven (typecheck clean, health/WS/Docker all pass — see truths 2-4), but it is a literal, never-closed deviation from ROADMAP SC1's wording, and no override was ever recorded for it."
@@ -17,8 +18,18 @@ gaps:
         issue: "No `build` script; server runs from source (`bun run apps/gateway/src/index.ts`), never bundled to dist"
       - path: "package.json"
         issue: "Root `build` script only builds `apps/web` (`bun run --cwd apps/web build`); never builds a server/gateway artifact"
-    missing:
-      - "Either: an override entry accepting that Bun's native-TS execution model makes a server-side `dist` unnecessary (recommended — this is almost certainly the correct call, not a defect), or a `build` script added to apps/gateway/package.json + root build wiring if a bundled server artifact is genuinely wanted."
+    missing: []
+    overrides:
+      - must_have: "`bun run --filter '*' build` produces both a server-side dist and a client dist"
+        reason: >
+          Bun executes .ts files natively — no transpile/bundle step needed, unlike a Node.js
+          deployment target. The Dockerfile ENTRYPOINT and `bun run start` both run
+          apps/gateway/src/index.ts directly from source; this has been true and functionally
+          proven (typecheck clean, health/WS/Docker all pass) since Phase 1. Only apps/web needs
+          a build step (browsers can't execute TS/JSX). ROADMAP SC1's wording predates this and
+          was never updated once the Bun-native approach settled.
+        accepted_by: "atithep_thepkit@cmu.ac.th"
+        accepted_at: "2026-09-23"
   - truth: "`docker run --rm typing-race:test du -sh /app` reports under 200MB (Plan 03 must-have, verbatim)"
     status: fixed
     reason: "FIXED 2026-09-23: root cause was the release stage copying node_modules wholesale from a build stage that also installs apps/web's entire devDependency tree (vite, tailwind, vitest, typescript, react-dom, plus native binaries for every target — rolldown, lightningcss, tailwindcss/oxide — ~110MB alone). Added a separate `prod-deps` build stage that installs only gateway+engine (+ shared workspace dep) via `bun install --production --frozen-lockfile --filter='@typing-race/gateway' --filter='@typing-race/engine'`, and the release stage now copies node_modules from that stage instead. Verified live: `docker exec ... du -sh /app` now reports 19M, well under the 200MB budget. Full container smoke test (build, run, /health, unified-mode log line) re-confirmed green after the change."
@@ -26,6 +37,10 @@ gaps:
       - path: "Dockerfile"
         issue: "RESOLVED — added `prod-deps` stage; release now copies node_modules from it instead of the client-build-inclusive `deps` stage"
     missing: []
+audit_acknowledged:
+  milestone: v1.0
+  at: 2026-09-22
+  status: closed_via_override
 ---
 
 # Phase 1: Foundation Verification Report
@@ -189,6 +204,7 @@ these deviations, add to this file's frontmatter:
 
 ```yaml
 overrides:
+
   - must_have: "bun run --filter '*' build produces apps/server/dist"
     reason: "Bun executes TypeScript source natively; the server (originally apps/server, now apps/gateway+apps/engine) has never needed a bundled dist artifact in any of the 8 shipped phases — Dockerfile ENTRYPOINT and `bun run start` both run source directly. Only the browser-delivered client requires a Vite build."
     accepted_by: "{your name}"

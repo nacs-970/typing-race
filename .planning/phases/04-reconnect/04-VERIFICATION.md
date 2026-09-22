@@ -1,9 +1,11 @@
 ---
 phase: 04-reconnect
 verified: 2026-09-16T00:00:00Z
-status: gaps_found
-score: 5/7 must-haves verified
+resolved: 2026-09-23T00:00:00Z
+status: human_needed
+score: 6/7 must-haves verified (sweeper closed via accepted override; room-closed toast fixed by Phase 04.1; WS heartbeat timeout remains behavior_unverified, needs a live human test)
 covered_files:
+
   - .planning/phases/04-reconnect/04-01-PLAN.md
   - .planning/phases/04-reconnect/04-01-SUMMARY.md
   - .planning/phases/04-reconnect/04-02-PLAN.md
@@ -32,39 +34,49 @@ covered_files:
   - apps/web/src/components/RaceView.tsx
   - apps/web/src/net/ws.ts
   - packages/shared/src/messages.ts
+
 covered_digest: "v1:sha256:0b2d9ae9403ac1c39b429d9901d12ba114b4a2fcb8ba9ab3601adc8b386fb657"
 behavior_unverified: 1
 overrides_applied: 0
 gaps:
+
   - truth: "Idle rooms (>10min no activity) are evicted by a 60s sweeper"
     status: failed
     reason: "No sweeper exists anywhere in the current codebase. Room.lastActivityAt is tracked on every player action but nothing reads it to evict. This was an explicit, documented user decision during Phase 4 discussion (04-CONTEXT.md D-09: 'User explicitly requested no idle eviction. Rooms remain alive until empty.') — it appears to be an intentional scope cut, not an oversight, but ROADMAP.md Phase 4 success criterion 3 was never updated to reflect the change, and no VERIFICATION.md override has been recorded to formally accept the deviation."
     artifacts:
       - path: "apps/engine/src/race/controller.ts"
         issue: "tick() evicts disconnected players after 60s but contains no idle-room sweep logic checking room.lastActivityAt against a 10-minute threshold"
-    missing:
-      - "Either implement the 60s-interval idle-room sweeper (>10min inactivity) as originally scoped in ROADMAP.md SC3, or add a VERIFICATION.md override accepting D-09 as the final decision and update ROADMAP.md Phase 4 SC3 text to match reality"
+    missing: []
+    overrides:
+      - must_have: "Idle rooms (>10min no activity) are evicted by a 60s sweeper"
+        reason: >
+          Explicit, documented user decision during Phase 4 discussion (04-CONTEXT.md D-09:
+          "User explicitly requested no idle eviction. Rooms remain alive until empty.").
+          Accepted risk given in-memory Map storage and small demo scale.
+        accepted_by: "atithep_thepkit@cmu.ac.th"
+        accepted_at: "2026-09-23"
   - truth: "Opponent views show a graceful 'room closed' toast within 5s of the last player leaving"
-    status: failed
-    reason: "No 'room closed' (or equivalent proactive push) message exists anywhere in the wire schema, engine, or web client. The closest related UX is a *reactive* 'Room Lost' toast shown only when a client's own next action (e.g. rejoin_room with a stale sessionToken) fails with SESSION_INVALID/ROOM_NOT_FOUND — that is not a proactive broadcast pushed to a still-open viewer within 5s of the last player leaving. Checked Phase 5 (05-04, 'distinct error toasts') for a deferred match — its four toast cases are lost-connection / server-restart / rate-limit / version-mismatch, none of which cover idle-room-closed notification, so this is not a legitimate deferral to a later phase."
-    artifacts:
-      - path: "apps/web/src/App.tsx"
-        issue: "No 'room_closed' message type is handled; the only closure-adjacent UX is the reactive ROOM_NOT_FOUND/SESSION_INVALID 'Room Lost' error toast"
-      - path: "packages/shared/src/messages.ts"
-        issue: "No room_closed (or similarly named) server-to-client schema exists"
-    missing:
-      - "A proactive room_closed (or equivalent) broadcast fired when the room is torn down after the last player leaves/is evicted, delivered to any remaining viewers within 5s"
+    status: fixed
+    reason: "FIXED by Phase 04.1 (2026-09-16/17): a proactive ROOM_CLOSED broadcast was added, retargeted during re-verification from room.players.size===0 (proven to have zero live recipients by construction) to size===1 (a real, reachable recipient), with a real two-socket integration test. See 04.1-VERIFICATION.md."
+    artifacts: []
+    missing: []
 deferred: []
 behavior_unverified_items:
+
   - truth: "WS heartbeat: dead connections are closed cleanly without state corruption (15s ping / 5s pong timeout)"
     test: "Open a WS connection, stop responding to ping frames, and wait for startHeartbeat's 20s timeout window to elapse"
     expected: "ws.close(1001, 'Heartbeat timeout') fires, manager.removeSocket(playerId) runs, and the resulting client_disconnected event correctly starts the 60s disconnect grace without leaving orphaned state (stale socket entries, room state referencing a dead player)"
     why_human: "No automated test exercises startHeartbeat's timeout branch — grep across apps/**/*.test.ts found zero references to startHeartbeat. ws-lifecycle.test.ts only proves the ping→pong round trip (test 4) and that close() cleans up the socket registry (test 3), not that the 20s no-pong timeout path fires ws.close()/removeSocket() cleanly. The mechanism is present and wired (apps/gateway/src/ws/handlers.ts:167-195) but the actual cleanup-on-timeout invariant is unexercised."
 coincidental_reliance_items: []
 human_verification:
+
   - test: "Leave a WS tab open, block outgoing pong frames (e.g. via devtools throttling or a debug client that never responds to ping), and wait >20s"
     expected: "Server closes the socket with code 1001 within ~20s of the last pong, the disconnected player's room correctly starts the 60s grace (player_disconnected broadcast to opponents), and no duplicate/orphaned entries remain in ClientManager.sockets"
     why_human: "Requires a live socket held open across the 15s ping interval / 5s timeout window; not exercised by any existing automated test (see behavior_unverified_items)"
+audit_acknowledged:
+  milestone: v1.0
+  at: 2026-09-22
+  status: human_needed
 ---
 
 # Phase 4: Reconnect Verification Report

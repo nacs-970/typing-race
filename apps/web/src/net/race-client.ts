@@ -184,6 +184,17 @@ export class RaceClient {
       const charStates = (msg.charStates ?? []) as CharStateType[];
       const wpm = msg.wpm ?? 0;
 
+      const raceStartMs = useRaceStore.getState().countdownStartsAtServerMs ?? msg.serverTs;
+      setRaceState((s) => ({
+        wpmHistory: {
+          ...s.wpmHistory,
+          [msg.playerId]: [
+            ...(s.wpmHistory[msg.playerId] ?? []),
+            { t: msg.serverTs - raceStartMs, wpm },
+          ],
+        },
+      }));
+
       if (msg.playerId === myId) {
         setCursorState((s) => {
           if (s.cursors.has(msg.playerId)) {

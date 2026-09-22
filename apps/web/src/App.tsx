@@ -23,6 +23,7 @@ export function App(): React.ReactElement {
   const playerId = useConnectionStore((s) => s.playerId);
   const passageText = useRaceStore((s) => s.passageText);
   const raceEndResults = useRaceStore((s) => s.raceEndResults);
+  const raceEndFinishedIds = useRaceStore((s) => s.raceEndFinishedIds);
   const countdownStartsAtServerMs = useRaceStore((s) => s.countdownStartsAtServerMs);
   const raceStart = passageText !== null;
   const inCountdown = countdownStartsAtServerMs !== null;
@@ -493,6 +494,7 @@ export function App(): React.ReactElement {
       {inResults && raceEndResults && (
         <ResultsBoard
           results={raceEndResults}
+          finishedPlayerIds={raceEndFinishedIds ?? undefined}
           isHost={isHost}
           onRematch={() => {
             resetRaceUi();

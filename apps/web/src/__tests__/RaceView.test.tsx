@@ -108,7 +108,11 @@ describe("RaceView — char-state accents & zero-commit overlay", () => {
 });
 
 describe("ResultsBoard — ranking", () => {
-  test("7. renders ranked list — finishTimeMs asc, WPM desc as tiebreaker", () => {
+  test("7. renders ranked list — wpm * accuracy score desc (finish bonus equal, ignores finish time)", () => {
+    // Score = wpm * accuracy (all finished, so the finish bonus is a wash):
+    // a: 50 * 0.9 = 45, b: 60 * 0.95 = 57, c: 40 * 0.85 = 34 -> b, a, c.
+    // Note finishTimeMs (30000/20000/25000) deliberately does NOT match this
+    // order, proving ranking no longer sorts by finish time.
     const results: PlayerFinalStats[] = [
       { playerId: "a", finishTimeMs: 30000, wpm: 50, accuracy: 0.9 },
       { playerId: "b", finishTimeMs: 20000, wpm: 60, accuracy: 0.95 },
@@ -124,7 +128,28 @@ describe("ResultsBoard — ranking", () => {
     const rows = container.querySelectorAll("tbody tr");
     expect(rows.length).toBe(3);
     expect(rows[0]?.textContent).toContain("b");
-    expect(rows[1]?.textContent).toContain("c");
-    expect(rows[2]?.textContent).toContain("a");
+    expect(rows[1]?.textContent).toContain("a");
+    expect(rows[2]?.textContent).toContain("c");
+  });
+
+  test("8. a player who did not finish always ranks below one who did, regardless of score", () => {
+    const results: PlayerFinalStats[] = [
+      // DNF: high wpm/accuracy (partial progress at grace-timeout) but never finished.
+      { playerId: "dnf-fast", finishTimeMs: 30000, wpm: 90, accuracy: 0.99 },
+      // Finisher: much lower wpm/accuracy, but actually completed the passage.
+      { playerId: "finisher-slow", finishTimeMs: 28000, wpm: 20, accuracy: 0.7 },
+    ];
+    const { container } = render(
+      <ResultsBoard
+        results={results}
+        finishedPlayerIds={["finisher-slow"]}
+        isHost={false}
+        onRematch={() => {}}
+      />,
+    );
+    const rows = container.querySelectorAll("tbody tr");
+    expect(rows.length).toBe(2);
+    expect(rows[0]?.getAttribute("data-player-id")).toBe("finisher-slow");
+    expect(rows[1]?.getAttribute("data-player-id")).toBe("dnf-fast");
   });
 });

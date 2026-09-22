@@ -234,6 +234,7 @@ export class RaceClient {
       setCursorState({ cursors: new Map(), ownIndex: 0 });
       setRaceState({
         raceEndResults: msg.results ?? null,
+        raceEndFinishedIds: msg.finishedPlayerIds ?? null,
         ownCharStates: [],
         ownWpm: 0,
         graceBanner: null,

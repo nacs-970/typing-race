@@ -4,8 +4,19 @@ import { ws } from "../net/ws.ts";
 import { useConnectionStore } from "../store/connection.ts";
 import { useRaceStore } from "../store/race.ts";
 
+/**
+ * Score dominates any wpm*accuracy product for a player who didn't finish
+ * the passage, so finishers always outrank DNFs regardless of their partial
+ * wpm/accuracy at grace-timeout. wpm is capped well under 1000 by the
+ * server's anti-cheat keystroke-rate floor (see README), so 1000 is a safe
+ * margin.
+ */
+const FINISH_BONUS = 1000;
+
 export interface ResultsBoardProps {
   results: PlayerFinalStats[];
+  /** Omitted = treat everyone as finished (matches the "all finished" race-end case). */
+  finishedPlayerIds?: string[];
   isHost: boolean;
   onRematch?: () => void;
   onReturnToLobby?: () => void;
@@ -20,6 +31,7 @@ export function ResultsBoard({
   onReturnToLobby,
   onLeaveRoom,
   players: propPlayers,
+  finishedPlayerIds,
 }: ResultsBoardProps): React.ReactElement {
   const myId = useConnectionStore((s) => s.playerId);
   const lobbyPlayers = useRaceStore((s) => s.lobbyPlayers);
@@ -34,13 +46,12 @@ export function ResultsBoard({
   }, [propPlayers, lobbyPlayers]);
 
   const ranked = useMemo(() => {
-    return [...results].sort((a, b) => {
-      if (a.finishTimeMs !== b.finishTimeMs) {
-        return a.finishTimeMs - b.finishTimeMs;
-      }
-      return b.wpm - a.wpm; // WPM tiebreaker
-    });
-  }, [results]);
+    const score = (r: PlayerFinalStats): number => {
+      const finished = finishedPlayerIds === undefined || finishedPlayerIds.includes(r.playerId);
+      return r.wpm * r.accuracy + (finished ? FINISH_BONUS : 0);
+    };
+    return [...results].sort((a, b) => score(b) - score(a));
+  }, [results, finishedPlayerIds]);
 
   if (results.length === 0) {
     return (

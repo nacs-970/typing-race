@@ -1,0 +1,44 @@
+# Render.com Blueprint — single free web service, unified mode.
+# One container serves the React SPA + WebSocket API + /health on one port.
+#
+# NOTE: MODE and NODE_ENV below are REDUNDANT with the release stage of the root
+# Dockerfile (which already sets ENV NODE_ENV=production / ENV MODE=unified).
+# They are repeated here deliberately, as documentation of the runtime contract.
+# If you remove them, the Dockerfile still carries the behaviour. Do not remove
+# BOTH. Deliberately NOT set: PORT (Render injects its own, default 10000),
+# REDIS_URL (its presence would override MODE and force RedisEventBridge),
+# VITE_WS_URL (must stay unset so the client resolves same-origin wss://).
+services:
+  - type: web
+    name: typing-race
+    runtime: docker
+    plan: free              # REQUIRED. Omitting this defaults to a paid plan and
+                            # blocks the Blueprint import behind a payment wall.
+    region: singapore       # Closest region to Thailand. IMMUTABLE after creation.
+    branch: master
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    maxShutdownDelaySeconds: 95   # > the hardcoded 90s drain() cap in
+                                  # apps/gateway/src/index.ts. Render's default is
+                                  # 30s, which would SIGKILL mid-drain — the same
+                                  # bug as fly.toml's kill_timeout = "10s".
+    autoDeployTrigger: commit
+    buildFilter:
+      # Build minutes are the suspension risk on a card-less account. This repo
+      # commits .planning/ churn constantly; without this every such commit would
+      # run a full bun install + vite build for zero runtime change.
+      # Only gates AUTOdeploys — the initial import and manual "Deploy latest
+      # commit" run regardless.
+      ignoredPaths:
+        - ".planning/**"
+        - ".claude/**"
+        - ".hermes/**"
+        - "**/*.md"
+        - "fly.toml"
+        - "docker-compose.yml"
+    envVars:
+      - key: MODE
+        value: unified
+      - key: NODE_ENV
+        value: production

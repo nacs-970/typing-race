@@ -85,6 +85,13 @@ Configuration is maintained in `fly.toml`.
 On SIGTERM, the process broadcasts a `SERVER_SHUTTING_DOWN` error frame to all connected clients (rendered as a "Server Restarting" toast), stops accepting new `create_room`/`join_room`/`start_race` messages, lets in-flight races finish normally, and exits once drained or after a 90-second hard cap (via `apps/engine/src/engine.ts`'s `EngineWorker.drain()` and `apps/gateway/src/index.ts`'s `GatewayInstance.drain()`).
 Note: `fly.toml`'s current `kill_timeout` is `"10s"`, well under the 90s drain window — whoever performs the actual Fly.io deploy work must bump `kill_timeout` to `>= 90s` first, or Fly will SIGKILL mid-drain.
 
+### Render.com (Free Tier)
+
+Push to `master`, then in the Render dashboard: New → Blueprint → select this repo. Config lives in `render.yaml` at the repo root and uses the same root `Dockerfile` as the Fly.io path above (unified mode — one process serves gateway + engine + static SPA).
+
+- **Cold start**: the free instance spins down after 15 minutes with no inbound traffic; the next visitor waits roughly 1 minute for a cold start. Room state is entirely in-memory, so a room code shared before a spin-down does not survive it — an accepted trade-off for a demo deployment, not something to work around with a keep-alive pinger.
+- **Shutdown**: `render.yaml`'s `maxShutdownDelaySeconds: 95` is Render's equivalent of `fly.toml`'s `kill_timeout`, set above the 90-second graceful drain cap described above. On a single free instance a redeploy still causes real downtime — clients receive the `SERVER_SHUTTING_DOWN` notice and reconnect; this is not a zero-downtime deploy.
+
 ### Local Smoke Test
 
 The new `scripts/smoke-test.sh` is the local pre-ship check. The full two-browser manual race verification and the CI gate are both explicitly deferred out of Phase 6's scope and remain manual/future work respectively.
@@ -94,12 +101,13 @@ The new `scripts/smoke-test.sh` is the local pre-ship check. The full two-browse
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `MODE` | `unified` (single process) or `split` (Gateway + Engine as separate tiers) | `split` |
-| `PORT` / `GATEWAY_PORT` | Gateway listen port | `8080` |
+| `PORT` / `GATEWAY_PORT` | Gateway listen port. On Render, injected automatically (default `10000`) — do not set manually. | `8080` |
 | `HOST` / `GATEWAY_HOST` | Gateway bind address | `0.0.0.0` |
 | `ENGINE_HOST` | Engine host, split mode only | `127.0.0.1` |
 | `ENGINE_PORT` | Engine port, split mode only | `8081` |
 | `REDIS_URL` | Redis connection string for the split-mode EventBridge; unset in unified mode | none |
 | `NODE_ENV` | `production` / `development` | `development` |
 | `LOG_LEVEL` | pino log level | `info` in production, `debug` otherwise |
+| `VITE_WS_URL` | Build-time override for the client's WebSocket URL. Must stay unset on Render so the client resolves same-origin (`wss://<render-hostname>/ws`). | none (same-origin) |
 
 Names only — no values are committed anywhere in this repo. `REDIS_URL` and any Fly.io deploy token are supplied as secrets by the hosting platform, never checked in.

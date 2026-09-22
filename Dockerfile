@@ -41,6 +41,6 @@ COPY package.json bun.lock tsconfig.base.json /app/
 USER bun
 EXPOSE 8080
 
-HEALTHCHECK --interval=15s --timeout=4s --start-period=3s CMD bun -e 'fetch("http://localhost:8080/health").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))'
+HEALTHCHECK --interval=15s --timeout=4s --start-period=3s CMD bun -e 'fetch("http://localhost:" + (process.env.PORT || 8080) + "/health").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))'
 
 ENTRYPOINT ["bun", "run", "apps/gateway/src/index.ts"]

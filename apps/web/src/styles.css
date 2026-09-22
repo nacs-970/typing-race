@@ -105,15 +105,15 @@
   --color-danger-hover: #fee2e2;
   --color-danger-text: #b91c1c;
 
-  /* Cursor Rainbow Slots */
-  --color-cursor-slot-1: #dc2626;
-  --color-cursor-slot-2: #db2777;
-  --color-cursor-slot-3: #ea580c;
-  --color-cursor-slot-4: #ca8a04;
-  --color-cursor-slot-5: #65a30d;
-  --color-cursor-slot-6: #16a34a;
-  --color-cursor-slot-7: #0891b2;
-  --color-cursor-slot-8: #9333ea;
+  /* Cursor Rainbow Slots (pastel) */
+  --color-cursor-slot-1: #f87171;
+  --color-cursor-slot-2: #f472b6;
+  --color-cursor-slot-3: #fb923c;
+  --color-cursor-slot-4: #fbbf24;
+  --color-cursor-slot-5: #4ade80;
+  --color-cursor-slot-6: #22d3ee;
+  --color-cursor-slot-7: #60a5fa;
+  --color-cursor-slot-8: #c084fc;
 }
 
 :root {

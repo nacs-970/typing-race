@@ -15,7 +15,7 @@ export function SettingsPanel(): React.ReactElement {
   const settings = useSettingsStore((s) => s.settings);
 
   return (
-    <div className="fixed top-3 right-3 z-50" data-testid="settings-panel">
+    <div className="fixed bottom-3 right-3 z-50 flex flex-col-reverse items-end" data-testid="settings-panel">
       <button
         type="button"
         aria-label="Settings"
@@ -26,7 +26,7 @@ export function SettingsPanel(): React.ReactElement {
       </button>
 
       {open && (
-        <div className="mt-2 w-64 p-4 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] text-[var(--color-text-bright)] font-mono shadow-2xl">
+        <div className="mb-2 w-64 p-4 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] text-[var(--color-text-bright)] font-mono shadow-2xl">
           <div className="flex items-center justify-between mb-3">
             <span className="font-bold text-sm">Settings</span>
             <button

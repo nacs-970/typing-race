@@ -19,10 +19,11 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /health
-    maxShutdownDelaySeconds: 95   # > the hardcoded 90s drain() cap in
-                                  # apps/gateway/src/index.ts. Render's default is
-                                  # 30s, which would SIGKILL mid-drain — the same
-                                  # bug as fly.toml's kill_timeout = "10s".
+    # maxShutdownDelaySeconds is NOT supported on free-tier services (Render
+    # rejects the blueprint with it set). Free tier's shutdown grace is fixed
+    # short, shorter than the hardcoded 90s drain() cap in
+    # apps/gateway/src/index.ts — a redeploy may SIGKILL mid-drain. Accepted
+    # tradeoff on free tier; would need a paid plan to raise this cap.
     autoDeployTrigger: commit
     buildFilter:
       # Build minutes are the suspension risk on a card-less account. This repo

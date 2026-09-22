@@ -6,30 +6,21 @@ FROM oven/bun:${BUN_VERSION}-slim AS base
 WORKDIR /app
 
 # ---------- deps ----------
-# Workspace-aware install: COPY each package.json so Bun can resolve the
-# `workspaces` field in the root package.json and link accordingly.
+# Full workspace source is copied before `bun install` (not just each
+# package.json) — installing against package.json-only stubs left the
+# apps/{gateway,engine}/node_modules/@typing-race/* workspace symlinks
+# unreliably created under BuildKit (observed both locally and on Render:
+# "Cannot find module '@typing-race/shared/bridge'" at container start).
 FROM base AS deps
 COPY package.json bun.lock tsconfig.base.json ./
-COPY packages/shared/package.json ./packages/shared/
-COPY apps/gateway/package.json   ./apps/gateway/
-COPY apps/engine/package.json    ./apps/engine/
-COPY apps/web/package.json       ./apps/web/
-# `bun install` under BuildKit has an observed race where it silently skips
-# creating the workspace-package symlinks (apps/{gateway,engine}/node_modules/
-# @typing-race/*), with no non-zero exit — reproduced locally, intermittent
-# across identical --no-cache builds. Verify both required symlinks after
-# install; on miss, wipe and reinstall once rather than shipping a broken image.
-RUN bun install --frozen-lockfile; \
-    if [ ! -e apps/gateway/node_modules/@typing-race/shared ] || [ ! -e apps/engine/node_modules/@typing-race/shared ]; then \
-      echo "bun install: workspace symlinks missing, retrying" >&2; \
-      rm -rf node_modules apps/*/node_modules packages/*/node_modules; \
-      bun install --frozen-lockfile; \
-    fi
+COPY packages/shared ./packages/shared
+COPY apps/gateway    ./apps/gateway
+COPY apps/engine     ./apps/engine
+COPY apps/web        ./apps/web
+RUN bun install --frozen-lockfile
 
 # ---------- client build ----------
 FROM deps AS client-build
-COPY packages/shared ./packages/shared
-COPY apps/web       ./apps/web
 WORKDIR /app/apps/web
 # Vite-only build (skip `tsc --noEmit` here — Dockerfile is not the place to
 # typecheck; CI / `bun run typecheck` does that). Vite's bundler resolves
@@ -41,10 +32,10 @@ FROM base AS release
 ENV NODE_ENV=production
 ENV MODE=unified
 COPY --from=deps          /app/node_modules         /app/node_modules
+COPY --from=deps          /app/packages/shared      /app/packages/shared
+COPY --from=deps          /app/apps/gateway         /app/apps/gateway
+COPY --from=deps          /app/apps/engine          /app/apps/engine
 COPY --from=client-build  /app/apps/web/dist        /app/apps/web/dist
-COPY packages/shared      /app/packages/shared
-COPY apps/gateway         /app/apps/gateway
-COPY apps/engine          /app/apps/engine
 COPY package.json bun.lock tsconfig.base.json /app/
 
 # `oven/bun` images ship a non-root `bun` user (UID 1000). Switch before ENTRYPOINT.

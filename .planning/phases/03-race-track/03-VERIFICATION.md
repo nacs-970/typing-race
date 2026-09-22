@@ -1,8 +1,9 @@
 ---
 phase: 03-race-track
 verified: 2026-09-16T00:00:00Z
-status: gaps_found
-score: 4/5 must-haves verified
+resolved: 2026-09-21T00:00:00Z
+status: closed_via_override
+score: 4/5 must-haves verified, remaining must-have closed via accepted override (Gap A + Gap B, see below)
 covered_files:
   - .planning/phases/03-race-track/03-01-PLAN.md
   - .planning/phases/03-race-track/03-01-SUMMARY.md

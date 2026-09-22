@@ -27,14 +27,34 @@ WORKDIR /app/apps/web
 # `.ts` extension imports fine via `allowImportingTsExtensions` at runtime.
 RUN bun x vite build
 
+# ---------- prod deps ----------
+# Separate, apps/web-free install for the runtime image. `deps` above (used
+# only to build the client) drags in apps/web's whole devDependency tree —
+# vite, tailwind, vitest, typescript, react-dom, plus native binaries for
+# every target (rolldown, lightningcss, tailwind oxide) — none of which the
+# gateway/engine process ever touches at runtime. That alone was ~110MB of
+# the image's 221MB total. `--filter` installs only gateway+engine (+ their
+# shared workspace dep) and skips web's "dependencies" entirely (react,
+# tailwind, etc. are real deps there, not dev-only, so `--production` alone
+# wouldn't have excluded them). apps/web/package.json is still copied
+# (manifest only) so `--frozen-lockfile`'s workspace-membership check still
+# matches the lockfile's full 4-workspace shape.
+FROM base AS prod-deps
+COPY package.json bun.lock tsconfig.base.json ./
+COPY packages/shared ./packages/shared
+COPY apps/gateway    ./apps/gateway
+COPY apps/engine     ./apps/engine
+COPY apps/web/package.json ./apps/web/
+RUN bun install --production --frozen-lockfile --filter='@typing-race/gateway' --filter='@typing-race/engine'
+
 # ---------- runtime ----------
 FROM base AS release
 ENV NODE_ENV=production
 ENV MODE=unified
-COPY --from=deps          /app/node_modules         /app/node_modules
-COPY --from=deps          /app/packages/shared      /app/packages/shared
-COPY --from=deps          /app/apps/gateway         /app/apps/gateway
-COPY --from=deps          /app/apps/engine          /app/apps/engine
+COPY --from=prod-deps     /app/node_modules         /app/node_modules
+COPY --from=prod-deps     /app/packages/shared      /app/packages/shared
+COPY --from=prod-deps     /app/apps/gateway         /app/apps/gateway
+COPY --from=prod-deps     /app/apps/engine          /app/apps/engine
 COPY --from=client-build  /app/apps/web/dist        /app/apps/web/dist
 COPY package.json bun.lock tsconfig.base.json /app/
 

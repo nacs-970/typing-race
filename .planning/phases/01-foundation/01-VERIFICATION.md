@@ -1,8 +1,9 @@
 ---
 phase: 01-foundation
 verified: 2026-09-16T22:45:00Z
+resolved: 2026-09-23T00:00:00Z
 status: gaps_found
-score: 3/5 must-haves verified
+score: 4/5 must-haves verified (image-size gap fixed 2026-09-23; server-dist gap remains, pending override)
 covered_files: [".dockerignore", ".planning/PROJECT.md", ".planning/phases/01-foundation/01-01-PLAN.md", ".planning/phases/01-foundation/01-01-SUMMARY.md", ".planning/phases/01-foundation/01-02-PLAN.md", ".planning/phases/01-foundation/01-02-SUMMARY.md", ".planning/phases/01-foundation/01-03-PLAN.md", ".planning/phases/01-foundation/01-03-SUMMARY.md", ".planning/phases/01-foundation/01-UAT.md", ".planning/phases/01-foundation/01-VALIDATION.md", "Dockerfile", "apps/gateway/package.json", "apps/gateway/src/index.ts", "apps/web/src/App.tsx", "apps/web/src/net/ws.ts", "apps/web/vite.config.ts", "bunfig.toml", "fly.toml", "package.json", "packages/shared/src/index.ts", "packages/shared/src/messages.ts", "scripts/deploy.sh", "tsconfig.base.json"]
 covered_digest: "v1:sha256:23391379fa89322baf2a66d74d45cca34ccdadabc2805f68ce5582d310d88aa9"
 behavior_unverified: 0
@@ -19,13 +20,12 @@ gaps:
     missing:
       - "Either: an override entry accepting that Bun's native-TS execution model makes a server-side `dist` unnecessary (recommended — this is almost certainly the correct call, not a defect), or a `build` script added to apps/gateway/package.json + root build wiring if a bundled server artifact is genuinely wanted."
   - truth: "`docker run --rm typing-race:test du -sh /app` reports under 200MB (Plan 03 must-have, verbatim)"
-    status: failed
-    reason: "Live re-verification this session (docker build + docker run against the current Dockerfile/apps/gateway/apps/engine) measured `/app` at 221M inside the running container — over the declared 200MB budget by roughly 10%. This is an observable, quantitative miss against a must-have with a hard numeric threshold. Whether the Phase-1-era image (COPY apps/server) would also have exceeded 200MB is not determinable from the current tree — that Dockerfile no longer exists to rebuild, and the original Phase 1 execution never got a live measurement (Docker failed on the host's bridge networking before reaching a running container)."
+    status: fixed
+    reason: "FIXED 2026-09-23: root cause was the release stage copying node_modules wholesale from a build stage that also installs apps/web's entire devDependency tree (vite, tailwind, vitest, typescript, react-dom, plus native binaries for every target — rolldown, lightningcss, tailwindcss/oxide — ~110MB alone). Added a separate `prod-deps` build stage that installs only gateway+engine (+ shared workspace dep) via `bun install --production --frozen-lockfile --filter='@typing-race/gateway' --filter='@typing-race/engine'`, and the release stage now copies node_modules from that stage instead. Verified live: `docker exec ... du -sh /app` now reports 19M, well under the 200MB budget. Full container smoke test (build, run, /health, unified-mode log line) re-confirmed green after the change."
     artifacts:
       - path: "Dockerfile"
-        issue: "Multi-stage build is correct and non-root, but resulting runtime image content is measured at 221M, not under 200M"
-    missing:
-      - "Either accept the overage via override (the 200MB figure was a Phase 1 estimate; 7 subsequent phases added dependencies/corpus data), or trim image size (prune devDependencies more aggressively, multi-stage node_modules pruning, distroless-style final stage)."
+        issue: "RESOLVED — added `prod-deps` stage; release now copies node_modules from it instead of the client-build-inclusive `deps` stage"
+    missing: []
 ---
 
 # Phase 1: Foundation Verification Report

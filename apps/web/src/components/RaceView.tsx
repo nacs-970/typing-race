@@ -161,7 +161,7 @@ export function RaceView({
   }, [localEngine, onKeystroke, onCorrection]);
 
   return (
-    <div className="race-view relative mx-auto w-full max-w-[800px] select-none font-mono">
+    <div className="race-view relative mx-auto w-full max-w-[70vw] select-none font-mono">
       <RaceHud
         typingEngine={localEngine}
         passageLength={passageText.length}

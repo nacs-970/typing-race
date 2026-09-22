@@ -326,7 +326,7 @@ h1 {
 
 /* Centered track container */
 .passage-track {
-  max-width: 800px;
+  max-width: 70vw;
   width: 100%;
   margin: 0 auto;
   position: relative;

@@ -3,7 +3,6 @@ import type { PlayerFinalStats } from "@typing-race/shared";
 import { ws } from "../net/ws.ts";
 import { useConnectionStore } from "../store/connection.ts";
 import { useRaceStore } from "../store/race.ts";
-import { PerformanceChart } from "./PerformanceChart.tsx";
 
 /**
  * Score dominates any wpm*accuracy product for a player who didn't finish
@@ -211,8 +210,6 @@ export function ResultsBoard({
           </tbody>
         </table>
       </div>
-
-      <PerformanceChart ranked={ranked} nicknameMap={nicknameMap} myId={myId} />
 
       {isHost ? (
         <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t border-[var(--color-border-subtle)]">

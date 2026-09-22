@@ -12,6 +12,8 @@ import { GraceBanner } from "./components/GraceBanner.tsx";
 import { ReconnectBanner } from "./components/ReconnectBanner.tsx";
 import { ResultsBoard } from "./components/ResultsBoard.tsx";
 import { ToastQueue } from "./components/ToastQueue.tsx";
+import { SettingsPanel } from "./components/SettingsPanel.tsx";
+import { hydrateSettings } from "./store/settings.ts";
 import { addToast } from "./store/toast.ts";
 import type { ServerToClient } from "@typing-race/shared";
 
@@ -51,6 +53,11 @@ export function App(): React.ReactElement {
       (window as unknown as { __nickname?: string }).__nickname = val;
     }
   };
+
+  // Apply saved (or default) color/font settings on mount
+  useEffect(() => {
+    hydrateSettings();
+  }, []);
 
   // 1. syncClock on mount
   useEffect(() => {
@@ -337,6 +344,7 @@ export function App(): React.ReactElement {
   return (
     <main className="container">
       <ToastQueue />
+      <SettingsPanel />
 
       {sessionTakenOver && (
         <div className="session-taken-over-banner">

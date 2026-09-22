@@ -5,6 +5,7 @@ import { CursorManager } from "../core/cursor-manager.ts";
 import { PassageLayout } from "../core/layout.ts";
 import { TypingEngine } from "../core/typing-engine.ts";
 import { RaceHud } from "./RaceHud.tsx";
+import { useSettingsStore } from "../store/settings.ts";
 
 export interface RaceViewProps {
   passageText: string;
@@ -35,6 +36,7 @@ export function RaceView({
   const localManager = useMemo(() => cursorManager ?? new CursorManager(), [cursorManager]);
   const localLayout = useMemo(() => passageLayout ?? new PassageLayout(), [passageLayout]);
 
+  const fontSize = useSettingsStore((s) => s.settings.fontSize);
   const ownCharStates = useRaceStore((s) => s.ownCharStates);
   const [charStates, setCharStates] = useState<readonly CharState[]>(() => localEngine.getCharStates());
   const ownIndex = useCursorStore((s) => s.ownIndex);
@@ -44,10 +46,15 @@ export function RaceView({
   useEffect(() => {
     localEngine.init(passageText);
     setCharStates([...localEngine.getCharStates()]);
-    localLayout.init(passageText, '16px "JetBrains Mono", "Fira Code", "SF Mono", ui-monospace, monospace', 32);
+    localLayout.init(
+      passageText,
+      `${fontSize}px "JetBrains Mono", "Fira Code", "SF Mono", ui-monospace, monospace`,
+      fontSize * 2,
+    );
     localLayout.updateLayout(trackRef.current?.clientWidth || 800);
     localManager.setPassageText(passageText);
-  }, [passageText, localEngine, localLayout, localManager]);
+    setLocalCoords(localLayout.getCoordinates(useCursorStore.getState().ownIndex));
+  }, [passageText, fontSize, localEngine, localLayout, localManager]);
 
   // Mount cursor overlay outside React tree
   useEffect(() => {
@@ -159,7 +166,7 @@ export function RaceView({
         passageLength={passageText.length}
         onLeaveRoom={onLeaveRoom}
       />
-      <div ref={trackRef} className="passage-track relative text-[16px] leading-[32px] font-mono select-none">
+      <div ref={trackRef} className="passage-track relative font-mono select-none">
         {passageText.split("").map((ch, i) => {
           const storeState = ownCharStates[i];
           const localState = charStates[i];
@@ -203,7 +210,7 @@ export function RaceView({
           <div className="flex items-center gap-2">
             <span className="text-lg">⚠️</span>
             <span>
-              <strong>Finish blocked:</strong> Passage contains uncorrected errors or low accuracy (&lt;50%). Hold <strong>Backspace</strong> to delete mistakes and correct them.
+              <strong>Finish blocked</strong> — backspace to fix errors first.
             </span>
           </div>
         </div>

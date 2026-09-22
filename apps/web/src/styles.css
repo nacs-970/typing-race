@@ -2,6 +2,7 @@
 
 @theme {
   --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", ui-monospace, monospace;
+  --app-font-size: 16px;
 
   /* Olive Leaf scale */
   --color-olive-leaf-50: #f4f6ee;
@@ -89,6 +90,9 @@
   --color-accent-green-hover: #7e914a;
   --color-accent-green-subtle: rgba(144, 163, 88, 0.2);
   --color-accent-green-glow: rgba(144, 163, 88, 0.5);
+
+  --color-char-correct: #1a4d10;
+  --color-cursor-own: var(--color-accent-green);
 
   --color-accent-clay: var(--color-accent-green);
   --color-accent-hover: var(--color-accent-green-hover);
@@ -321,8 +325,8 @@ h1 {
   margin: 0 auto;
   position: relative;
   font-family: var(--font-mono);
-  font-size: 16px;
-  line-height: 32px;
+  font-size: var(--app-font-size);
+  line-height: calc(var(--app-font-size) * 2);
   user-select: none;
   white-space: pre-wrap;
   word-break: normal;
@@ -358,7 +362,7 @@ h1 {
 }
 
 .char-correct {
-  color: #1a4d10;
+  color: var(--color-char-correct);
   text-decoration: underline;
   text-decoration-color: var(--color-accent-green);
   text-decoration-thickness: 2px;
@@ -376,9 +380,9 @@ h1 {
 }
 
 .own-cursor {
-  border-left: 2px solid var(--color-accent-clay);
+  border-left: 2px solid var(--color-cursor-own);
   margin-left: -2px;
-  box-shadow: 0 0 8px var(--color-accent-clay);
+  box-shadow: 0 0 8px var(--color-cursor-own);
   z-index: 20;
 }
 
@@ -388,8 +392,8 @@ h1 {
   left: 0;
   width: 2px;
   height: 22px;
-  background: var(--color-accent-clay);
-  box-shadow: 0 0 10px var(--color-accent-clay);
+  background: var(--color-cursor-own);
+  box-shadow: 0 0 10px var(--color-cursor-own);
   z-index: 20;
   pointer-events: none;
   border-radius: 9999px;

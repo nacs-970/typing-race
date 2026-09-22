@@ -69,27 +69,33 @@
   --color-copperwood-900: #672518;
   --color-copperwood-950: #1e1106;
 
-  /* Semantic Theme Tokens */
+  /* Semantic Theme Tokens
+   * bg-base/bg-surface/bg-surface-elevated/text-bright/accent-green/
+   * char-correct/status-danger/cursor-own are the tokens the settings panel
+   * overrides directly (see store/settings.ts applySettingsToDom). Everything
+   * below is derived FROM those six via color-mix(), so a theme/preset change
+   * recolors the whole app, not just the surfaces settings.ts touches directly.
+   */
   --color-bg-base: #fefbe6;
   --color-bg-surface: #fefbe6;
   --color-bg-surface-elevated: #fefbe6;
-  --color-bg-surface-hover: #f3edd0;
-  --color-bg-overlay: rgba(254, 251, 230, 0.92);
+  --color-bg-surface-hover: color-mix(in srgb, var(--color-bg-surface) 85%, var(--color-text-bright) 15%);
+  --color-bg-overlay: color-mix(in srgb, var(--color-bg-surface) 92%, transparent);
 
-  --color-border-subtle: #d8debe;
-  --color-border-muted: rgba(60, 70, 38, 0.2);
-  --color-border-hover: #90a358;
+  --color-border-subtle: color-mix(in srgb, var(--color-bg-surface) 88%, var(--color-text-bright) 12%);
+  --color-border-muted: color-mix(in srgb, var(--color-text-bright) 20%, transparent);
+  --color-border-hover: var(--color-accent-green);
 
   --color-text-bright: #151d10;
-  --color-text-muted: #4a572c;
-  --color-text-faint: #7e914a;
+  --color-text-muted: color-mix(in srgb, var(--color-text-bright) 75%, var(--color-bg-surface) 25%);
+  --color-text-faint: color-mix(in srgb, var(--color-text-bright) 55%, var(--color-bg-surface) 45%);
   --color-text-dark: #ffffff;
 
   /* Green Accent: #90a358 (5% darker than #9bad67) */
   --color-accent-green: #90a358;
-  --color-accent-green-hover: #7e914a;
-  --color-accent-green-subtle: rgba(144, 163, 88, 0.2);
-  --color-accent-green-glow: rgba(144, 163, 88, 0.5);
+  --color-accent-green-hover: color-mix(in srgb, var(--color-accent-green) 85%, black 15%);
+  --color-accent-green-subtle: color-mix(in srgb, var(--color-accent-green) 20%, transparent);
+  --color-accent-green-glow: color-mix(in srgb, var(--color-accent-green) 50%, transparent);
 
   --color-char-correct: #1a4d10;
   --color-cursor-own: var(--color-accent-green);
@@ -99,15 +105,15 @@
   --color-accent-subtle: var(--color-accent-green-subtle);
   --color-accent-glow: var(--color-accent-green-glow);
 
-  --color-status-success: #2e7d32;
-  --color-status-warning: #d97706;
-  --color-status-amber: #d97706;
+  --color-status-success: var(--color-char-correct);
   --color-status-danger: #dc2626;
+  --color-status-warning: color-mix(in srgb, var(--color-accent-green) 50%, var(--color-status-danger) 50%);
+  --color-status-amber: var(--color-status-warning);
 
-  --color-danger-bg: #fef2f2;
-  --color-danger-border: #fecaca;
-  --color-danger-hover: #fee2e2;
-  --color-danger-text: #b91c1c;
+  --color-danger-bg: color-mix(in srgb, var(--color-status-danger) 8%, var(--color-bg-surface) 92%);
+  --color-danger-border: color-mix(in srgb, var(--color-status-danger) 30%, var(--color-bg-surface) 70%);
+  --color-danger-hover: color-mix(in srgb, var(--color-status-danger) 12%, var(--color-bg-surface) 88%);
+  --color-danger-text: color-mix(in srgb, var(--color-status-danger) 80%, black 20%);
 
   /* Cursor Rainbow Slots (pastel) */
   --color-cursor-slot-1: #f87171;

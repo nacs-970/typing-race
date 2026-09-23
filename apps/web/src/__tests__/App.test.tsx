@@ -114,11 +114,11 @@ describe("App — SERVER_SHUTTING_DOWN error frame", () => {
 });
 
 describe("App — player_disconnected notice", () => {
-  it("can be dismissed with its close button", async () => {
+  it("shows exactly one warning toast, and no inline .toast-disconnect notice", async () => {
     const { App } = await import("../App.tsx");
     const { ws } = await import("../net/ws.ts");
 
-    const { container, getByLabelText } = render(<App />);
+    const { container } = render(<App />);
 
     act(() => {
       ws.dispatch({
@@ -129,10 +129,9 @@ describe("App — player_disconnected notice", () => {
       } satisfies ServerToClient);
     });
 
-    expect(container.querySelectorAll(".toast-disconnect").length).toBe(1);
-
-    fireEvent.click(getByLabelText("Dismiss disconnect notice for Hi"));
-
+    expect(
+      container.querySelectorAll('[data-testid="toast-warning"][data-toast-id]').length,
+    ).toBe(1);
     expect(container.querySelectorAll(".toast-disconnect").length).toBe(0);
   });
 });

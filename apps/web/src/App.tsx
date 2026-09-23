@@ -34,10 +34,6 @@ export function App(): React.ReactElement {
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [isHost, setIsHost] = useState<boolean>(false);
   const [sessionTakenOver, setSessionTakenOver] = useState<boolean>(false);
-  const [disconnectToasts, setDisconnectToasts] = useState<
-    Array<{ playerId: string; nickname: string }>
-  >([]);
-  const [reconnectedNotice, setReconnectedNotice] = useState<string | null>(null);
   const [nickname, setNickname] = useState<string>(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("typing_race_nickname") || "";
@@ -143,8 +139,8 @@ export function App(): React.ReactElement {
               if (!prevHost && me.isHost) {
                 addToast({
                   type: "success",
-                  title: "Host Promoted",
-                  body: "You are now the room host!",
+                  title: "You're the host",
+                  body: "You're the host now.",
                   durationMs: 4000,
                 });
               }
@@ -154,10 +150,6 @@ export function App(): React.ReactElement {
         }
       }
       if (msg.type === "player_disconnected") {
-        setDisconnectToasts((prev) => [
-          ...prev.filter((t) => t.playerId !== msg.playerId),
-          { playerId: msg.playerId, nickname: msg.nickname },
-        ]);
         addToast({
           type: "warning",
           title: "Player Disconnected",
@@ -166,22 +158,14 @@ export function App(): React.ReactElement {
         });
       }
       if (msg.type === "player_reconnected") {
-        setDisconnectToasts((prev) =>
-          prev.filter((t) => t.playerId !== msg.playerId),
-        );
-        setReconnectedNotice(`${msg.nickname} reconnected!`);
-        setTimeout(() => setReconnectedNotice(null), 3000);
         addToast({
           type: "success",
           title: "Player Reconnected",
-          body: `${msg.nickname} reconnected!`,
+          body: `${msg.nickname} reconnected.`,
           durationMs: 3000,
         });
       }
       if (msg.type === "player_left") {
-        setDisconnectToasts((prev) =>
-          prev.filter((t) => t.playerId !== msg.playerId),
-        );
         useRaceStore.setState((s) => ({
           lobbyPlayers: s.lobbyPlayers.filter((p) => p.playerId !== msg.playerId),
         }));
@@ -229,9 +213,8 @@ export function App(): React.ReactElement {
             body =
               "Rate limit reached (max 10 rooms/hr). Wait 15 minutes or join an existing room.";
           } else {
-            title = "Typing Throttled";
-            body =
-              "Keystroke rate limit exceeded (<20ms interval or race start grace).";
+            title = "Slow down";
+            body = "Typing too fast to register. Slow down a little.";
           }
         }
         if (
@@ -374,39 +357,6 @@ export function App(): React.ReactElement {
       <ReconnectBanner sessionTakenOver={sessionTakenOver} />
 
       <GraceBanner />
-
-      {disconnectToasts.length > 0 && (
-        <div className="disconnect-toasts my-2">
-          {disconnectToasts.map((t) => (
-            <div
-              key={t.playerId}
-              className="toast-disconnect"
-            >
-              <span>
-                — <strong>{t.nickname}</strong> disconnected — waiting up to 60s for reconnect...
-              </span>
-              <button
-                type="button"
-                aria-label={`Dismiss disconnect notice for ${t.nickname}`}
-                className="font-mono text-[13px] bg-transparent border-0 p-0 text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] cursor-pointer leading-none"
-                onClick={() =>
-                  setDisconnectToasts((prev) =>
-                    prev.filter((d) => d.playerId !== t.playerId),
-                  )
-                }
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {reconnectedNotice && (
-        <div className="toast-reconnected">
-          — {reconnectedNotice}
-        </div>
-      )}
 
       {!roomCode && !raceStart && !inCountdown && !inResults && (
         <div className="landing-view w-full flex flex-col items-center">

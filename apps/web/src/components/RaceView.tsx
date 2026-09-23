@@ -346,14 +346,17 @@ export function RaceView({
         />
       </div>
 
-      {ownIndex >= passageText.length && !localEngine.getIsFinished() && (
-        <div
-          data-testid="finish-blocked-banner"
-          className="mt-5 pt-2.5 border-t border-[var(--color-status-danger)] text-[var(--color-status-danger)] text-sm"
-        >
-          — Finish blocked. Backspace to fix errors first.
-        </div>
-      )}
+      {/* Always mounted, so screen readers announce the note when it appears. */}
+      <div role="status">
+        {ownIndex >= passageText.length && !localEngine.getIsFinished() && (
+          <div
+            data-testid="finish-blocked-banner"
+            className="mt-5 pt-2.5 border-t border-[var(--color-status-danger)] text-[var(--color-status-danger)] text-sm"
+          >
+            — Finish blocked. Backspace to fix errors first.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

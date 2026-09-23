@@ -34,27 +34,38 @@ function ToastCard({
     info: "toast-info",
   }[toast.type];
 
-  const icon = {
-    error: "❌",
-    warning: "⚠️",
-    success: "✓",
-    info: "ℹ️",
+  const tagText = {
+    error: "ERR",
+    warning: "NOTE",
+    success: "OK",
+    info: "INFO",
+  }[toast.type];
+
+  const tagColorClass = {
+    error: "text-[var(--color-status-danger)]",
+    warning: "text-[var(--color-status-warning)]",
+    success: "text-[var(--color-accent-green)]",
+    info: "text-[var(--color-text-muted)]",
   }[toast.type];
 
   return (
     <div
-      className={`pointer-events-auto relative overflow-hidden rounded-lg p-3.5 bg-[var(--color-bg-base)]/95 border shadow-2xl backdrop-blur-md transition-all duration-300 ${borderAndAccentClass}`}
+      className={`pointer-events-auto relative p-3 bg-[var(--color-bg-surface)] border border-[var(--color-border-muted)] border-l-2 rounded-none transition-all duration-300 font-mono text-[var(--color-text-bright)] ${borderAndAccentClass}`}
       data-testid={`toast-${toast.type}`}
       data-toast-id={toast.id}
       role="alert"
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-start gap-2">
-          <span className="text-base select-none">{icon}</span>
-          <div>
-            <h5 className="font-bold text-sm m-0 leading-tight">{toast.title}</h5>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3 flex-grow">
+          <span className={`label font-bold pt-0.5 select-none ${tagColorClass}`}>
+            {tagText}
+          </span>
+          <div className="flex-grow">
+            <h5 className="font-mono font-bold text-sm m-0 leading-tight text-[var(--color-text-bright)]">
+              {toast.title}
+            </h5>
             {toast.body && (
-              <p className="text-xs text-[var(--color-text-muted)] mt-1 m-0 leading-relaxed">
+              <p className="font-mono text-[13px] text-[var(--color-text-muted)] mt-1 m-0 leading-relaxed">
                 {toast.body}
               </p>
             )}
@@ -64,17 +75,17 @@ function ToastCard({
         <button
           type="button"
           aria-label="Dismiss notification"
-          className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] transition-colors p-1 rounded hover:bg-[var(--color-bg-surface-hover)]"
+          className="font-mono text-[13px] bg-transparent border-0 p-0 text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] cursor-pointer leading-none"
           onClick={onDismiss}
         >
-          ✕
+          ×
         </button>
       </div>
 
       {toast.showProgress && toast.durationMs && (
-        <div className="w-full h-1 bg-[var(--color-bg-surface)] rounded-full overflow-hidden mt-2.5">
+        <div className="w-full h-[1px] bg-[var(--color-border-muted)] overflow-hidden mt-2.5">
           <div
-            className="h-full bg-current rounded-full animate-[shrink_linear_forwards]"
+            className="h-full bg-[var(--color-text-bright)] animate-[shrink_linear_forwards]"
             style={{
               animationDuration: `${toast.durationMs}ms`,
             }}

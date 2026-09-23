@@ -130,7 +130,7 @@ describe("ResultsBoard", () => {
       <ResultsBoard results={sampleResults} isHost={true} onLeaveRoom={onLeaveRoom} />,
     );
 
-    const leaveBtn = getByText("🚪 Leave Room");
+    const leaveBtn = getByText("Leave room");
     fireEvent.click(leaveBtn);
     expect(onLeaveRoom).toHaveBeenCalled();
   });
@@ -141,7 +141,7 @@ describe("ResultsBoard", () => {
       <ResultsBoard results={sampleResults} isHost={false} onLeaveRoom={onLeaveRoom} />,
     );
 
-    const leaveBtn = getByText("🚪 Leave Room");
+    const leaveBtn = getByText("Leave room");
     fireEvent.click(leaveBtn);
     expect(onLeaveRoom).toHaveBeenCalled();
   });

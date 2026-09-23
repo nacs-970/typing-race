@@ -53,11 +53,18 @@ export function ResultsBoard({
     return [...results].sort((a, b) => score(b) - score(a));
   }, [results, finishedPlayerIds]);
 
+  const getRankLabel = (i: number): string => {
+    if (i === 0) return "1st Place";
+    if (i === 1) return "2nd Place";
+    if (i === 2) return "3rd Place";
+    return `${i + 1}th Place`;
+  };
+
   if (results.length === 0) {
     return (
-      <div className="results-board results-empty-state max-w-[800px] mx-auto p-6 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] text-center font-mono text-[var(--color-text-bright)]">
-        <h3 className="text-xl font-bold mb-2">Awaiting Race Finishers</h3>
-        <p className="text-sm text-[var(--color-text-muted)] m-0">
+      <div className="results-board results-empty-state w-full max-w-[860px] mx-auto py-8 text-center font-mono text-[var(--color-text-bright)] border-t border-b border-[var(--color-border-muted)]">
+        <h3 className="text-xl font-normal font-serif-display mb-2">Awaiting Race Finishers</h3>
+        <p className="text-sm italic text-[var(--color-text-muted)] m-0">
           Complete the passage to view final standings, WPM, and accuracy metrics.
         </p>
       </div>
@@ -121,26 +128,30 @@ export function ResultsBoard({
 
   return (
     <div
-      className="results-board max-w-[800px] mx-auto p-6 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] text-[var(--color-text-bright)] font-mono shadow-2xl"
+      className="results-board w-full max-w-[860px] mx-auto text-[var(--color-text-bright)] font-mono text-left"
       data-testid="results-board"
     >
-      <div className="border-b border-[var(--color-border-subtle)] pb-4 mb-6">
-        <h2 className="text-2xl font-bold m-0 tracking-tight">Race Results</h2>
-        <p className="text-sm text-[var(--color-text-muted)] mt-1 mb-0">
-          Final standings, speed, and precision metrics
-        </p>
+      <div className="flex justify-between label pb-2.5 border-b border-[var(--color-border-muted)]">
+        <span>{typeLabel} · {catLabel}</span>
       </div>
 
+      <h2 className="mt-9 m-0 font-serif-display font-normal text-[88px] leading-none text-[var(--color-text-bright)]">
+        Results
+      </h2>
+      <p className="mt-3 mb-7 italic text-[15px] text-[var(--color-text-muted)]">
+        Final standings, speed and precision.
+      </p>
+
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full border-collapse font-mono text-base tabular-nums">
           <thead>
-            <tr className="border-b border-[var(--color-border-subtle)] text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
-              <th className="py-2.5 px-3">Rank</th>
-              <th className="py-2.5 px-3">Player</th>
-              <th className="py-2.5 px-3">Time</th>
-              <th className="py-2.5 px-3">Delta</th>
-              <th className="py-2.5 px-3">WPM</th>
-              <th className="py-2.5 px-3">Accuracy</th>
+            <tr className="border-t border-[var(--color-text-bright)] border-b border-[var(--color-border-muted)]">
+              <th className="text-left py-2.5 px-3 label font-normal">Rank</th>
+              <th className="text-left py-2.5 px-3 label font-normal">Player</th>
+              <th className="text-right py-2.5 px-3 label font-normal">Time</th>
+              <th className="text-right py-2.5 px-3 label font-normal">Delta</th>
+              <th className="text-right py-2.5 px-3 label font-normal">WPM</th>
+              <th className="text-right py-2.5 px-3 label font-normal">Accuracy</th>
             </tr>
           </thead>
           <tbody>
@@ -151,66 +162,47 @@ export function ResultsBoard({
               const isFastest = r.finishTimeMs === fastestFinishMs;
               const deltaMs = r.finishTimeMs - fastestFinishMs;
               const deltaText = isFastest ? "Fastest" : `+${(deltaMs / 1000).toFixed(1)}s`;
-
-              let rankBadge: React.ReactNode;
-              if (i === 0) {
-                rankBadge = (
-                  <span role="img" aria-label="1st Place" className="text-lg">
-                    🥇
-                  </span>
-                );
-              } else if (i === 1) {
-                rankBadge = (
-                  <span role="img" aria-label="2nd Place" className="text-lg">
-                    🥈
-                  </span>
-                );
-              } else if (i === 2) {
-                rankBadge = (
-                  <span role="img" aria-label="3rd Place" className="text-lg">
-                    🥉
-                  </span>
-                );
-              } else {
-                rankBadge = <span className="font-bold text-[var(--color-text-muted)]">#{i + 1}</span>;
-              }
+              const rankLabel = getRankLabel(i);
 
               return (
                 <tr
                   key={r.playerId}
-                  className={`border-b border-[var(--color-border-subtle)]/40 transition-colors ${
+                  className={`border-b border-[var(--color-border-subtle)] ${
                     isMe
-                      ? "bg-[var(--color-accent-clay)]/15 border-[var(--color-accent-clay)]/50 font-bold"
-                      : "hover:bg-[var(--color-bg-base)]/40"
+                      ? "bg-[color-mix(in_srgb,var(--color-accent-green)_8%,transparent)] font-bold shadow-[inset_2px_0_0_var(--color-accent-green)]"
+                      : ""
                   }`}
                   data-testid="result-row"
                   data-player-id={r.playerId}
                 >
-                  <td className="py-3 px-3">{rankBadge}</td>
-                  <td className="py-3 px-3">
-                    <div className="flex items-center gap-1.5">
-                      <span className="truncate max-w-[150px]">{displayName}</span>
-                      {isMe && (
-                        <span className="text-[10px] text-[var(--color-accent-clay)] uppercase font-bold bg-[var(--color-accent-clay)]/10 px-1.5 py-0.5 rounded">
-                          (You)
-                        </span>
-                      )}
-                    </div>
+                  <td
+                    className="py-3.5 px-3 font-serif-display text-[22px] font-normal"
+                    aria-label={rankLabel}
+                  >
+                    No. {i + 1}
                   </td>
-                  <td className="py-3 px-3 text-sm text-[var(--color-text-bright)]">
-                    {formatTime(r.finishTimeMs)}
-                  </td>
-                  <td className="py-3 px-3 text-sm font-semibold">
-                    {i === 0 ? (
-                      <span className="text-[var(--color-status-success)] font-bold">Winner</span>
-                    ) : (
-                      <span className="text-[var(--color-accent-clay)]">{deltaText}</span>
+                  <td className="py-3.5 px-3">
+                    <span className="truncate max-w-[150px] inline-block align-middle">{displayName}</span>
+                    {isMe && (
+                      <span className="italic font-normal text-[var(--color-text-muted)] text-sm ml-1.5 align-middle">
+                        (You)
+                      </span>
                     )}
                   </td>
-                  <td className="py-3 px-3 text-sm font-bold text-[var(--color-text-bright)]">
+                  <td className="py-3.5 px-3 text-right">
+                    {formatTime(r.finishTimeMs)}
+                  </td>
+                  <td className="py-3.5 px-3 text-right">
+                    {i === 0 ? (
+                      <span className="text-[var(--color-accent-green)] font-bold">Winner</span>
+                    ) : (
+                      <span>{deltaText}</span>
+                    )}
+                  </td>
+                  <td className="py-3.5 px-3 text-right">
                     {r.wpm.toFixed(1)}
                   </td>
-                  <td className="py-3 px-3 text-sm text-[var(--color-status-success)]">
+                  <td className="py-3.5 px-3 text-right text-[var(--color-text-bright)]">
                     {(r.accuracy * 100).toFixed(1)}%
                   </td>
                 </tr>
@@ -221,10 +213,10 @@ export function ResultsBoard({
       </div>
 
       {isHost ? (
-        <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t border-[var(--color-border-subtle)]">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 mt-9 pt-5 border-t border-[var(--color-border-muted)]">
           <button
             type="button"
-            className="flex-1 py-3 px-4 rounded-lg text-sm font-bold bg-[var(--color-accent-clay)] text-white hover:bg-[var(--color-accent-hover)] transition-colors shadow-md text-center cursor-pointer"
+            className="flex-grow font-mono text-base font-bold tracking-[0.04em] bg-[var(--color-accent-green)] hover:bg-[var(--color-accent-green-hover)] text-[var(--color-bg-base)] border border-[var(--color-accent-green)] rounded-none py-3.5 px-4 cursor-pointer transition-colors"
             data-testid="rematch-button"
             onClick={handleRematch}
           >
@@ -232,7 +224,7 @@ export function ResultsBoard({
           </button>
           <button
             type="button"
-            className="py-3 px-4 rounded-lg text-sm font-semibold bg-[var(--color-bg-base)] border border-[var(--color-border-subtle)] text-[var(--color-text-bright)] hover:bg-[var(--color-bg-surface-hover)] transition-colors text-center cursor-pointer"
+            className="font-mono text-base font-bold tracking-[0.04em] bg-transparent text-[var(--color-text-bright)] border border-[var(--color-text-bright)] hover:bg-[var(--color-bg-surface-hover)] rounded-none py-3.5 px-5 cursor-pointer transition-colors whitespace-nowrap"
             onClick={handleReturnToLobby}
           >
             Return to Lobby
@@ -240,25 +232,25 @@ export function ResultsBoard({
           {onLeaveRoom && (
             <button
               type="button"
-              className="py-3 px-4 rounded-lg text-sm font-semibold bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] text-[var(--color-danger-text)] hover:bg-[var(--color-danger-hover)] transition-colors text-center cursor-pointer"
+              className="font-mono text-sm bg-transparent border-0 py-0 px-2 text-[var(--color-status-danger)] underline underline-offset-4 cursor-pointer hover:opacity-80 transition-opacity whitespace-nowrap"
               onClick={onLeaveRoom}
             >
-              🚪 Leave Room
+              Leave room
             </button>
           )}
         </div>
       ) : (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 pt-4 border-t border-[var(--color-border-subtle)]">
-          <span className="text-xs text-[var(--color-text-muted)] italic">
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 mt-9 pt-5 border-t border-[var(--color-border-muted)]">
+          <span className="italic text-sm text-[var(--color-text-muted)]">
             Waiting for host to start rematch or return to lobby…
           </span>
           {onLeaveRoom && (
             <button
               type="button"
-              className="py-2.5 px-4 rounded-lg text-sm font-semibold bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] text-[var(--color-danger-text)] hover:bg-[var(--color-danger-hover)] transition-colors text-center cursor-pointer"
+              className="font-mono text-sm bg-transparent border-0 py-0 px-2 text-[var(--color-status-danger)] underline underline-offset-4 cursor-pointer hover:opacity-80 transition-opacity whitespace-nowrap"
               onClick={onLeaveRoom}
             >
-              🚪 Leave Room
+              Leave room
             </button>
           )}
         </div>

@@ -24,22 +24,21 @@ export function GraceBanner(): React.ReactElement | null {
 
   return (
     <div
-      className="grace-banner overflow-hidden p-3 rounded-xl bg-[var(--color-bg-surface)] border border-[var(--color-accent-clay)]/60 shadow-[0_8px_24px_rgba(0,0,0,0.6),0_0_16px_var(--color-accent-subtle)] text-[var(--color-text-bright)] font-mono"
+      className="grace-banner flex flex-col gap-2 py-2.5 px-4 bg-[var(--color-bg-surface)] border-t border-[var(--color-text-bright)] border-b border-[var(--color-border-muted)] rounded-none text-[var(--color-text-bright)] font-mono shadow-none"
       role="status"
       aria-live="polite"
       data-testid="grace-banner"
     >
-      <div className="flex items-center justify-between text-xs font-bold mb-1.5">
-        <span className="text-[var(--color-cursor-slot-4)]">
-          ⚡ {banner.leaderNickname ? `${banner.leaderNickname} finished 1st!` : "First racer finished!"}
+      <div className="flex items-center justify-between text-sm">
+        <span>
+          — {banner.leaderNickname ? `${banner.leaderNickname} finished first.` : "First racer finished."}
         </span>
-        <span className="text-[var(--color-accent-clay)]">{seconds}s remaining</span>
+        <span className="text-[var(--color-text-muted)]">{seconds}s remaining</span>
       </div>
 
-      {/* Glowing timer shrink bar */}
-      <div className="w-full h-1.5 bg-[var(--color-bg-base)] rounded-full overflow-hidden">
+      <div className="relative h-[1px] w-full bg-[var(--color-border-muted)]">
         <div
-          className="h-full bg-gradient-to-r from-[var(--color-accent-clay)] to-[var(--color-cursor-slot-4)] rounded-full transition-all duration-75 ease-linear shadow-[0_0_8px_var(--color-accent-clay)]"
+          className="absolute left-0 -top-[1px] h-[2px] bg-[var(--color-text-bright)] transition-all duration-75 ease-linear"
           style={{ width: `${percent}%` }}
         />
       </div>

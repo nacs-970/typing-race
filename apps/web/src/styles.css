@@ -230,20 +230,16 @@ h1 {
 
 /* Toast Queue System */
 .toast-error {
-  border-color: var(--color-status-danger);
-  color: var(--color-text-bright);
+  border-left-color: var(--color-status-danger);
 }
 .toast-warning {
-  border-color: var(--color-status-warning);
-  color: var(--color-text-bright);
+  border-left-color: var(--color-status-warning);
 }
 .toast-success {
-  border-color: var(--color-status-success);
-  color: var(--color-text-bright);
+  border-left-color: var(--color-accent-green);
 }
 .toast-info {
-  border-color: var(--color-border-subtle);
-  color: var(--color-text-bright);
+  border-left-color: var(--color-text-muted);
 }
 
 .countdown-view {
@@ -367,16 +363,8 @@ h1 {
   width: 80%;
   max-width: 800px;
   box-sizing: border-box;
-  background: var(--color-bg-surface);
-  color: var(--color-text-bright);
-  padding: 0.75rem 1rem;
-  text-align: center;
-  font-weight: 600;
   z-index: 1000;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 0;
 }
-.grace-banner .grace-text { font-size: 1rem; }
 
 .lobby-view {
   margin-top: 1.5rem;
@@ -395,9 +383,6 @@ h1 {
   margin-top: 1.5rem;
   text-align: left;
 }
-.results-board h2 { margin-top: 0; color: var(--color-text-bright); }
-.results-board table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-.results-board th, .results-board td { text-align: left; }
 
 button:focus-visible, input:focus-visible, [tabindex]:focus-visible {
   outline: 2px solid var(--color-accent-green);

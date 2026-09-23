@@ -140,11 +140,10 @@ export function LobbyView({
         <div className="flex gap-6 normal-case tracking-normal text-sm font-mono">
           <button
             type="button"
-            aria-label="Copy room invite link"
             className="bg-transparent border-0 p-0 text-[var(--color-text-bright)] underline underline-offset-4 cursor-pointer font-mono text-sm"
             onClick={handleCopyLink}
           >
-            {copySuccess ? "copied" : "room link"}
+            <span aria-live="polite">{copySuccess ? "copied" : "room link"}</span>
           </button>
           {onLeaveRoom && (
             <button

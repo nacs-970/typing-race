@@ -216,11 +216,11 @@ export function LobbyView({
         <div className="label py-2.5 border-t border-[var(--color-text-bright)]">
           Competitors ({players.length})
         </div>
-        <div className="flex flex-col text-base">
+        <ul className="flex flex-col text-base list-none m-0 p-0">
           {players.map((p, idx) => {
             const isMe = p.playerId === myPlayerId;
             return (
-              <div
+              <li
                 key={p.playerId}
                 className="flex items-baseline gap-4 py-2.5 border-b border-[var(--color-border-subtle)]"
               >
@@ -248,10 +248,10 @@ export function LobbyView({
                 ) : (
                   <span className="italic text-[var(--color-text-muted)]">Waiting…</span>
                 )}
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </div>
 
       {/* Guest Ready Up Action */}

@@ -278,7 +278,7 @@ export function LobbyView({
             <p className="m-0 mt-3 italic text-sm text-[var(--color-text-muted)]">
               {getCategoryDescription(storeCorpusType ?? "passage", storeCorpusCategory ?? "mid")}
             </p>
-            <p className="m-0 mt-1 italic text-xs text-[var(--color-text-faint)]">
+            <p className="m-0 mt-1 italic text-xs text-[var(--color-text-muted)]">
               A random {storeCorpusType === "random_words" ? "word sequence" : "passage"} will be dealt when the host starts the race.
             </p>
           </div>

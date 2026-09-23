@@ -283,7 +283,7 @@ h1 {
 }
 
 .char-pending {
-  color: color-mix(in srgb, var(--color-text-bright) 50%, var(--color-bg-surface) 50%);
+  color: color-mix(in srgb, var(--color-text-bright) 65%, var(--color-bg-surface) 35%);
 }
 
 .char-correct {

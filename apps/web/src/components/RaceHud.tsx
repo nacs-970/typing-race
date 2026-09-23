@@ -81,12 +81,12 @@ export function RaceHud({
 
   return (
     <div
-      className="race-hud flex items-center justify-between py-3.5 border-t border-b border-[var(--color-border-muted)] text-[var(--color-text-bright)] font-mono select-none"
+      className="race-hud grid grid-cols-[1fr_minmax(0,280px)_1fr] items-center gap-6 py-3.5 border-t border-b border-[var(--color-border-muted)] text-[var(--color-text-bright)] font-mono select-none"
       data-testid="race-hud"
     >
       {/* Net WPM with Hover/Focus Tooltip */}
       <div
-        className="relative flex flex-col gap-1 cursor-pointer group"
+        className="relative flex flex-col gap-1 cursor-pointer group justify-self-start"
         data-testid="wpm-display"
         tabIndex={0}
         onMouseEnter={() => setShowTooltip(true)}
@@ -141,8 +141,9 @@ export function RaceHud({
         )}
       </div>
 
-      {/* Progress Bar Indicator */}
-      <div className="flex-1 max-w-[280px] mx-6 flex flex-col gap-2">
+      {/* Progress Bar Indicator: the middle grid track has a fixed width, so
+          changing WPM, accuracy or rank text never moves it. */}
+      <div className="w-full flex flex-col gap-2">
         <div className="flex justify-between label">
           <span>Track</span>
           <span>{Math.round(progressPercent)}%</span>
@@ -160,7 +161,7 @@ export function RaceHud({
       </div>
 
       {/* Rank Badge Indicator & Leave Room */}
-      <div className="flex items-baseline gap-6">
+      <div className="flex items-baseline gap-6 justify-self-end">
         <span
           className={`font-serif-display text-[30px] leading-none ${
             rank === 1 ? "text-[var(--color-accent-green)]" : "text-[var(--color-text-bright)]"

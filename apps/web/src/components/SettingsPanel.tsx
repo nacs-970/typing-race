@@ -47,7 +47,7 @@ export function SettingsPanel(): React.ReactElement {
             </button>
           </div>
 
-          <label className="label block mb-1.5">Theme</label>
+          <span className="label block mb-1.5">Theme</span>
           <div className="flex gap-2 mb-3">
             {THEME_PRESETS.map((preset) => (
               <button
@@ -67,10 +67,11 @@ export function SettingsPanel(): React.ReactElement {
             ))}
           </div>
 
-          <label className="label block mb-1.5">
+          <label htmlFor="font-size-input" className="label block mb-1.5">
             Font size ({settings.fontSize}px)
           </label>
           <input
+            id="font-size-input"
             type="range"
             min={12}
             max={24}

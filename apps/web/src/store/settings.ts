@@ -17,7 +17,7 @@ export const DEFAULT_SETTINGS: PlayerSettings = {
   colorIncorrect: "#b3261e",
   colorCursor: "#80924a",
   colorAccent: "#5f6f36",
-  colorBackground: "#fdfbf3",
+  colorBackground: "#fefbe6",
   colorText: "#1d2114",
 };
 
@@ -37,7 +37,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       colorIncorrect: "#b3261e",
       colorCursor: "#80924a",
       colorAccent: "#5f6f36",
-      colorBackground: "#fdfbf3",
+      colorBackground: "#fefbe6",
       colorText: "#1d2114",
     },
   },
@@ -59,7 +59,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       colorIncorrect: "#b91c1c",
       colorCursor: "#B6B6B6",
       colorAccent: "#000000",
-      colorBackground: "#ffffff",
+      colorBackground: "#fafaf7",
       colorText: "#000000",
     },
   },

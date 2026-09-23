@@ -77,9 +77,9 @@
    * below is derived FROM those six via color-mix(), so a theme/preset change
    * recolors the whole app, not just the surfaces settings.ts touches directly.
    */
-  --color-bg-base: #fdfbf3;
-  --color-bg-surface: #fdfbf3;
-  --color-bg-surface-elevated: #fdfbf3;
+  --color-bg-base: #fefbe6;
+  --color-bg-surface: #fefbe6;
+  --color-bg-surface-elevated: #fefbe6;
   --color-bg-surface-hover: color-mix(in srgb, var(--color-bg-surface) 85%, var(--color-text-bright) 15%);
   --color-bg-overlay: color-mix(in srgb, var(--color-bg-surface) 92%, transparent);
 

@@ -40,7 +40,7 @@ Define colors ONLY as tokens in `apps/web/src/styles.css` (`@theme`). In compone
 
 | Token | Default | Use |
 |---|---|---|
-| `--color-bg-base` / `-surface` / `-surface-elevated` | `#fdfbf3` | Paper. Cream-white, not grey off-white |
+| `--color-bg-base` / `-surface` / `-surface-elevated` | `#fefbe6` | Paper. Cream off-white, not grey |
 | `--color-text-bright` | `#1d2114` | Ink: body text, rules, outline buttons |
 | `--color-accent-green` | `#5f6f36` | Olive ink: primary buttons, active states, "Winner" |
 | `--color-cursor-own` | `#80924a` | Your caret, and your own chip in the lobby |

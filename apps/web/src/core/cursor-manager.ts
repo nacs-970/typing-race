@@ -328,6 +328,9 @@ export class CursorManager {
     caret.style.height = `${this.fontSize * CARET_HEIGHT_RATIO}px`;
     caret.style.marginTop = `${this.fontSize * CARET_MARGIN_TOP_RATIO}px`;
     caret.style.backgroundColor = color;
+    // Pastel slots are 1.6-2.7:1 on light paper; the fixed dark ink edge keeps
+    // the caret above 3:1 there and blends into dark themes, where the pastels pass.
+    caret.style.outline = "1px solid var(--color-on-cursor)";
 
     root.appendChild(tag);
     root.appendChild(caret);

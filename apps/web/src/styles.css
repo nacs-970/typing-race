@@ -414,3 +414,25 @@ button:active:not(:disabled) {
 .choice[aria-pressed="true"]::after {
   visibility: visible;
 }
+
+/* Visually hidden but focusable typing target for touch keyboards (RaceView).
+ * Never display:none / visibility:hidden — both would also block focus.
+ * font-size 16px stops iOS Safari zooming the page on focus. */
+.sr-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  font-size: 16px;
+  pointer-events: none;
+  -webkit-user-select: text;
+  user-select: text;
+}

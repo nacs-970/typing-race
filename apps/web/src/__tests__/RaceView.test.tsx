@@ -174,6 +174,162 @@ describe("RaceView — char-state accents & zero-commit overlay", () => {
       useRaceStore.setState({ lobbyPlayers: [] });
     });
   });
+
+  test("8. tapping the passage track focuses the hidden mobile input", () => {
+    const { container, getByTestId } = render(
+      <RaceView passageText={PASSAGE} playerId="me" onKeystroke={() => {}} onCorrection={() => {}} />,
+    );
+    const track = container.querySelector(".passage-track") as HTMLElement;
+    const input = getByTestId("mobile-input") as HTMLInputElement;
+    expect(document.activeElement).not.toBe(input);
+    fireEvent.click(track);
+    expect(document.activeElement).toBe(input);
+  });
+
+  test("9. an input event with one new character advances the engine by one", () => {
+    const engine = new TypingEngine();
+    const { getByTestId } = render(
+      <RaceView
+        passageText={PASSAGE}
+        playerId="me"
+        typingEngine={engine}
+        onKeystroke={() => {}}
+        onCorrection={() => {}}
+      />,
+    );
+    const input = getByTestId("mobile-input") as HTMLInputElement;
+    act(() => {
+      fireEvent.input(input, { target: { value: input.value + "t" } });
+    });
+    expect(engine.getOwnIndex()).toBe(1);
+    expect(engine.getCharStates()[0]).toBe("correct");
+  });
+
+  test("10. a shorter input value deletes through the engine", () => {
+    const engine = new TypingEngine();
+    const { getByTestId } = render(
+      <RaceView
+        passageText={PASSAGE}
+        playerId="me"
+        typingEngine={engine}
+        onKeystroke={() => {}}
+        onCorrection={() => {}}
+      />,
+    );
+    const input = getByTestId("mobile-input") as HTMLInputElement;
+    act(() => {
+      fireEvent.input(input, { target: { value: input.value + "t" } });
+    });
+    expect(engine.getOwnIndex()).toBe(1);
+    act(() => {
+      fireEvent.input(input, { target: { value: "" } });
+    });
+    expect(engine.getOwnIndex()).toBe(0);
+  });
+
+  test("11. inserting several characters at once (autocomplete, paste, swipe) is rejected", () => {
+    const engine = new TypingEngine();
+    const { getByTestId } = render(
+      <RaceView
+        passageText={PASSAGE}
+        playerId="me"
+        typingEngine={engine}
+        onKeystroke={() => {}}
+        onCorrection={() => {}}
+      />,
+    );
+    const input = getByTestId("mobile-input") as HTMLInputElement;
+    act(() => {
+      fireEvent.input(input, { target: { value: input.value + "hello" } });
+    });
+    expect(engine.getOwnIndex()).toBe(0);
+  });
+
+  test("12. a keydown followed by its own resulting input event is not double-counted", () => {
+    const engine = new TypingEngine();
+    const { getByTestId } = render(
+      <RaceView
+        passageText={PASSAGE}
+        playerId="me"
+        typingEngine={engine}
+        onKeystroke={() => {}}
+        onCorrection={() => {}}
+      />,
+    );
+    const input = getByTestId("mobile-input") as HTMLInputElement;
+    act(() => {
+      fireEvent.keyDown(input, { key: "t" });
+      fireEvent.input(input, { target: { value: input.value + "t" } });
+    });
+    expect(engine.getOwnIndex()).toBe(1);
+  });
+
+  test("13. a held-down key on the mobile input does not bypass the repeat guard", () => {
+    const engine = new TypingEngine();
+    const { getByTestId } = render(
+      <RaceView
+        passageText={PASSAGE}
+        playerId="me"
+        typingEngine={engine}
+        onKeystroke={() => {}}
+        onCorrection={() => {}}
+      />,
+    );
+    const input = getByTestId("mobile-input") as HTMLInputElement;
+    act(() => {
+      fireEvent.keyDown(input, { key: "t", repeat: true });
+      fireEvent.input(input, { target: { value: input.value + "t" } });
+    });
+    expect(engine.getOwnIndex()).toBe(0);
+  });
+
+  test("14. Android's Unidentified keydown does not block the following input event", () => {
+    const engine = new TypingEngine();
+    const { getByTestId } = render(
+      <RaceView
+        passageText={PASSAGE}
+        playerId="me"
+        typingEngine={engine}
+        onKeystroke={() => {}}
+        onCorrection={() => {}}
+      />,
+    );
+    const input = getByTestId("mobile-input") as HTMLInputElement;
+    act(() => {
+      fireEvent.keyDown(input, { key: "Unidentified" });
+      fireEvent.input(input, { target: { value: input.value + "t" } });
+    });
+    expect(engine.getOwnIndex()).toBe(1);
+  });
+
+  test("15. on a touch device the tap hint stays mounted but hides while the mobile input is focused", () => {
+    const originalMatchMedia = window.matchMedia;
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: (q: string) => ({ matches: true, media: q }) as unknown as MediaQueryList,
+    });
+    try {
+      const { getByTestId } = render(
+        <RaceView passageText={PASSAGE} playerId="me" onKeystroke={() => {}} onCorrection={() => {}} />,
+      );
+      const hint = getByTestId("mobile-hint");
+      const input = getByTestId("mobile-input") as HTMLInputElement;
+      expect(hint.textContent).toBe("Tap the passage to type");
+      expect(hint.classList.contains("invisible")).toBe(false);
+
+      act(() => {
+        input.focus();
+      });
+      expect(hint.classList.contains("invisible")).toBe(true);
+    } finally {
+      Object.defineProperty(window, "matchMedia", {
+        configurable: true,
+        writable: true,
+        value: originalMatchMedia,
+      });
+    }
+  });
 });
 
 describe("ResultsBoard — ranking", () => {

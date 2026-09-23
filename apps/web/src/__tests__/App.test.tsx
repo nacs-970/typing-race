@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, cleanup, act } from "@testing-library/react";
+import { render, cleanup, act, fireEvent } from "@testing-library/react";
 import { clearToasts } from "../store/toast.ts";
 import type { ServerToClient } from "@typing-race/shared";
 
@@ -110,5 +110,29 @@ describe("App — SERVER_SHUTTING_DOWN error frame", () => {
 
     // The generic fallback title must NOT be used for this code.
     expect(queryByText("Error")).toBeNull();
+  });
+});
+
+describe("App — player_disconnected notice", () => {
+  it("can be dismissed with its close button", async () => {
+    const { App } = await import("../App.tsx");
+    const { ws } = await import("../net/ws.ts");
+
+    const { container, getByLabelText } = render(<App />);
+
+    act(() => {
+      ws.dispatch({
+        type: "player_disconnected",
+        playerId: "3f1c2b9e-8a4d-4c6e-9b1a-2d7e5f0c8a11",
+        nickname: "Hi",
+        timeoutMs: 60000,
+      } satisfies ServerToClient);
+    });
+
+    expect(container.querySelectorAll(".toast-disconnect").length).toBe(1);
+
+    fireEvent.click(getByLabelText("Dismiss disconnect notice for Hi"));
+
+    expect(container.querySelectorAll(".toast-disconnect").length).toBe(0);
   });
 });

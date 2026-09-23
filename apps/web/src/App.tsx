@@ -375,7 +375,21 @@ export function App(): React.ReactElement {
               key={t.playerId}
               className="toast-disconnect"
             >
-              — <strong>{t.nickname}</strong> disconnected — waiting up to 60s for reconnect...
+              <span>
+                — <strong>{t.nickname}</strong> disconnected — waiting up to 60s for reconnect...
+              </span>
+              <button
+                type="button"
+                aria-label={`Dismiss disconnect notice for ${t.nickname}`}
+                className="font-mono text-[13px] bg-transparent border-0 p-0 text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] cursor-pointer leading-none"
+                onClick={() =>
+                  setDisconnectToasts((prev) =>
+                    prev.filter((d) => d.playerId !== t.playerId),
+                  )
+                }
+              >
+                ×
+              </button>
             </div>
           ))}
         </div>

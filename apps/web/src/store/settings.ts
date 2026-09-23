@@ -57,7 +57,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     colors: {
       colorCorrect: "#000000",
       colorIncorrect: "#b91c1c",
-      colorCursor: "#BDBDBD",
+      colorCursor: "#000000",
       colorAccent: "#000000",
       colorBackground: "#ffffff",
       colorText: "#000000",

@@ -207,7 +207,7 @@ export function LobbyView({
           >
             {copySuccess ? "copied" : "room link"}
           </button> */}
-         <p>⊹ ࣪ ﹏𓊝﹏𓂁﹏⊹ ࣪ ˖</p>
+         <p aria-hidden="true">⊹ ࣪ ﹏𓊝﹏𓂁﹏⊹ ࣪ ˖</p>
         </div>
       )}
 

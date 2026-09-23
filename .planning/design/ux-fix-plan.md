@@ -13,18 +13,18 @@ This plan turns them into small, test-backed commits.
 **Rules for every step:**
 - Write the test first and see it fail. Then implement, and run `bunx vitest run` + `bunx tsc --noEmit` in `apps/web`. Commit each step.
 - Keep the pinned strings and test ids from `design-guideline.md` §9, unless the step below says to change one. If it does, change the test in the same commit.
-- Who does the work: every step is small, so Claude does steps A–E directly, because the round trip to agy costs more than the step. agy is optional for F.
+- Who does the work: Claude does steps A–G directly. They are small, or, in G's case, they need judgment about input edge cases, so the round trip to agy costs more than the step.
 
 ---
 
-## Decisions needed before starting
+## Decisions (made by the user, 2026-09-23)
 
-| # | Question | Recommendation |
+| # | Question | Decision |
 |---|---|---|
-| D1 | **Item 7:** a disconnect shows both a toast and an inline notice. Which one stays? | **Keep the toast.** It is dismissible, it expires, and it is consistent with every other event. Remove the inline notice and the "reconnected" notice. This undoes the dismiss button added in `9d95845` and its test, which the toast already covers. |
-| D2 | **Item 6:** remove the WPM hover tooltip? | **Keep it** for raw WPM (it opens on keyboard focus as well as hover), and ADD accuracy and errors inline. Removing it would mean deleting a working test. |
-| D3 | **Item 10:** mobile | **A notice only**: "Typing needs a physical keyboard." on coarse-pointer devices. A hidden-input keyboard is a separate project. |
-| D4 | The High Contrast cursor is `#BDBDBD` on white (≈1.9:1) | Use `#000000` again, or a dark color such as `#1f3fbf`. The user decides. |
+| D1 | **Item 7:** a disconnect shows both a toast and an inline notice. Which one stays? | **Keep the toast. Remove the inline notice** and the "reconnected" notice. This undoes the dismiss button from `9d95845` and its test; the toast is already dismissible. |
+| D2 | **Item 6:** remove the WPM hover tooltip? | **Keep the tooltip.** Add accuracy and errors inline. |
+| D3 | **Item 10:** mobile | **Mobile must be able to type.** Full support through a hidden input (step G), not only a notice. |
+| D4 | The High Contrast cursor is `#BDBDBD` on white (≈1.9:1) | **`#000000` for now.** |
 
 ---
 
@@ -128,18 +128,73 @@ This plan turns them into small, test-backed commits.
 
 ---
 
-## Step F: Optional (items 10, 12, and a review follow-up)
+## Step F: Small follow-ups (D4, and the review a11y note)
 
-1. **Item 10 (D3):**
-   - On the landing and in the lobby, when `matchMedia("(pointer: coarse)").matches` and there is no fine pointer, show a ruled note: "Typing needs a physical keyboard."
-   - Guard `matchMedia` for the tests (happy-dom).
-2. **Item 12, session best:**
-   - On the results screen, compare your WPM with `sessionStorage["typing_race_best_wpm"]`. Wrap every read and write in try/catch.
-   - Show a `.label` line, "Your best today: 81.2 wpm", or "New best today" when you beat it.
-3. **A11y follow-up:** add `aria-hidden="true"` to the decorative `⊹ ࣪ ﹏𓊝﹏𓂁﹏⊹ ࣪ ˖` line in the lobby empty state.
-4. **D4:** apply the chosen High Contrast cursor color in `store/settings.ts`.
+1. **D4:** in `store/settings.ts`, the High Contrast preset's `colorCursor` becomes `#000000`.
+2. **A11y:** add `aria-hidden="true"` to the decorative `⊹ ࣪ ﹏𓊝﹏𓂁﹏⊹ ࣪ ˖` line in the lobby empty state.
 
-One commit each.
+**Commit:** `fix(web): restore the High Contrast cursor and hide the decorative lobby line`
+
+---
+
+## Step G: Mobile typing (item 10, decision D3)
+
+**Problem:** `RaceView` reads keys only from a `window` `keydown` listener. A phone opens its on-screen keyboard only for a focused editable element, so touch users cannot type at all. Android keyboards also send `keydown` with `key: "Unidentified"` (keyCode 229), so even a focused field gives the engine nothing to read.
+
+**Files:**
+- `src/components/RaceView.tsx`
+- a new `src/core/mobile-input.ts` (pure diff logic, easy to test)
+- `src/styles.css`
+- `index.html` (the viewport meta)
+- `src/__tests__/RaceView.test.tsx`
+- a new `src/__tests__/mobile-input.test.ts`
+
+**Design:**
+1. **The hidden input.** `RaceView` renders one `<input>` that is visually hidden but focusable (a `.sr-input` class: 1px, `opacity: 0`, positioned over the caret line, so iOS does not scroll to the top).
+   - Attributes: `autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck={false} inputMode="text" enterKeyHint="done" aria-label="Type the passage"`.
+   - Keep `data-testid="mobile-input"`.
+2. **Focus.**
+   - Tapping the passage track focuses the input. iOS allows focus only inside a user gesture.
+   - On touch devices (`matchMedia("(pointer: coarse)")`), show a `.label` hint above the passage, "Tap the passage to type", until the input is focused.
+   - On desktop, nothing changes: the window listener keeps working, and the input is never focused.
+3. **Reading input. Diff the value; don't trust the key.** Keep the input value as a short buffer. On every `input` event, `diffInput(prev, next)` in `mobile-input.ts` returns one of:
+   - `{ type: "char", ch }`: exactly one character was appended → call `engine.handleKeyDown({ key: ch })`.
+   - `{ type: "backspace", count }`: the value got shorter → send `Backspace` that many times.
+   - `{ type: "ignore" }`: more than one character was inserted at once (autocomplete, paste or a swipe word). **Reject it** and restore the previous value. This keeps the one-key-per-keystroke rule, prevents autocomplete from typing whole words, and avoids the server's `<20ms` keystroke rate limit.
+
+   After each handled event, reset the buffer to a short sentinel, so it never grows and Backspace always has something to delete.
+4. **No double counting on desktop and iOS.** Hardware and iOS keyboards send a real `keydown` first. The window listener sets a `handledByKeydown` flag when it passes a printable key or Backspace to the engine. The `input` handler then ignores the next event and resets the flag. Android (`"Unidentified"`) never sets the flag, so the `input` path handles it.
+5. **The caret stays visible.** After each keystroke, when the input is focused, call `scrollIntoView({ block: "center" })` on the local caret. Add `interactive-widget=resizes-content` to the viewport meta, so the on-screen keyboard shrinks the layout instead of covering the passage.
+6. **The engine is unchanged.** Pass `handleKeyDown` a minimal event-shaped object (`{ key, repeat: false, ctrlKey: false, metaKey: false, altKey: false, preventDefault() {} }`). Keep all anti-cheat checks in the engine and on the server.
+
+**Tests:**
+- `mobile-input.test.ts`:
+  - one character appended → `char`
+  - shorter value → `backspace`
+  - a multi-character insertion → `ignore`
+  - a paste → `ignore`
+- `RaceView.test.tsx`:
+  - `fireEvent.input` with one new character → the engine index goes up by 1
+  - deleting → the index goes down
+  - inserting "hello" at once → no change
+  - a `keydown` "h" followed by an `input` "h" → the index goes up by 1, not 2
+- Keep all existing keyboard tests passing.
+
+**Manual check (required, because happy-dom can't show this):**
+- Android Chrome with Gboard: autocorrect and suggestions are off or ignored.
+- iOS Safari.
+- In both, type a whole passage: the caret stays in view, Backspace works across words, and there are no `RATE_LIMITED` toasts at a normal typing speed.
+
+**Commit:** `feat(web): type on phones through a hidden input`
+
+---
+
+## Step H: Session best (item 12, optional)
+
+- On the results screen, compare your WPM with `sessionStorage["typing_race_best_wpm"]`. Wrap every read and write in try/catch.
+- Show a `.label` line, "Your best today: 81.2 wpm", or "New best today" when you beat it.
+
+**Commit:** `feat(web): show your session best on the results screen`
 
 ---
 
@@ -157,4 +212,5 @@ One commit each.
    - the race header shows accuracy and errors
    - disconnect one tab → exactly one toast
    - rematch after picking 10s grace → a 10s countdown
+   - on a phone (Android and iOS): tap the passage → the keyboard opens, and a whole passage can be typed (step G)
 3. Tick each finished item in `ux-todo.md` in the same commit as the fix.

@@ -95,4 +95,24 @@ describe("ToastQueue", () => {
       ),
     ).toBeDefined();
   });
+
+  it("pauses auto-dismiss while hovered and restarts it on leave", () => {
+    const { container } = render(<ToastQueue />);
+    act(() => {
+      addToast({ type: "error", title: "Paused Toast", durationMs: 1000 });
+    });
+    const card = container.querySelector("[data-toast-id]") as HTMLElement;
+
+    fireEvent.mouseEnter(card);
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(container.querySelectorAll("[data-toast-id]").length).toBe(1);
+
+    fireEvent.mouseLeave(card);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(container.querySelectorAll("[data-toast-id]").length).toBe(0);
+  });
 });

@@ -1,5 +1,5 @@
 import React from "react";
-import { useToastStore, dismissToast, type ToastItem } from "../store/toast.ts";
+import { useToastStore, dismissToast, pauseToast, resumeToast, type ToastItem } from "../store/toast.ts";
 
 export function ToastQueue(): React.ReactElement {
   const toasts = useToastStore((s) => s.toasts);
@@ -54,6 +54,10 @@ function ToastCard({
       data-testid={`toast-${toast.type}`}
       data-toast-id={toast.id}
       role="alert"
+      onMouseEnter={() => pauseToast(toast.id)}
+      onMouseLeave={() => resumeToast(toast.id)}
+      onFocus={() => pauseToast(toast.id)}
+      onBlur={() => resumeToast(toast.id)}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 flex-grow">

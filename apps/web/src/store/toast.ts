@@ -49,14 +49,31 @@ export function addToast(toast: Omit<ToastItem, "id">): string {
     return { toasts: next };
   });
 
-  if (toast.durationMs && toast.durationMs > 0) {
-    const timer = setTimeout(() => {
-      dismissToast(id);
-    }, toast.durationMs);
-    timerMap.set(id, timer);
-  }
+  startTimer(id, toast.durationMs);
 
   return id;
+}
+
+function startTimer(id: string, durationMs: number | undefined): void {
+  if (!durationMs || durationMs <= 0) return;
+  const timer = setTimeout(() => {
+    dismissToast(id);
+  }, durationMs);
+  timerMap.set(id, timer);
+}
+
+/** Stops auto-dismiss while the toast is hovered or focused (WCAG 2.2.1). */
+export function pauseToast(id: string): void {
+  const timer = timerMap.get(id);
+  if (timer) clearTimeout(timer);
+  timerMap.delete(id);
+}
+
+/** Restarts the full duration when hover/focus leaves the toast. */
+export function resumeToast(id: string): void {
+  if (timerMap.has(id)) return;
+  const toast = useToastStore.getState().toasts.find((t) => t.id === id);
+  if (toast) startTimer(id, toast.durationMs);
 }
 
 export function dismissToast(id: string): void {

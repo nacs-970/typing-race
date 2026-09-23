@@ -106,7 +106,7 @@ describe("RaceHud", () => {
     expect(queryByTestId("wpm-tooltip")).toBeNull();
   });
 
-  it("shows accuracy and error count under the WPM number", () => {
+  it("shows accuracy under the WPM number", () => {
     const engine = new TypingEngine();
     engine.init("hello world");
 
@@ -114,7 +114,7 @@ describe("RaceHud", () => {
       <RaceHud typingEngine={engine} passageLength={11} />,
     );
 
-    expect(getByTestId("accuracy-line").textContent).toBe("100.0% · 0 errors");
+    expect(getByTestId("accuracy-line").textContent).toBe("100.0%");
 
     act(() => {
       (engine as any).emit("stats_updated", {
@@ -125,9 +125,7 @@ describe("RaceHud", () => {
       });
     });
 
-    const line = getByTestId("accuracy-line");
-    expect(line.textContent).toBe("95.4% · 1 error");
-    expect(line.querySelector("span")?.className).toContain("--color-status-danger");
+    expect(getByTestId("accuracy-line").textContent).toBe("95.4%");
   });
 
   it("requires two clicks on Leave before calling onLeaveRoom", () => {
@@ -139,12 +137,12 @@ describe("RaceHud", () => {
       <RaceHud typingEngine={engine} passageLength={11} onLeaveRoom={onLeaveRoom} />,
     );
 
-    const leaveBtn = getByText("Leave");
+    const leaveBtn = getByText("Leave.");
     fireEvent.click(leaveBtn);
     expect(onLeaveRoom).not.toHaveBeenCalled();
-    expect(getByText("Sure? Leave")).toBeDefined();
+    expect(getByText("Leave?")).toBeDefined();
 
-    fireEvent.click(getByText("Sure? Leave"));
+    fireEvent.click(getByText("Leave?"));
     expect(onLeaveRoom).toHaveBeenCalledTimes(1);
   });
 });

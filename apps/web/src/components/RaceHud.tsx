@@ -73,8 +73,6 @@ export function RaceHud({
   const roundedNetWpm = Math.round(stats.netWpm);
   const roundedRawWpm = Math.round(stats.rawWpm);
   const accuracyPercent = (stats.accuracy * 100).toFixed(1);
-  const errorCount = stats.uncorrectedErrors;
-  const errorLabel = errorCount === 1 ? "error" : "errors";
 
   const handleLeaveConfirmed = useCallback(() => {
     onLeaveRoom?.();
@@ -107,10 +105,7 @@ export function RaceHud({
         </div>
 
         <div className="label" data-testid="accuracy-line">
-          {`${accuracyPercent}% · `}
-          <span className={errorCount > 0 ? "text-[var(--color-status-danger)]" : undefined}>
-            {`${errorCount} ${errorLabel}`}
-          </span>
+          {`${accuracyPercent}%`}
         </div>
 
         {/* Hover Popover Tooltip (D-18) */}
@@ -183,7 +178,7 @@ export function RaceHud({
             onClick={onLeaveClick}
             title="Leave Race Room"
           >
-            <span aria-live="polite">{leaveArmed ? "Sure? Leave" : "Leave"}</span>
+            <span aria-live="polite">{leaveArmed ? "Leave?" : "Leave."}</span>
           </button>
         )}
       </div>

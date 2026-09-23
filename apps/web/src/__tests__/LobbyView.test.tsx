@@ -204,7 +204,7 @@ describe("LobbyView", () => {
       />,
     );
 
-    const leaveBtn = getByText("Leave room");
+    const leaveBtn = getByText("leave");
     expect(leaveBtn).toBeDefined();
     fireEvent.click(leaveBtn);
     expect(onLeaveRoom).toHaveBeenCalledTimes(1);

@@ -88,7 +88,7 @@ export function LobbyView({
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(roomCode);
       setCodeCopied(true);
-      setTimeout(() => setCodeCopied(false), 2000);
+      setTimeout(() => setCodeCopied(false), 900);
     }
   };
 
@@ -128,7 +128,7 @@ export function LobbyView({
     <div className="lobby-view w-full max-w-[860px] mx-auto text-left font-mono">
       {/* Header */}
       <div className="flex justify-between items-baseline pb-2.5 border-b border-[var(--color-border-muted)] label">
-        <span>Room · {isHost ? "Host" : "Guest"}</span>
+        <span>Room · {isHost ? "Host" : "Player"}</span>
         <div className="flex gap-6 normal-case tracking-normal text-sm font-mono">
           <button
             type="button"
@@ -136,16 +136,16 @@ export function LobbyView({
             className="bg-transparent border-0 p-0 text-[var(--color-text-bright)] underline underline-offset-4 cursor-pointer font-mono text-sm"
             onClick={handleCopyLink}
           >
-            {copySuccess ? "Copied" : "Copy room link"}
+            {copySuccess ? "copied" : "room link"}
           </button>
           {onLeaveRoom && (
             <button
               type="button"
-              aria-label="Leave room"
+              aria-label="leave"
               className="bg-transparent border-0 p-0 text-[var(--color-status-danger)] underline underline-offset-4 cursor-pointer font-mono text-sm"
               onClick={onLeaveRoom}
             >
-              Leave room
+              leave
             </button>
           )}
         </div>
@@ -167,7 +167,7 @@ export function LobbyView({
             {roomCode}
           </button>
           <span className="label block mt-2" aria-live="polite">
-            {codeCopied ? "Code copied" : "Click the code to copy it"}
+            {codeCopied ? "Code copied" : "Code"}
           </span>
           <p className="m-0 mt-3 italic text-[15px] text-[var(--color-text-muted)]">
             {isHost
@@ -187,14 +187,16 @@ export function LobbyView({
           <p className="text-sm text-[var(--color-text-muted)] m-0 mb-4">
             Share the invite link or room code with friends to start racing.
           </p>
+            {/* }
           <button
             type="button"
             aria-label="Copy room invite link"
             className="inline-block py-2.5 px-4 bg-[var(--color-accent-green)] hover:bg-[var(--color-accent-green-hover)] text-[var(--color-bg-base)] font-mono font-bold text-sm cursor-pointer border border-[var(--color-accent-green)] rounded-none"
             onClick={handleCopyLink}
           >
-            {copySuccess ? "Copied" : "Copy room link"}
-          </button>
+            {copySuccess ? "copied" : "room link"}
+          </button> */}
+         <p>⊹ ࣪ ﹏𓊝﹏𓂁﹏⊹ ࣪ ˖</p>
         </div>
       )}
 

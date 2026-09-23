@@ -55,9 +55,9 @@ export const THEME_PRESETS: ThemePreset[] = [
   {
     name: "High Contrast",
     colors: {
-      colorCorrect: "#006400",
+      colorCorrect: "#000000",
       colorIncorrect: "#b91c1c",
-      colorCursor: "#000000",
+      colorCursor: "#BDBDBD",
       colorAccent: "#000000",
       colorBackground: "#ffffff",
       colorText: "#000000",

@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, vi } from "vitest";
-import { render, fireEvent, cleanup } from "@testing-library/react";
+import { render, fireEvent, cleanup, act } from "@testing-library/react";
 import { afterEach } from "vitest";
 import { RaceView } from "../components/RaceView.tsx";
 import { ResultsBoard } from "../components/ResultsBoard.tsx";
@@ -7,6 +7,7 @@ import { useRaceStore, resetRaceUi } from "../store/race.ts";
 import { TypingEngine } from "../core/typing-engine.ts";
 import { CursorManager } from "../core/cursor-manager.ts";
 import { PassageLayout } from "../core/layout.ts";
+import { setSettings, DEFAULT_SETTINGS } from "../store/settings.ts";
 import type { PlayerFinalStats } from "@typing-race/shared";
 
 const PASSAGE = "the quick brown fox jumps over the lazy dog"; // 43 chars
@@ -104,6 +105,34 @@ describe("RaceView — char-state accents & zero-commit overlay", () => {
 
     fireEvent.keyDown(window, { key: "t" });
     expect(onKeystroke).toHaveBeenCalledWith(0, "t");
+  });
+
+  test("6. changing font size mid-race keeps typed progress", () => {
+    const engine = new TypingEngine();
+    render(
+      <RaceView
+        passageText="hi"
+        playerId="me"
+        typingEngine={engine}
+        onKeystroke={() => {}}
+        onCorrection={() => {}}
+      />,
+    );
+    act(() => {
+      fireEvent.keyDown(window, { key: "h" });
+    });
+    expect(engine.getOwnIndex()).toBe(1);
+    expect(engine.getCharStates()[0]).toBe("correct");
+
+    act(() => {
+      setSettings({ fontSize: 20 });
+    });
+    expect(engine.getOwnIndex()).toBe(1);
+    expect(engine.getCharStates()[0]).toBe("correct");
+
+    act(() => {
+      setSettings({ fontSize: DEFAULT_SETTINGS.fontSize });
+    });
   });
 });
 

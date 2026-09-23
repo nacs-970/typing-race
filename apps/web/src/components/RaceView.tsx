@@ -42,10 +42,15 @@ export function RaceView({
   const ownIndex = useCursorStore((s) => s.ownIndex);
   const [localCoords, setLocalCoords] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Initialize engine and layout with passage text
+  // Initialize the engine only when the passage changes. Keeping fontSize out
+  // of these deps matters: re-running init() mid-race wipes typed progress.
   useEffect(() => {
     localEngine.init(passageText);
     setCharStates([...localEngine.getCharStates()]);
+  }, [passageText, localEngine]);
+
+  // (Re)measure layout when the passage or font size changes
+  useEffect(() => {
     localLayout.init(
       passageText,
       `${fontSize}px "Courier Prime", ui-monospace, monospace`,
@@ -55,7 +60,7 @@ export function RaceView({
     localManager.setPassageText(passageText);
     localManager.setFontSize(fontSize);
     setLocalCoords(localLayout.getCoordinates(useCursorStore.getState().ownIndex));
-  }, [passageText, fontSize, localEngine, localLayout, localManager]);
+  }, [passageText, fontSize, localLayout, localManager]);
 
   // Mount cursor overlay outside React tree
   useEffect(() => {

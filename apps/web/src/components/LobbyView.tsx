@@ -352,7 +352,10 @@ export function LobbyView({
                   type="button"
                   className="choice"
                   aria-pressed={grace === g}
-                  onClick={() => setGrace(g)}
+                  onClick={() => {
+                    setGrace(g);
+                    useRaceStore.setState({ graceSeconds: g });
+                  }}
                 >
                   {g}s
                 </button>

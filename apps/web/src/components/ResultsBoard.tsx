@@ -115,7 +115,7 @@ export function ResultsBoard({
   const handleRematch = () => {
     ws.send({
       type: "start_race",
-      graceSeconds: 5,
+      graceSeconds: useRaceStore.getState().graceSeconds,
       corpusType,
       corpusCategory,
     });

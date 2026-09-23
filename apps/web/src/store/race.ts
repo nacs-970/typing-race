@@ -42,6 +42,8 @@ export type RaceUiState = {
   /** Server timestamp when countdown began (ms). Null when not in countdown. */
   countdownStartsAtServerMs: number | null;
   lobbyPlayers: LobbyPlayer[];
+  /** Host-selected countdown grace, in seconds. Persists across resetRaceUi — it's a room setting, not per-race UI. */
+  graceSeconds: number;
 };
 
 export const useRaceStore = create<RaceUiState>(() => ({
@@ -58,6 +60,7 @@ export const useRaceStore = create<RaceUiState>(() => ({
   passageText: null,
   countdownStartsAtServerMs: null,
   lobbyPlayers: [],
+  graceSeconds: 5,
 }));
 
 export const setRaceState = (

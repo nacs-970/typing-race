@@ -425,7 +425,7 @@ export function App(): React.ReactElement {
                   id="nickname-input"
                   type="text"
                   placeholder="your name"
-                  className="font-mono text-[18px] text-[var(--color-text-bright)] placeholder:text-[var(--color-text-muted)] bg-transparent border-0 border-b border-[var(--color-text-bright)] py-2 px-0 outline-none"
+                  className="font-mono text-[18px] text-center text-[var(--color-text-bright)] placeholder:text-[var(--color-text-muted)] bg-transparent border-0 border-b border-[var(--color-text-bright)] py-2 px-0 outline-none"
                   maxLength={20}
                   value={nickname}
                   onChange={(e) => handleNicknameChange(e.target.value)}

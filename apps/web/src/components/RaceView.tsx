@@ -161,13 +161,13 @@ export function RaceView({
   }, [localEngine, onKeystroke, onCorrection]);
 
   return (
-    <div className="race-view relative mx-auto w-full max-w-[70vw] select-none font-mono">
+    <div className="race-view relative w-full select-none font-mono">
       <RaceHud
         typingEngine={localEngine}
         passageLength={passageText.length}
         onLeaveRoom={onLeaveRoom}
       />
-      <div ref={trackRef} className="passage-track relative font-mono select-none">
+      <div ref={trackRef} className="passage-track relative font-mono select-none mt-12">
         {passageText.split("").map((ch, i) => {
           const storeState = ownCharStates[i];
           const localState = charStates[i];
@@ -206,14 +206,9 @@ export function RaceView({
       {ownIndex >= passageText.length && !localEngine.getIsFinished() && (
         <div
           data-testid="finish-blocked-banner"
-          className="mt-4 p-3 bg-amber-950/60 border border-amber-500/60 rounded-lg text-amber-200 text-sm flex items-center justify-between gap-3 animate-pulse shadow-lg"
+          className="mt-5 pt-2.5 border-t border-[var(--color-status-danger)] text-[var(--color-status-danger)] text-sm"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-lg">⚠️</span>
-            <span>
-              <strong>Finish blocked</strong> — backspace to fix errors first.
-            </span>
-          </div>
+          — Finish blocked. Backspace to fix errors first.
         </div>
       )}
     </div>

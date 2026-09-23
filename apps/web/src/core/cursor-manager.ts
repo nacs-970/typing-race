@@ -69,8 +69,8 @@ export class CursorManager {
       if (existing) {
         existing.tag.textContent = nickname.slice(0, 16);
         existing.tag.style.backgroundColor = color;
+        existing.tag.style.color = "var(--color-text-bright)";
         existing.caret.style.backgroundColor = color;
-        existing.caret.style.boxShadow = `0 0 8px ${color}`;
       }
     }
   }
@@ -310,17 +310,16 @@ export class CursorManager {
 
     const tag = document.createElement("div");
     tag.className =
-      "cursor-micro-tag absolute bottom-full left-0 mb-1 px-1.5 py-0.5 rounded text-[10px] font-bold shadow-md whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]";
+      "cursor-micro-tag absolute bottom-full left-0 mb-1 px-1.5 py-0.5 rounded-none uppercase tracking-[0.08em] font-mono text-[10px] whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]";
     tag.textContent = nickname.slice(0, 16);
     tag.style.backgroundColor = color;
-    tag.style.color = "#ffffff";
+    tag.style.color = "var(--color-text-bright)";
 
     const caret = document.createElement("div");
-    caret.className = "cursor-caret w-[2px] rounded-full transition-shadow duration-300";
+    caret.className = "cursor-caret w-[2px]";
     caret.style.height = `${this.fontSize * CARET_HEIGHT_RATIO}px`;
     caret.style.marginTop = `${this.fontSize * CARET_MARGIN_TOP_RATIO}px`;
     caret.style.backgroundColor = color;
-    caret.style.boxShadow = `0 0 8px ${color}`;
 
     root.appendChild(tag);
     root.appendChild(caret);

@@ -52,22 +52,23 @@ export function CountdownView({
 
   return (
     <div
-      className={`countdown-overlay fixed inset-0 flex items-center justify-center bg-[var(--color-bg-overlay)] backdrop-blur-xs z-30 transition-opacity duration-300 ${
+      className={`countdown-overlay fixed inset-0 flex items-center justify-center bg-[var(--color-bg-base)] z-30 transition-opacity duration-300 ${
         fading ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
       data-testid="countdown-overlay"
     >
       <div className="countdown-view text-center flex flex-col items-center">
+        <span className="countdown-label label">
+          {display === "GO!" ? "Race started" : "Starting in"}
+        </span>
         <span
           key={display}
-          className="countdown-num text-7xl sm:text-8xl font-black font-mono text-[var(--color-accent-clay)] drop-shadow-[0_0_24px_var(--color-accent-glow)] animate-in zoom-in-75 duration-200"
+          className={`countdown-num ${display === "GO!" ? "italic" : ""}`}
           data-testid="countdown-num"
         >
           {display}
         </span>
-        <span className="countdown-label text-sm uppercase tracking-widest text-[var(--color-text-muted)] mt-4 font-bold">
-          {display === "GO!" ? "Race Started!" : "Starting in…"}
-        </span>
+        <div className="h-px w-60 bg-[var(--color-text-bright)] mt-4" />
       </div>
     </div>
   );

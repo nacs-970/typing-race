@@ -75,12 +75,12 @@ export function RaceHud({
 
   return (
     <div
-      className="race-hud flex items-center justify-between mb-4 px-4 py-2.5 rounded-lg bg-[var(--color-bg-surface)]/90 border border-[var(--color-border-subtle)] text-[var(--color-text-bright)] font-mono select-none"
+      className="race-hud flex items-center justify-between py-3.5 border-t border-b border-[var(--color-border-muted)] text-[var(--color-text-bright)] font-mono select-none"
       data-testid="race-hud"
     >
       {/* Net WPM with Hover/Focus Tooltip */}
       <div
-        className="relative flex items-baseline gap-2 cursor-pointer group"
+        className="relative flex items-baseline gap-2.5 cursor-pointer group"
         data-testid="wpm-display"
         tabIndex={0}
         onMouseEnter={() => setShowTooltip(true)}
@@ -89,20 +89,20 @@ export function RaceHud({
         onBlur={() => setShowTooltip(false)}
       >
         <span
-          className="text-3xl font-bold text-[var(--color-text-bright)] tracking-tight leading-none"
+          className="font-serif-display text-[52px] leading-none text-[var(--color-text-bright)]"
           data-testid="net-wpm-value"
         >
           {roundedNetWpm}
         </span>
-        <span className="text-xs uppercase font-bold text-[var(--color-text-muted)]">WPM</span>
+        <span className="label">wpm</span>
 
         {/* Hover Popover Tooltip (D-18) */}
         {showTooltip && (
           <div
-            className="absolute top-full left-0 mt-2 p-3 rounded-lg bg-[var(--color-bg-overlay)] border border-[var(--color-copperwood-700)]/60 shadow-2xl z-30 pointer-events-none min-w-[170px]"
+            className="absolute top-full left-0 mt-2 p-3 bg-[var(--color-bg-surface)] border border-[var(--color-border-muted)] z-30 pointer-events-none min-w-[170px]"
             data-testid="wpm-tooltip"
           >
-            <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-muted)] font-bold border-b border-[var(--color-border-subtle)] pb-1.5 mb-2">
+            <div className="label border-b border-[var(--color-border-muted)] pb-1.5 mb-2">
               Typing Breakdown
             </div>
             <div className="space-y-1 text-xs">
@@ -116,11 +116,11 @@ export function RaceHud({
               </div>
               <div className="flex justify-between">
                 <span className="text-[var(--color-text-muted)]">Accuracy:</span>
-                <span className="font-bold text-[var(--color-status-success)]">{accuracyPercent}%</span>
+                <span className="font-bold text-[var(--color-text-bright)]">{accuracyPercent}%</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[var(--color-text-muted)]">Errors:</span>
-                <span className="font-bold text-[var(--color-cursor-slot-2)]">
+                <span className="font-bold text-[var(--color-status-danger)]">
                   {stats.uncorrectedErrors}
                 </span>
               </div>
@@ -130,17 +130,17 @@ export function RaceHud({
       </div>
 
       {/* Progress Bar Indicator */}
-      <div className="flex-1 max-w-[240px] mx-6">
-        <div className="flex justify-between text-[10px] text-[var(--color-text-muted)] uppercase font-bold mb-1">
+      <div className="flex-1 max-w-[280px] mx-6 flex flex-col gap-2">
+        <div className="flex justify-between label">
           <span>Track</span>
           <span>{Math.round(progressPercent)}%</span>
         </div>
         <div
-          className="w-full h-2 bg-[var(--color-bg-base)] rounded-full overflow-hidden border border-[var(--color-border-subtle)]"
+          className="h-px bg-[var(--color-border-muted)] relative"
           data-testid="progress-container"
         >
           <div
-            className="h-full bg-[var(--color-accent-clay)] rounded-full transition-all duration-150"
+            className="absolute left-0 -top-px h-[3px] bg-[var(--color-accent-green)] transition-all duration-150"
             data-testid="progress-fill"
             style={{ width: `${progressPercent}%` }}
           />
@@ -148,12 +148,10 @@ export function RaceHud({
       </div>
 
       {/* Rank Badge Indicator & Leave Room */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-baseline gap-6">
         <span
-          className={`px-2.5 py-1 rounded text-xs font-bold transition-all shadow-sm ${
-            rank === 1
-              ? "bg-[var(--color-accent-clay)] text-white"
-              : "bg-[var(--color-bg-surface-hover)] text-[var(--color-text-muted)]"
+          className={`font-serif-display text-[30px] leading-none ${
+            rank === 1 ? "text-[var(--color-accent-green)]" : "text-[var(--color-text-bright)]"
           }`}
           data-testid="rank-badge"
         >
@@ -162,7 +160,7 @@ export function RaceHud({
         {onLeaveRoom && (
           <button
             type="button"
-            className="px-2.5 py-1 rounded text-xs font-semibold bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] hover:bg-[var(--color-danger-hover)] transition-colors text-[var(--color-danger-text)] cursor-pointer"
+            className="bg-transparent border-0 p-0 text-sm text-[var(--color-status-danger)] underline underline-offset-4 cursor-pointer font-mono"
             onClick={onLeaveRoom}
             title="Leave Race Room"
           >

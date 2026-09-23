@@ -421,9 +421,20 @@ button:active:not(:disabled) {
   color: var(--color-text-bright);
   font-weight: 700;
 }
-.choice[aria-pressed="true"]::before {
+/* Brackets are always rendered and only hidden when inactive, so their width
+ * stays reserved and switching options never shifts the row. The "/ ''" alt
+ * text keeps screen readers from announcing the brackets. */
+.choice::before {
   content: "[ ";
+  content: "[ " / "";
+  visibility: hidden;
 }
-.choice[aria-pressed="true"]::after {
+.choice::after {
   content: " ]";
+  content: " ]" / "";
+  visibility: hidden;
+}
+.choice[aria-pressed="true"]::before,
+.choice[aria-pressed="true"]::after {
+  visibility: visible;
 }

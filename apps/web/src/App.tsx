@@ -44,7 +44,14 @@ export function App(): React.ReactElement {
     }
     return "";
   });
-  const [joinCode, setJoinCode] = useState<string>("");
+  const [joinCode, setJoinCode] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    const hash = window.location.hash.replace("#", "").trim().toUpperCase();
+    if (hash.length === 6 && !getSessionCookie(hash)) {
+      return hash;
+    }
+    return "";
+  });
 
   const handleNicknameChange = (val: string) => {
     setNickname(val);
@@ -414,34 +421,39 @@ export function App(): React.ReactElement {
             </h1>
 
             <div className="w-full max-w-[420px] flex flex-col gap-[22px] mt-14">
-              <div className="flex flex-col text-left gap-1.5">
-                <label
-                  htmlFor="nickname-input"
-                  className="label"
-                >
-                  Nickname
-                </label>
-                <input
-                  id="nickname-input"
-                  type="text"
-                  placeholder="your name"
-                  className="font-mono text-[18px] text-center text-[var(--color-text-bright)] placeholder:text-[var(--color-text-muted)] bg-transparent border-0 border-b border-[var(--color-text-bright)] py-2 px-0 outline-none"
-                  maxLength={20}
-                  value={nickname}
-                  onChange={(e) => handleNicknameChange(e.target.value)}
-                />
-              </div>
-
-              <button
-                type="button"
-                className="w-full font-mono text-base font-bold tracking-[0.04em] bg-[var(--color-accent-green)] hover:bg-[var(--color-accent-green-hover)] text-[var(--color-bg-base)] border border-[var(--color-accent-green)] rounded-none py-3.5 px-4 cursor-pointer transition-colors"
-                onClick={() => {
+              <form
+                className="contents"
+                onSubmit={(e) => {
+                  e.preventDefault();
                   const nick = nickname.trim() || "Racer";
                   ws.send({ type: "create_room", nickname: nick });
                 }}
               >
-                Create Room
-              </button>
+                <div className="flex flex-col text-left gap-1.5">
+                  <label
+                    htmlFor="nickname-input"
+                    className="label"
+                  >
+                    Nickname
+                  </label>
+                  <input
+                    id="nickname-input"
+                    type="text"
+                    placeholder="Racer"
+                    className="font-mono text-[18px] text-center text-[var(--color-text-bright)] placeholder:text-[var(--color-text-muted)] bg-transparent border-0 border-b border-[var(--color-text-bright)] py-2 px-0 outline-none"
+                    maxLength={20}
+                    value={nickname}
+                    onChange={(e) => handleNicknameChange(e.target.value)}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full font-mono text-base font-bold tracking-[0.04em] bg-[var(--color-accent-green)] hover:bg-[var(--color-accent-green-hover)] text-[var(--color-bg-base)] border border-[var(--color-accent-green)] rounded-none py-3.5 px-4 cursor-pointer transition-colors"
+                >
+                  Create Room
+                </button>
+              </form>
 
               <div className="flex items-center gap-3.5">
                 <span className="flex-grow h-px bg-[var(--color-border-muted)]" />
@@ -451,29 +463,10 @@ export function App(): React.ReactElement {
                 <span className="flex-grow h-px bg-[var(--color-border-muted)]" />
               </div>
 
-              <div className="flex flex-col text-left gap-1.5">
-                <label
-                  htmlFor="room-code-input"
-                  className="label"
-                >
-                  Room code
-                </label>
-                <input
-                  id="room-code-input"
-                  type="text"
-                  placeholder="..."
-                  className="font-mono text-[22px] tracking-[0.4em] text-center uppercase text-[var(--color-text-bright)] placeholder:text-[var(--color-text-muted)] bg-transparent border-0 border-b border-[var(--color-text-bright)] py-2 px-0 outline-none"
-                  maxLength={6}
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                />
-              </div>
-
-              <button
-                type="button"
-                className="w-full font-mono text-base font-bold tracking-[0.04em] bg-transparent text-[var(--color-text-bright)] border border-[var(--color-text-bright)] hover:bg-[var(--color-bg-surface-hover)] rounded-none py-3.5 px-4 cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                disabled={joinCode.trim().length !== 6}
-                onClick={() => {
+              <form
+                className="contents"
+                onSubmit={(e) => {
+                  e.preventDefault();
                   const nick = nickname.trim() || "Racer";
                   ws.send({
                     type: "join_room",
@@ -482,8 +475,32 @@ export function App(): React.ReactElement {
                   });
                 }}
               >
-                Join Room
-              </button>
+                <div className="flex flex-col text-left gap-1.5">
+                  <label
+                    htmlFor="room-code-input"
+                    className="label"
+                  >
+                    Room code
+                  </label>
+                  <input
+                    id="room-code-input"
+                    type="text"
+                    placeholder="..."
+                    className="font-mono text-[22px] tracking-[0.4em] text-center uppercase text-[var(--color-text-bright)] placeholder:text-[var(--color-text-muted)] bg-transparent border-0 border-b border-[var(--color-text-bright)] py-2 px-0 outline-none"
+                    maxLength={6}
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full font-mono text-base font-bold tracking-[0.04em] bg-transparent text-[var(--color-text-bright)] border border-[var(--color-text-bright)] hover:bg-[var(--color-bg-surface-hover)] rounded-none py-3.5 px-4 cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  disabled={joinCode.trim().length !== 6}
+                >
+                  Join Room
+                </button>
+              </form>
             </div>
           </div>
         </div>

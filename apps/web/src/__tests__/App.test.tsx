@@ -136,3 +136,71 @@ describe("App — player_disconnected notice", () => {
     expect(container.querySelectorAll(".toast-disconnect").length).toBe(0);
   });
 });
+
+describe("App — landing: invite-link prefill", () => {
+  afterEach(() => {
+    window.location.hash = "";
+    document.cookie = "typing_race_K7QX2M=; path=/; max-age=0; SameSite=Lax";
+  });
+
+  it("prefills the room code from the URL hash when there is no session cookie", async () => {
+    document.cookie = "typing_race_K7QX2M=; path=/; max-age=0; SameSite=Lax";
+    window.location.hash = "#K7QX2M";
+
+    const { App } = await import("../App.tsx");
+    const { container } = render(<App />);
+
+    const input = container.querySelector("#room-code-input") as HTMLInputElement;
+    expect(input.value).toBe("K7QX2M");
+  });
+
+  it("leaves the room code field empty when a session cookie exists for the hash", async () => {
+    document.cookie = "typing_race_K7QX2M=some-token; path=/; SameSite=Lax";
+    window.location.hash = "#K7QX2M";
+
+    const { App } = await import("../App.tsx");
+    const { container } = render(<App />);
+
+    const input = container.querySelector("#room-code-input") as HTMLInputElement;
+    expect(input.value).toBe("");
+  });
+});
+
+describe("App — landing: Enter submits", () => {
+  it("pressing Enter in the room-code field sends join_room", async () => {
+    const { App } = await import("../App.tsx");
+    const { ws } = await import("../net/ws.ts");
+    const sendSpy = vi.spyOn(ws, "send");
+
+    const { container } = render(<App />);
+    const input = container.querySelector("#room-code-input") as HTMLInputElement;
+
+    fireEvent.change(input, { target: { value: "K7QX2M" } });
+    // happy-dom does not implement native "Enter submits the form"
+    // (implicit submission); a real browser translates that keypress into
+    // a submit event on the input's form, so simulate that directly.
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    fireEvent.submit(input.closest("form") as HTMLFormElement);
+
+    expect(sendSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "join_room", code: "K7QX2M" }),
+    );
+  });
+
+  it("pressing Enter in the nickname field sends create_room", async () => {
+    const { App } = await import("../App.tsx");
+    const { ws } = await import("../net/ws.ts");
+    const sendSpy = vi.spyOn(ws, "send");
+
+    const { container } = render(<App />);
+    const input = container.querySelector("#nickname-input") as HTMLInputElement;
+
+    fireEvent.change(input, { target: { value: "Ann" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    fireEvent.submit(input.closest("form") as HTMLFormElement);
+
+    expect(sendSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "create_room" }),
+    );
+  });
+});

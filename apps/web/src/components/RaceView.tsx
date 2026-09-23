@@ -279,6 +279,7 @@ export function RaceView({
 
   return (
     <div className="race-view relative w-full select-none font-mono">
+      <h1 className="sr-only">Race</h1>
       <RaceHud
         typingEngine={localEngine}
         passageLength={passageText.length}

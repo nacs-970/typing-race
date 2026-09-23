@@ -116,7 +116,7 @@ export function ResultsBoard({
   if (results.length === 0) {
     return (
       <div className="results-board results-empty-state w-full max-w-[860px] mx-auto py-8 text-center font-mono text-[var(--color-text-bright)] border-t border-b border-[var(--color-border-muted)]">
-        <h3 className="text-xl font-normal font-serif-display mb-2">Awaiting Race Finishers</h3>
+        <h1 className="text-xl font-normal font-serif-display mb-2">Awaiting Race Finishers</h1>
         <p className="text-sm italic text-[var(--color-text-muted)] m-0">
           Complete the passage to view final standings, WPM, and accuracy metrics.
         </p>
@@ -185,9 +185,9 @@ export function ResultsBoard({
         <span>{typeLabel} · {catLabel}</span>
       </div>
 
-      <h2 className="mt-9 m-0 font-serif-display font-normal text-[88px] leading-none text-[var(--color-text-bright)]">
+      <h1 className="mt-9 m-0 font-serif-display font-normal text-[88px] leading-none text-[var(--color-text-bright)]">
         Results
-      </h2>
+      </h1>
       <p className="mt-3 mb-7 italic text-[15px] text-[var(--color-text-muted)]">
         Final standings, speed and precision.
       </p>

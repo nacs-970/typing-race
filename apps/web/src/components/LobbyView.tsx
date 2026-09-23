@@ -162,19 +162,21 @@ export function LobbyView({
 
       <div className="flex justify-between items-end pt-9 pb-7">
         <div>
-          <button
-            type="button"
-            aria-label={`Copy room code ${roomCode}`}
-            title="Click to copy the room code"
-            className={`font-serif-display text-[clamp(3.5rem,10vw,88px)] leading-none tracking-[0.04em] bg-transparent border-0 p-0 cursor-copy transition-colors duration-300 ${
-              codeCopied
-                ? "text-[color-mix(in_srgb,var(--color-accent-green)_45%,var(--color-bg-base))]"
-                : "text-[var(--color-text-bright)] hover:text-[var(--color-accent-green)]"
-            }`}
-            onClick={handleCopyCode}
-          >
-            {roomCode}
-          </button>
+          <h1 className="m-0">
+            <button
+              type="button"
+              aria-label={`Copy room code ${roomCode}`}
+              title="Click to copy the room code"
+              className={`font-serif-display text-[clamp(3.5rem,10vw,88px)] leading-none tracking-[0.04em] bg-transparent border-0 p-0 cursor-copy transition-colors duration-300 ${
+                codeCopied
+                  ? "text-[color-mix(in_srgb,var(--color-accent-green)_45%,var(--color-bg-base))]"
+                  : "text-[var(--color-text-bright)] hover:text-[var(--color-accent-green)]"
+              }`}
+              onClick={handleCopyCode}
+            >
+              {roomCode}
+            </button>
+          </h1>
           <span className="label block mt-2" aria-live="polite">
             {codeCopied ? "Code copied" : "Code"}
           </span>
@@ -190,9 +192,9 @@ export function LobbyView({
       {/* Empty State when solo in room */}
       {players.length <= 1 && (
         <div className="lobby-empty-state my-6 py-6 border-y border-[var(--color-border-muted)]">
-          <h3 className="text-base font-bold text-[var(--color-text-bright)] m-0 mb-1">
+          <h2 className="text-base font-bold text-[var(--color-text-bright)] m-0 mb-1">
             Waiting for Competitors
-          </h3>
+          </h2>
           <p className="text-sm text-[var(--color-text-muted)] m-0 mb-4">
             Share the invite link or room code with friends to start racing.
           </p>

@@ -61,9 +61,9 @@ function ToastCard({
             {tagText}
           </span>
           <div className="flex-grow">
-            <h5 className="font-mono font-bold text-sm m-0 leading-tight text-[var(--color-text-bright)]">
+            <p className="font-mono font-bold text-sm m-0 leading-tight text-[var(--color-text-bright)]">
               {toast.title}
-            </h5>
+            </p>
             {toast.body && (
               <p className="font-mono text-[13px] text-[var(--color-text-muted)] mt-1 m-0 leading-relaxed">
                 {toast.body}

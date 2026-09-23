@@ -106,6 +106,30 @@ describe("RaceHud", () => {
     expect(queryByTestId("wpm-tooltip")).toBeNull();
   });
 
+  it("shows accuracy and error count under the WPM number", () => {
+    const engine = new TypingEngine();
+    engine.init("hello world");
+
+    const { getByTestId } = render(
+      <RaceHud typingEngine={engine} passageLength={11} />,
+    );
+
+    expect(getByTestId("accuracy-line").textContent).toBe("100.0% · 0 errors");
+
+    act(() => {
+      (engine as any).emit("stats_updated", {
+        rawWpm: 72.4,
+        netWpm: 68.8,
+        accuracy: 0.954,
+        uncorrectedErrors: 1,
+      });
+    });
+
+    const line = getByTestId("accuracy-line");
+    expect(line.textContent).toBe("95.4% · 1 error");
+    expect(line.querySelector("span")?.className).toContain("--color-status-danger");
+  });
+
   it("requires two clicks on Leave before calling onLeaveRoom", () => {
     const engine = new TypingEngine();
     engine.init("hello world");

@@ -73,6 +73,8 @@ export function RaceHud({
   const roundedNetWpm = Math.round(stats.netWpm);
   const roundedRawWpm = Math.round(stats.rawWpm);
   const accuracyPercent = (stats.accuracy * 100).toFixed(1);
+  const errorCount = stats.uncorrectedErrors;
+  const errorLabel = errorCount === 1 ? "error" : "errors";
 
   const handleLeaveConfirmed = useCallback(() => {
     onLeaveRoom?.();
@@ -86,7 +88,7 @@ export function RaceHud({
     >
       {/* Net WPM with Hover/Focus Tooltip */}
       <div
-        className="relative flex items-baseline gap-2.5 cursor-pointer group"
+        className="relative flex flex-col gap-1 cursor-pointer group"
         data-testid="wpm-display"
         tabIndex={0}
         onMouseEnter={() => setShowTooltip(true)}
@@ -94,13 +96,22 @@ export function RaceHud({
         onFocus={() => setShowTooltip(true)}
         onBlur={() => setShowTooltip(false)}
       >
-        <span
-          className="font-serif-display text-[52px] leading-none text-[var(--color-text-bright)]"
-          data-testid="net-wpm-value"
-        >
-          {roundedNetWpm}
-        </span>
-        <span className="label">wpm</span>
+        <div className="flex items-baseline gap-2.5">
+          <span
+            className="font-serif-display text-[52px] leading-none text-[var(--color-text-bright)]"
+            data-testid="net-wpm-value"
+          >
+            {roundedNetWpm}
+          </span>
+          <span className="label">wpm</span>
+        </div>
+
+        <div className="label" data-testid="accuracy-line">
+          {`${accuracyPercent}% · `}
+          <span className={errorCount > 0 ? "text-[var(--color-status-danger)]" : undefined}>
+            {`${errorCount} ${errorLabel}`}
+          </span>
+        </div>
 
         {/* Hover Popover Tooltip (D-18) */}
         {showTooltip && (

@@ -124,7 +124,7 @@ describe("ResultsBoard", () => {
     expect(getByText("Play Again (Random Words - Short)")).toBeDefined();
   });
 
-  it("triggers onLeaveRoom when host clicks Leave Room", () => {
+  it("triggers onLeaveRoom when host clicks Leave Room twice", () => {
     const onLeaveRoom = vi.fn();
     const { getByText } = render(
       <ResultsBoard results={sampleResults} isHost={true} onLeaveRoom={onLeaveRoom} />,
@@ -132,10 +132,14 @@ describe("ResultsBoard", () => {
 
     const leaveBtn = getByText("Leave room");
     fireEvent.click(leaveBtn);
+    expect(onLeaveRoom).not.toHaveBeenCalled();
+    expect(getByText("Sure? Leave room")).toBeDefined();
+
+    fireEvent.click(getByText("Sure? Leave room"));
     expect(onLeaveRoom).toHaveBeenCalled();
   });
 
-  it("triggers onLeaveRoom when guest clicks Leave Room", () => {
+  it("triggers onLeaveRoom when guest clicks Leave Room twice", () => {
     const onLeaveRoom = vi.fn();
     const { getByText } = render(
       <ResultsBoard results={sampleResults} isHost={false} onLeaveRoom={onLeaveRoom} />,
@@ -143,6 +147,10 @@ describe("ResultsBoard", () => {
 
     const leaveBtn = getByText("Leave room");
     fireEvent.click(leaveBtn);
+    expect(onLeaveRoom).not.toHaveBeenCalled();
+    expect(getByText("Sure? Leave room")).toBeDefined();
+
+    fireEvent.click(getByText("Sure? Leave room"));
     expect(onLeaveRoom).toHaveBeenCalled();
   });
 });

@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import type { CorpusType, CorpusCategory } from "@typing-race/shared";
 import { useRaceStore, type LobbyPlayer } from "../store/race.ts";
 import { useConnectionStore } from "../store/connection.ts";
 import { ws } from "../net/ws.ts";
 import { cursorSlotColor } from "../core/cursor-manager.ts";
+import { useConfirmClick } from "./useConfirmClick.ts";
 
 export interface LobbyViewProps {
   roomCode: string;
@@ -92,15 +93,23 @@ export function LobbyView({
     }
   };
 
+  const startRaceAction = useCallback(() => {
+    onStartRace(undefined, grace, corpusType, corpusCategory);
+  }, [onStartRace, grace, corpusType, corpusCategory]);
+
+  const { armed: forceStartArmed, onClick: onForceStartClick } = useConfirmClick(startRaceAction);
+
+  const handleLeaveConfirmed = useCallback(() => {
+    onLeaveRoom?.();
+  }, [onLeaveRoom]);
+  const { armed: leaveArmed, onClick: onLeaveClick } = useConfirmClick(handleLeaveConfirmed);
+
   const handleStartRace = () => {
     if (guests.length > 0 && !allGuestsReady) {
-      const confirmed =
-        typeof window !== "undefined" && window.confirm
-          ? window.confirm("Force Start Race: Not all players are ready. Start the race anyway?")
-          : true;
-      if (!confirmed) return;
+      onForceStartClick();
+      return;
     }
-    onStartRace(undefined, grace, corpusType, corpusCategory);
+    startRaceAction();
   };
 
   const getCategoryDescription = (type: CorpusType, cat: CorpusCategory): string => {
@@ -142,10 +151,12 @@ export function LobbyView({
             <button
               type="button"
               aria-label="leave"
-              className="bg-transparent border-0 p-0 text-[var(--color-status-danger)] underline underline-offset-4 cursor-pointer font-mono text-sm"
-              onClick={onLeaveRoom}
+              className={`bg-transparent border-0 p-0 text-[var(--color-status-danger)] underline underline-offset-4 cursor-pointer font-mono text-sm ${
+                leaveArmed ? "font-bold" : ""
+              }`}
+              onClick={onLeaveClick}
             >
-              leave
+              <span aria-live="polite">{leaveArmed ? "Sure? leave" : "leave"}</span>
             </button>
           )}
         </div>
@@ -364,9 +375,13 @@ export function LobbyView({
             }`}
             onClick={handleStartRace}
           >
-            {guests.length === 0 || allGuestsReady
-              ? "Start Race"
-              : "Force Start Race"}
+            <span aria-live="polite">
+              {guests.length === 0 || allGuestsReady
+                ? "Start Race"
+                : forceStartArmed
+                  ? "Start anyway?"
+                  : "Force Start Race"}
+            </span>
           </button>
         </div>
       )}

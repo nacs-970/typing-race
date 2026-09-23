@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, fireEvent, cleanup, act } from "@testing-library/react";
 import { RaceHud } from "../components/RaceHud";
 import { TypingEngine } from "../core/typing-engine";
@@ -104,5 +104,23 @@ describe("RaceHud", () => {
     // Trigger leave
     fireEvent.mouseLeave(wpmDisplay);
     expect(queryByTestId("wpm-tooltip")).toBeNull();
+  });
+
+  it("requires two clicks on Leave before calling onLeaveRoom", () => {
+    const engine = new TypingEngine();
+    engine.init("hello world");
+    const onLeaveRoom = vi.fn();
+
+    const { getByText } = render(
+      <RaceHud typingEngine={engine} passageLength={11} onLeaveRoom={onLeaveRoom} />,
+    );
+
+    const leaveBtn = getByText("Leave");
+    fireEvent.click(leaveBtn);
+    expect(onLeaveRoom).not.toHaveBeenCalled();
+    expect(getByText("Sure? Leave")).toBeDefined();
+
+    fireEvent.click(getByText("Sure? Leave"));
+    expect(onLeaveRoom).toHaveBeenCalledTimes(1);
   });
 });

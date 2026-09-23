@@ -12,7 +12,6 @@ afterEach(() => {
 beforeEach(() => {
   useConnectionStore.setState({ playerId: "host-1" });
   useRaceStore.setState({ lobbyPlayers: [] });
-  window.confirm = vi.fn().mockReturnValue(true);
 });
 
 describe("LobbyView", () => {
@@ -137,8 +136,6 @@ describe("LobbyView", () => {
       { playerId: "guest-1", nickname: "Alice", isHost: false, progress: 0, isReady: false },
     ];
 
-    const confirmSpy = vi.spyOn(window, "confirm");
-
     const { getByText, rerender } = render(
       <LobbyView
         roomCode="ABCDEF"
@@ -152,7 +149,10 @@ describe("LobbyView", () => {
     expect(forceBtn).toBeDefined();
 
     fireEvent.click(forceBtn);
-    expect(confirmSpy).toHaveBeenCalled();
+    expect(onStartRace).not.toHaveBeenCalled();
+    expect(getByText("Start anyway?")).toBeDefined();
+
+    fireEvent.click(getByText("Start anyway?"));
     expect(onStartRace).toHaveBeenCalled();
 
     // Now make Alice ready
@@ -207,6 +207,10 @@ describe("LobbyView", () => {
     const leaveBtn = getByText("leave");
     expect(leaveBtn).toBeDefined();
     fireEvent.click(leaveBtn);
+    expect(onLeaveRoom).not.toHaveBeenCalled();
+    expect(getByText("Sure? leave")).toBeDefined();
+
+    fireEvent.click(getByText("Sure? leave"));
     expect(onLeaveRoom).toHaveBeenCalledTimes(1);
   });
 

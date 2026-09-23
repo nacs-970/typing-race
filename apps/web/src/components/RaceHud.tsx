@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import type { TypingEngine, TypingStats } from "../core/typing-engine.ts";
 import { useCursorStore } from "../store/cursor.ts";
+import { useConfirmClick } from "./useConfirmClick.ts";
 
 export interface RaceHudProps {
   typingEngine?: TypingEngine;
@@ -72,6 +73,11 @@ export function RaceHud({
   const roundedNetWpm = Math.round(stats.netWpm);
   const roundedRawWpm = Math.round(stats.rawWpm);
   const accuracyPercent = (stats.accuracy * 100).toFixed(1);
+
+  const handleLeaveConfirmed = useCallback(() => {
+    onLeaveRoom?.();
+  }, [onLeaveRoom]);
+  const { armed: leaveArmed, onClick: onLeaveClick } = useConfirmClick(handleLeaveConfirmed);
 
   return (
     <div
@@ -160,11 +166,13 @@ export function RaceHud({
         {onLeaveRoom && (
           <button
             type="button"
-            className="bg-transparent border-0 p-0 text-sm text-[var(--color-status-danger)] underline underline-offset-4 cursor-pointer font-mono"
-            onClick={onLeaveRoom}
+            className={`bg-transparent border-0 p-0 text-sm text-[var(--color-status-danger)] underline underline-offset-4 cursor-pointer font-mono ${
+              leaveArmed ? "font-bold" : ""
+            }`}
+            onClick={onLeaveClick}
             title="Leave Race Room"
           >
-            Leave
+            <span aria-live="polite">{leaveArmed ? "Sure? Leave" : "Leave"}</span>
           </button>
         )}
       </div>

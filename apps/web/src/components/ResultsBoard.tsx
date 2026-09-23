@@ -1,8 +1,9 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import type { PlayerFinalStats } from "@typing-race/shared";
 import { ws } from "../net/ws.ts";
 import { useConnectionStore } from "../store/connection.ts";
 import { useRaceStore } from "../store/race.ts";
+import { useConfirmClick } from "./useConfirmClick.ts";
 
 /**
  * Score dominates any wpm*accuracy product for a player who didn't finish
@@ -126,6 +127,11 @@ export function ResultsBoard({
     onReturnToLobby?.();
   };
 
+  const handleLeaveConfirmed = useCallback(() => {
+    onLeaveRoom?.();
+  }, [onLeaveRoom]);
+  const { armed: leaveArmed, onClick: onLeaveClick } = useConfirmClick(handleLeaveConfirmed);
+
   return (
     <div
       className="results-board w-full max-w-[860px] mx-auto text-[var(--color-text-bright)] font-mono text-left"
@@ -232,10 +238,12 @@ export function ResultsBoard({
           {onLeaveRoom && (
             <button
               type="button"
-              className="font-mono text-sm bg-transparent border-0 py-0 px-2 text-[var(--color-status-danger)] underline underline-offset-4 cursor-pointer hover:opacity-80 transition-opacity whitespace-nowrap"
-              onClick={onLeaveRoom}
+              className={`font-mono text-sm bg-transparent border-0 py-0 px-2 text-[var(--color-status-danger)] underline underline-offset-4 cursor-pointer hover:opacity-80 transition-opacity whitespace-nowrap ${
+                leaveArmed ? "font-bold" : ""
+              }`}
+              onClick={onLeaveClick}
             >
-              Leave room
+              <span aria-live="polite">{leaveArmed ? "Sure? Leave room" : "Leave room"}</span>
             </button>
           )}
         </div>
@@ -247,10 +255,12 @@ export function ResultsBoard({
           {onLeaveRoom && (
             <button
               type="button"
-              className="font-mono text-sm bg-transparent border-0 py-0 px-2 text-[var(--color-status-danger)] underline underline-offset-4 cursor-pointer hover:opacity-80 transition-opacity whitespace-nowrap"
-              onClick={onLeaveRoom}
+              className={`font-mono text-sm bg-transparent border-0 py-0 px-2 text-[var(--color-status-danger)] underline underline-offset-4 cursor-pointer hover:opacity-80 transition-opacity whitespace-nowrap ${
+                leaveArmed ? "font-bold" : ""
+              }`}
+              onClick={onLeaveClick}
             >
-              Leave room
+              <span aria-live="polite">{leaveArmed ? "Sure? Leave room" : "Leave room"}</span>
             </button>
           )}
         </div>

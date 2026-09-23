@@ -97,7 +97,7 @@ export function RaceHud({
         <div className="flex items-baseline gap-2.5">
           <span
             // Fixed-width, right-aligned box for up to 3 digits, so the "wpm" label beside it never moves.
-            className="font-serif-display text-[52px] leading-none text-[var(--color-text-bright)] inline-block min-w-[3.3ch] text-right tabular-nums"
+            className="font-serif-display text-[52px] leading-none text-[var(--color-text-bright)] inline-block min-w-[1.5ch] text-right tabular-nums"
             data-testid="net-wpm-value"
           >
             {roundedNetWpm}

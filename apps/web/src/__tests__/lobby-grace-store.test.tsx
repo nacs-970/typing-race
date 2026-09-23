@@ -10,9 +10,9 @@ afterEach(() => {
 });
 
 describe("Step F — small follow-ups (D4, a11y)", () => {
-  it("D4: the High Contrast preset's cursor is black", () => {
+  it("D4: the High Contrast preset's cursor is light grey", () => {
     const highContrast = THEME_PRESETS.find((p) => p.name === "High Contrast");
-    expect(highContrast?.colors.colorCursor).toBe("#000000");
+    expect(highContrast?.colors.colorCursor).toBe("#B6B6B6");
   });
 
   it("hides the decorative lobby empty-state line from assistive tech", () => {

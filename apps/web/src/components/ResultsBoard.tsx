@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PlayerFinalStats } from "@typing-race/shared";
 import { ws } from "../net/ws.ts";
 import { useConnectionStore } from "../store/connection.ts";
@@ -60,8 +60,16 @@ export function ResultsBoard({
    * Session-best WPM (item 12). Kept above the `results.length === 0` early
    * return so hook order stays stable across renders. Wrapped in try/catch:
    * sessionStorage can throw (private browsing, disabled storage).
+   *
+   * `evaluatedKeyRef` guards against evaluating (and re-writing) the same
+   * result twice: StrictMode double-invokes effects in dev, and an unrelated
+   * re-render can hand this effect a fresh `results` array with the same
+   * values. Without the guard, the second pass reads back the value the
+   * first pass just wrote and reports "Your best today" instead of "New
+   * best today" for the same race.
    */
   const [sessionBestLine, setSessionBestLine] = useState<string | null>(null);
+  const evaluatedKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     const myResult = results.find((r) => r.playerId === myId);
@@ -69,6 +77,11 @@ export function ResultsBoard({
       setSessionBestLine(null);
       return;
     }
+    const resultKey = `${myResult.playerId}|${myResult.finishTimeMs}|${myResult.wpm}`;
+    if (evaluatedKeyRef.current === resultKey) {
+      return;
+    }
+    evaluatedKeyRef.current = resultKey;
     try {
       const stored = sessionStorage.getItem(SESSION_BEST_KEY);
       const prevBest = stored ? parseFloat(stored) : null;

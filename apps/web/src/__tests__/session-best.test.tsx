@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { StrictMode } from "react";
 import { render, cleanup } from "@testing-library/react";
 import { ResultsBoard } from "../components/ResultsBoard";
 import { useConnectionStore } from "../store/connection";
@@ -66,5 +67,27 @@ describe("ResultsBoard session best — Step H", () => {
     const { queryByText } = render(<ResultsBoard results={results} isHost={false} />);
 
     expect(queryByText(/best today/)).toBeNull();
+  });
+
+  it("stays 'New best today' under StrictMode's double effect invocation", () => {
+    const { getByText, queryByText } = render(
+      <StrictMode>
+        <ResultsBoard results={results} isHost={false} />
+      </StrictMode>,
+    );
+
+    expect(getByText("New best today")).toBeDefined();
+    expect(queryByText(/^Your best today/)).toBeNull();
+    expect(memoryStorage.getItem("typing_race_best_wpm")).toBe("80.0");
+  });
+
+  it("does not re-evaluate against its own just-written value on an unrelated re-render", () => {
+    const { getByText, rerender } = render(<ResultsBoard results={results} isHost={false} />);
+    expect(getByText("New best today")).toBeDefined();
+
+    rerender(<ResultsBoard results={[...results]} isHost={false} />);
+
+    expect(getByText("New best today")).toBeDefined();
+    expect(memoryStorage.getItem("typing_race_best_wpm")).toBe("80.0");
   });
 });

@@ -43,7 +43,7 @@ Define colors ONLY as tokens in `apps/web/src/styles.css` (`@theme`). In compone
 | `--color-bg-base` / `-surface` / `-surface-elevated` | `#fdfbf3` | Paper. Cream-white, not grey off-white |
 | `--color-text-bright` | `#1d2114` | Ink: body text, rules, outline buttons |
 | `--color-accent-green` | `#5f6f36` | Olive ink: primary buttons, active states, "Winner" |
-| `--color-cursor-own` | `#90a358` | Your caret, and your own chip in the lobby |
+| `--color-cursor-own` | `#80924a` | Your caret, and your own chip in the lobby |
 | `--color-char-correct` | `#1d2114` | Typed-correct characters |
 | `--color-status-danger` | `#b3261e` | Errors, "Leave", finish-blocked |
 

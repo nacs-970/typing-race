@@ -92,14 +92,14 @@
   --color-text-faint: color-mix(in srgb, var(--color-text-bright) 55%, var(--color-bg-surface) 45%);
   --color-text-dark: #ffffff;
 
-  /* Olive ink accent (text/buttons). The lighter #90a358 stays on the cursor. */
+  /* Olive ink accent (text/buttons). The lighter #80924a stays on the cursor (3.3:1 on paper, 4.8:1 under ink). */
   --color-accent-green: #5f6f36;
   --color-accent-green-hover: color-mix(in srgb, var(--color-accent-green) 85%, black 15%);
   --color-accent-green-subtle: color-mix(in srgb, var(--color-accent-green) 20%, transparent);
   --color-accent-green-glow: color-mix(in srgb, var(--color-accent-green) 50%, transparent);
 
   --color-char-correct: #1d2114;
-  --color-cursor-own: #90a358;
+  --color-cursor-own: #80924a;
 
   --color-accent-clay: var(--color-accent-green);
   --color-accent-hover: var(--color-accent-green-hover);

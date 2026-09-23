@@ -15,7 +15,7 @@ export const DEFAULT_SETTINGS: PlayerSettings = {
   fontSize: 16,
   colorCorrect: "#1d2114",
   colorIncorrect: "#b3261e",
-  colorCursor: "#90a358",
+  colorCursor: "#80924a",
   colorAccent: "#5f6f36",
   colorBackground: "#fdfbf3",
   colorText: "#1d2114",
@@ -35,7 +35,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     colors: {
       colorCorrect: "#1d2114",
       colorIncorrect: "#b3261e",
-      colorCursor: "#90a358",
+      colorCursor: "#80924a",
       colorAccent: "#5f6f36",
       colorBackground: "#fdfbf3",
       colorText: "#1d2114",

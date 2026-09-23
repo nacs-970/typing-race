@@ -207,7 +207,7 @@ h1 {
 
 .session-taken-over-button {
   background: var(--color-status-danger);
-  color: #fdfbf3;
+  color: var(--color-bg-base);
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 0;

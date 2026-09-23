@@ -37,7 +37,7 @@ export class PassageLayout {
 
   public init(
     passageText: string,
-    font: string = '16px "JetBrains Mono", "Fira Code", "SF Mono", ui-monospace, monospace',
+    font: string = '16px "Courier Prime", ui-monospace, monospace',
     lineHeight: number = 32,
   ): void {
     this.lineHeight = lineHeight;

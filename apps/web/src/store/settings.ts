@@ -13,12 +13,12 @@ export interface PlayerSettings {
 /** Matches the current hardcoded look in styles.css — changing a setting overrides these. */
 export const DEFAULT_SETTINGS: PlayerSettings = {
   fontSize: 16,
-  colorCorrect: "#1a4d10",
-  colorIncorrect: "#dc2626",
+  colorCorrect: "#1d2114",
+  colorIncorrect: "#b3261e",
   colorCursor: "#90a358",
-  colorAccent: "#90a358",
-  colorBackground: "#fefbe6",
-  colorText: "#151d10",
+  colorAccent: "#5f6f36",
+  colorBackground: "#fdfbf3",
+  colorText: "#1d2114",
 };
 
 export type ThemeColors = Omit<PlayerSettings, "fontSize">;
@@ -33,12 +33,12 @@ export const THEME_PRESETS: ThemePreset[] = [
   {
     name: "Olive",
     colors: {
-      colorCorrect: "#1a4d10",
-      colorIncorrect: "#dc2626",
+      colorCorrect: "#1d2114",
+      colorIncorrect: "#b3261e",
       colorCursor: "#90a358",
-      colorAccent: "#90a358",
-      colorBackground: "#fefbe6",
-      colorText: "#151d10",
+      colorAccent: "#5f6f36",
+      colorBackground: "#fdfbf3",
+      colorText: "#1d2114",
     },
   },
   {

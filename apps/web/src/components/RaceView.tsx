@@ -48,7 +48,7 @@ export function RaceView({
     setCharStates([...localEngine.getCharStates()]);
     localLayout.init(
       passageText,
-      `${fontSize}px "JetBrains Mono", "Fira Code", "SF Mono", ui-monospace, monospace`,
+      `${fontSize}px "Courier Prime", ui-monospace, monospace`,
       fontSize * 2,
     );
     localLayout.updateLayout(trackRef.current?.clientWidth || 800);

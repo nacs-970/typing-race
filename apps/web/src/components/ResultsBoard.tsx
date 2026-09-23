@@ -103,6 +103,16 @@ export function ResultsBoard({
     return `${i + 1}th Place`;
   };
 
+  // Every hook runs before the empty-results early return, so hook order
+  // stays the same when results arrive while this board is mounted.
+  const countdownStartsAtServerMs = useRaceStore((s) => s.countdownStartsAtServerMs);
+  const corpusType = useRaceStore((s) => s.corpusType ?? "passage");
+  const corpusCategory = useRaceStore((s) => s.corpusCategory ?? "mid");
+  const handleLeaveConfirmed = useCallback(() => {
+    onLeaveRoom?.();
+  }, [onLeaveRoom]);
+  const { armed: leaveArmed, onClick: onLeaveClick } = useConfirmClick(handleLeaveConfirmed);
+
   if (results.length === 0) {
     return (
       <div className="results-board results-empty-state w-full max-w-[860px] mx-auto py-8 text-center font-mono text-[var(--color-text-bright)] border-t border-b border-[var(--color-border-muted)]">
@@ -126,7 +136,6 @@ export function ResultsBoard({
     .filter((r) => finishedPlayerIds === undefined || finishedPlayerIds.includes(r.playerId))
     .map((r) => r.finishTimeMs);
   const fastestFinishMs = finisherTimes.length > 0 ? Math.min(...finisherTimes) : 0;
-  const countdownStartsAtServerMs = useRaceStore((s) => s.countdownStartsAtServerMs);
 
   const getElapsedMs = (rawMs: number): number => {
     if (rawMs > 1_000_000_000) {
@@ -149,8 +158,6 @@ export function ResultsBoard({
     return `${mins}:${secs}`;
   };
 
-  const corpusType = useRaceStore((s) => s.corpusType ?? "passage");
-  const corpusCategory = useRaceStore((s) => s.corpusCategory ?? "mid");
   const typeLabel = corpusType === "random_words" ? "Random Words" : "Passage";
   const catLabel = corpusCategory.charAt(0).toUpperCase() + corpusCategory.slice(1);
 
@@ -168,11 +175,6 @@ export function ResultsBoard({
     ws.send({ type: "return_to_lobby" });
     onReturnToLobby?.();
   };
-
-  const handleLeaveConfirmed = useCallback(() => {
-    onLeaveRoom?.();
-  }, [onLeaveRoom]);
-  const { armed: leaveArmed, onClick: onLeaveClick } = useConfirmClick(handleLeaveConfirmed);
 
   return (
     <div

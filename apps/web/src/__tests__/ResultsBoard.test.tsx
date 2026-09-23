@@ -104,6 +104,17 @@ describe("ResultsBoard", () => {
     ).toBeDefined();
   });
 
+  it("renders the table when results arrive after the empty state", () => {
+    const { rerender, container } = render(
+      <ResultsBoard results={[]} isHost={false} />,
+    );
+
+    rerender(<ResultsBoard results={sampleResults} isHost={false} />);
+
+    const rows = container.querySelectorAll('[data-testid="result-row"]');
+    expect(rows.length).toBe(4);
+  });
+
   it("triggers onRematch when host clicks Play Again", () => {
     const onRematch = vi.fn();
     const { getByTestId } = render(

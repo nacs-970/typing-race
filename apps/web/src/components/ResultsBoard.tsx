@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { PlayerFinalStats } from "@typing-race/shared";
 import { ws } from "../net/ws.ts";
 import { useConnectionStore } from "../store/connection.ts";
@@ -13,6 +13,8 @@ import { useConfirmClick } from "./useConfirmClick.ts";
  * margin.
  */
 const FINISH_BONUS = 1000;
+
+const SESSION_BEST_KEY = "typing_race_best_wpm";
 
 export interface ResultsBoardProps {
   results: PlayerFinalStats[];
@@ -53,6 +55,33 @@ export function ResultsBoard({
     };
     return [...results].sort((a, b) => score(b) - score(a));
   }, [results, finishedPlayerIds]);
+
+  /**
+   * Session-best WPM (item 12). Kept above the `results.length === 0` early
+   * return so hook order stays stable across renders. Wrapped in try/catch:
+   * sessionStorage can throw (private browsing, disabled storage).
+   */
+  const [sessionBestLine, setSessionBestLine] = useState<string | null>(null);
+
+  useEffect(() => {
+    const myResult = results.find((r) => r.playerId === myId);
+    if (!myResult) {
+      setSessionBestLine(null);
+      return;
+    }
+    try {
+      const stored = sessionStorage.getItem(SESSION_BEST_KEY);
+      const prevBest = stored ? parseFloat(stored) : null;
+      if (prevBest === null || myResult.wpm > prevBest) {
+        sessionStorage.setItem(SESSION_BEST_KEY, myResult.wpm.toFixed(1));
+        setSessionBestLine("New best today");
+      } else {
+        setSessionBestLine(`Your best today: ${prevBest.toFixed(1)} wpm`);
+      }
+    } catch {
+      setSessionBestLine(null);
+    }
+  }, [results, myId]);
 
   const getRankLabel = (i: number): string => {
     if (i === 0) return "1st Place";
@@ -147,6 +176,7 @@ export function ResultsBoard({
       <p className="mt-3 mb-7 italic text-[15px] text-[var(--color-text-muted)]">
         Final standings, speed and precision.
       </p>
+      {sessionBestLine && <p className="label mb-7">{sessionBestLine}</p>}
 
       <div className="overflow-x-auto">
         <table className="w-full border-collapse font-mono text-base tabular-nums">

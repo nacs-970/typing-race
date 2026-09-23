@@ -30,6 +30,7 @@ describe("LobbyView", () => {
 
     expect(writeText).toHaveBeenCalledWith("K7QX2M");
     expect(getByText("Code copied")).toBeDefined();
+    expect(getByLabelText("Copy room code K7QX2M").className).toContain("color-mix");
   });
 
   it("renders empty state when solo in lobby", () => {

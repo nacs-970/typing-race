@@ -156,7 +156,11 @@ export function LobbyView({
             type="button"
             aria-label={`Copy room code ${roomCode}`}
             title="Click to copy the room code"
-            className="font-serif-display text-[clamp(3.5rem,10vw,88px)] leading-none tracking-[0.04em] text-[var(--color-text-bright)] bg-transparent border-0 p-0 cursor-copy hover:text-[var(--color-accent-green)] transition-colors"
+            className={`font-serif-display text-[clamp(3.5rem,10vw,88px)] leading-none tracking-[0.04em] bg-transparent border-0 p-0 cursor-copy transition-colors duration-300 ${
+              codeCopied
+                ? "text-[color-mix(in_srgb,var(--color-accent-green)_45%,var(--color-bg-base))]"
+                : "text-[var(--color-text-bright)] hover:text-[var(--color-accent-green)]"
+            }`}
             onClick={handleCopyCode}
           >
             {roomCode}

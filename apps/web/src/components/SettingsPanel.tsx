@@ -28,6 +28,8 @@ export function SettingsPanel(): React.ReactElement {
       <button
         type="button"
         aria-label="Settings"
+        aria-expanded={open}
+        aria-controls="settings-panel-body"
         onClick={() => setOpen((v) => !v)}
         className="w-11 h-11 rounded-none bg-[var(--color-bg-surface)] border border-[var(--color-border-muted)] text-[var(--color-text-bright)] font-mono text-[15px] cursor-pointer hover:bg-[var(--color-bg-surface-hover)] transition-colors flex items-center justify-center"
       >
@@ -35,7 +37,7 @@ export function SettingsPanel(): React.ReactElement {
       </button>
 
       {open && (
-        <div className="mb-2 w-64 p-4 rounded-none border border-[var(--color-border-muted)] bg-[var(--color-bg-surface)] text-[var(--color-text-bright)] font-mono shadow-none">
+        <div id="settings-panel-body" className="mb-2 w-64 p-4 rounded-none border border-[var(--color-border-muted)] bg-[var(--color-bg-surface)] text-[var(--color-text-bright)] font-mono shadow-none">
           <div className="flex items-center justify-between mb-3">
             <span className="label font-bold text-[var(--color-text-bright)]">Settings</span>
             <button

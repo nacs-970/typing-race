@@ -148,11 +148,11 @@ export function LobbyView({
           </div>
           <p className="m-0 mt-3 italic text-[15px] text-[var(--color-text-muted)]">
             {isHost
-              ? "Configure the race, then start when racers are ready."
-              : "Waiting for host to start the race…"}
+              ? "Configure the race, then start when everyone is ready."
+              : "Waiting for host to start…"}
           </p>
         </div>
-        <span className="label"><strong>{players.length}</strong> of 8 seats</span>
+        <span className="label"><b>{players.length}</b> of 8 seats</span>
       </div>
 
       {/* Empty State when solo in room */}

@@ -11,7 +11,7 @@ These items change behavior, not only styling. Do them as a separate batch after
 - [x] **3. Show the default nickname.** An empty nickname silently becomes `"Racer"` (`nickname.trim() || "Racer"`). Use `Racer` as the input placeholder.
 - [x] **4. Confirm "Leave" mid-race.** `RaceHud` calls `onLeaveRoom` on a single click. Add a two-step inline confirm: the first click changes the label to "Sure? Leave" for 3 seconds, and the second click leaves. Use the same pattern for the lobby and results "Leave room" links.
 - [x] **5. Replace `window.confirm` on force start.** `LobbyView.handleStartRace` uses `window.confirm`. Use the same two-step inline confirm on the button ("Force Start Race", then "Start anyway?").
-- [x] **6. Show accuracy and errors inline in the race header.** Errors are visible only in a hover tooltip (`RaceHud`), and you cannot hover while typing. The finish-blocked note appears only at the end of the passage. Show `97.1% · 2 errors` next to WPM and remove the tooltip.
+- [x] **6. Show accuracy and errors inline in the race header.** Errors are visible only in a hover tooltip (`RaceHud`), and you cannot hover while typing. The finish-blocked note appears only at the end of the passage. Show `97.1% · 2 errors` next to WPM and remove the tooltip. (Shipped as accuracy only, `97.1%`, under WPM. The tooltip stays, per decision D2.)
 - [x] **7. Remove duplicate disconnect/reconnect notices.** `App.tsx` shows a toast (`addToast`) and also the inline `disconnectToasts` / `reconnectedNotice` banners for the same event. Keep only the toast.
 - [x] **8. Keep the host's grace setting on rematch.** `ResultsBoard.handleRematch` always sends `graceSeconds: 5`. Reuse the grace value the host picked in the lobby. This needs the value stored in the race store, or passed down.
 - [x] **9. Rewrite robotic or internal copy.**
@@ -23,4 +23,4 @@ These items change behavior, not only styling. Do them as a separate batch after
 
 - [x] **10. Typing on mobile.** (Shipped as a hidden input. Still needs a check on a real Android and iOS phone.) Keys come from a `window` `keydown` listener in `RaceView`, so touch devices never open a keyboard. The minimum fix is a "Physical keyboard needed" notice on touch devices. The full fix is a visually hidden input that gets focus on tap.
 - [ ] **11. Show the passage during the countdown.** A dimmed first line would let players prepare. This needs a server change, because `passageText` arrives only with the race start.
-- [x] **12. Show a session best on the results screen.** For example "74 wpm — your best today", stored in `localStorage`.
+- [x] **12. Show a session best on the results screen.** For example "74 wpm — your best today", stored in `localStorage`. (Shipped with `sessionStorage`, so the best lasts only while the tab is open.)

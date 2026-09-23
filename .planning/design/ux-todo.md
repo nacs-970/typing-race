@@ -22,5 +22,5 @@ These items change behavior, not only styling. Do them as a separate batch after
 ## Bigger (optional)
 
 - [x] **10. Typing on mobile.** (Shipped as a hidden input. Still needs a check on a real Android and iOS phone.) Keys come from a `window` `keydown` listener in `RaceView`, so touch devices never open a keyboard. The minimum fix is a "Physical keyboard needed" notice on touch devices. The full fix is a visually hidden input that gets focus on tap.
-- [ ] **11. Show the passage during the countdown.** A dimmed first line would let players prepare. This needs a server change, because `passageText` arrives only with the race start.
+- [~] **11. Show the passage during the countdown.** A dimmed first line would let players prepare. This needs a server change, because `passageText` arrives only with the race start. (Won't do. On 2026-09-23 the user chose to keep the current countdown. Demo: https://claude.ai/artifact/Ty24NYnCGVJAgpfVsHiYMB, private.)
 - [x] **12. Show a session best on the results screen.** For example "74 wpm — your best today", stored in `localStorage`. (Shipped with `sessionStorage`, so the best lasts only while the tab is open.)

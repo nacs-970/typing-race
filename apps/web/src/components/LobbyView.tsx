@@ -39,6 +39,7 @@ export function LobbyView({
   const [corpusCategory, setCorpusCategory] = useState<CorpusCategory>(storeCorpusCategory ?? "mid");
   const [grace, setGrace] = useState<number>(5);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
+  const [codeCopied, setCodeCopied] = useState<boolean>(false);
 
   const me = players.find((p) => p.playerId === myPlayerId);
   const guests = players.filter((p) => !p.isHost);
@@ -79,6 +80,14 @@ export function LobbyView({
       navigator.clipboard.writeText(url);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
+    }
+  };
+
+  const handleCopyCode = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(roomCode);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
     }
   };
 
@@ -143,9 +152,18 @@ export function LobbyView({
 
       <div className="flex justify-between items-end pt-9 pb-7">
         <div>
-          <div className="font-serif-display text-[clamp(3.5rem,10vw,88px)] leading-none tracking-[0.04em] text-[var(--color-text-bright)]">
+          <button
+            type="button"
+            aria-label={`Copy room code ${roomCode}`}
+            title="Click to copy the room code"
+            className="font-serif-display text-[clamp(3.5rem,10vw,88px)] leading-none tracking-[0.04em] text-[var(--color-text-bright)] bg-transparent border-0 p-0 cursor-copy select-all hover:text-[var(--color-accent-green)] transition-colors"
+            onClick={handleCopyCode}
+          >
             {roomCode}
-          </div>
+          </button>
+          <span className="label block mt-2" aria-live="polite">
+            {codeCopied ? "Code copied" : "Click the code to copy it"}
+          </span>
           <p className="m-0 mt-3 italic text-[15px] text-[var(--color-text-muted)]">
             {isHost
               ? "Configure the race, then start when everyone is ready."

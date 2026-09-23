@@ -16,6 +16,22 @@ beforeEach(() => {
 });
 
 describe("LobbyView", () => {
+  it("copies just the room code when the code is clicked", () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    const { getByLabelText, getByText } = render(
+      <LobbyView roomCode="K7QX2M" isHost={true} onStartRace={() => {}} />,
+    );
+
+    fireEvent.click(getByLabelText("Copy room code K7QX2M"));
+
+    expect(writeText).toHaveBeenCalledWith("K7QX2M");
+    expect(getByText("Code copied")).toBeDefined();
+  });
+
   it("renders empty state when solo in lobby", () => {
     const { getByText } = render(
       <LobbyView

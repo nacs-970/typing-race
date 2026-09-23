@@ -45,6 +45,16 @@ export function RaceHud({
     };
   }, [typingEngine]);
 
+  // Escape hides the tooltip wherever focus is (WCAG 1.4.13).
+  useEffect(() => {
+    if (!showTooltip) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowTooltip(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showTooltip]);
+
   const currentProgress = Math.max(engineIndex, ownIndex);
 
   // Rank calculation against opponents
@@ -111,31 +121,32 @@ export function RaceHud({
 
         {/* Hover Popover Tooltip (D-18) */}
         {showTooltip && (
-          <div
-            className="absolute top-full left-0 mt-2 p-3 bg-[var(--color-bg-surface)] border border-[var(--color-border-muted)] z-30 pointer-events-none min-w-[170px]"
-            data-testid="wpm-tooltip"
-          >
-            <div className="label border-b border-[var(--color-border-muted)] pb-1.5 mb-2">
-              Typing Breakdown
-            </div>
-            <div className="space-y-1 text-xs">
-              <div className="flex justify-between">
-                <span className="text-[var(--color-text-muted)]">Net WPM:</span>
-                <span className="font-bold text-[var(--color-text-bright)]">{roundedNetWpm}</span>
+          // pt-2 (not mt-2) keeps the gap inside the hover area, so the
+          // pointer can move onto the tooltip without closing it.
+          <div className="absolute top-full left-0 pt-2 z-30" data-testid="wpm-tooltip">
+            <div className="p-3 bg-[var(--color-bg-surface)] border border-[var(--color-border-muted)] min-w-[170px]">
+              <div className="label border-b border-[var(--color-border-muted)] pb-1.5 mb-2">
+                Typing Breakdown
               </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--color-text-muted)]">Raw WPM:</span>
-                <span className="font-bold text-[var(--color-text-bright)]">{roundedRawWpm}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--color-text-muted)]">Accuracy:</span>
-                <span className="font-bold text-[var(--color-text-bright)]">{accuracyPercent}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--color-text-muted)]">Errors:</span>
-                <span className="font-bold text-[var(--color-status-danger)]">
-                  {stats.uncorrectedErrors}
-                </span>
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-[var(--color-text-muted)]">Net WPM:</span>
+                  <span className="font-bold text-[var(--color-text-bright)]">{roundedNetWpm}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--color-text-muted)]">Raw WPM:</span>
+                  <span className="font-bold text-[var(--color-text-bright)]">{roundedRawWpm}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--color-text-muted)]">Accuracy:</span>
+                  <span className="font-bold text-[var(--color-text-bright)]">{accuracyPercent}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--color-text-muted)]">Errors:</span>
+                  <span className="font-bold text-[var(--color-status-danger)]">
+                    {stats.uncorrectedErrors}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

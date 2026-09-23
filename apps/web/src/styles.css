@@ -176,12 +176,11 @@ main {
   text-align: center;
 }
 
+/* Only font defaults here: unlayered rules beat Tailwind's layered utilities,
+ * so size/margin/tracking on h1 would silently override the component classes. */
 h1 {
   font-family: var(--font-serif);
   font-weight: 400;
-  font-size: clamp(2rem, 6vw, 3rem);
-  margin: 0 0 1rem;
-  letter-spacing: -0.02em;
   color: var(--color-text-bright);
 }
 

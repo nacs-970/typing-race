@@ -57,7 +57,7 @@ export function CountdownView({
       }`}
       data-testid="countdown-overlay"
     >
-      <div className="countdown-view text-center flex flex-col items-center">
+      <div className="countdown-view text-center flex flex-col items-center" role="status" aria-live="polite">
         <span className="countdown-label label">
           {display === "GO!" ? "Race started" : "Starting in"}
         </span>

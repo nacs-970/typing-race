@@ -48,7 +48,7 @@ describe("LobbyView", () => {
 
     expect(getByText("Alice")).toBeDefined();
     expect(getByText("Bob")).toBeDefined();
-    expect(getByText("✓ Ready")).toBeDefined();
+    expect(getByText("Ready")).toBeDefined();
     expect(getAllByText("Waiting…").length).toBeGreaterThanOrEqual(1);
   });
 
@@ -166,7 +166,7 @@ describe("LobbyView", () => {
       />,
     );
 
-    const leaveBtn = getByText("🚪 Leave Room");
+    const leaveBtn = getByText("Leave room");
     expect(leaveBtn).toBeDefined();
     fireEvent.click(leaveBtn);
     expect(onLeaveRoom).toHaveBeenCalledTimes(1);
@@ -183,11 +183,11 @@ describe("LobbyView", () => {
       />,
     );
 
-    expect(getByText("📖 Passage")).toBeDefined();
-    expect(getByText("🔤 Random Words")).toBeDefined();
+    expect(getByText("Passage")).toBeDefined();
+    expect(getByText("Random words")).toBeDefined();
 
     // Switch to Random Words
-    fireEvent.click(getByText("🔤 Random Words"));
+    fireEvent.click(getByText("Random words"));
     // Switch to Short
     fireEvent.click(getByText("short"));
 

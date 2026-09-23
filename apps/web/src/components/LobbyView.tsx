@@ -115,88 +115,98 @@ export function LobbyView({
   };
 
   return (
-    <div className="lobby-view max-w-[800px] mx-auto p-6 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] text-[var(--color-text-bright)] font-mono">
-      <div className="flex items-center justify-between border-b border-[var(--color-border-subtle)] pb-4 mb-6">
-        <div>
-          <h2 className="text-2xl font-bold m-0">Room {roomCode} {isHost ? "(Host)" : ""}</h2>
-          <p className="text-sm text-[var(--color-text-muted)] mt-1 mb-0">
-            {isHost ? "Configure race corpus and start when racers are ready" : "Waiting for host to start the race…"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+    <div className="lobby-view w-full max-w-[860px] mx-auto text-left font-mono">
+      {/* Header */}
+      <div className="flex justify-between items-baseline pb-2.5 border-b border-[var(--color-border-muted)] label">
+        <span>Room · {isHost ? "Host" : "Guest"}</span>
+        <div className="flex gap-6 normal-case tracking-normal text-sm font-mono">
           <button
             type="button"
             aria-label="Copy room invite link"
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--color-bg-base)] border border-[var(--color-border-subtle)] hover:bg-[var(--color-bg-surface-hover)] transition-colors text-[var(--color-text-bright)] cursor-pointer"
+            className="bg-transparent border-0 p-0 text-[var(--color-text-bright)] underline underline-offset-4 cursor-pointer font-mono text-sm"
             onClick={handleCopyLink}
           >
-            {copySuccess ? "✓ Copied Link" : "📋 Copy Room Link"}
+            {copySuccess ? "Copied" : "Copy room link"}
           </button>
           {onLeaveRoom && (
             <button
               type="button"
               aria-label="Leave room"
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] hover:bg-[var(--color-danger-hover)] transition-colors text-[var(--color-danger-text)] cursor-pointer"
-              onClick={onLeaveRoom}>
-              🚪 Leave Room
+              className="bg-transparent border-0 p-0 text-[var(--color-status-danger)] underline underline-offset-4 cursor-pointer font-mono text-sm"
+              onClick={onLeaveRoom}
+            >
+              Leave room
             </button>
           )}
         </div>
       </div>
 
+      <div className="flex justify-between items-end pt-9 pb-7">
+        <div>
+          <div className="font-serif-display text-[clamp(3.5rem,10vw,88px)] leading-none tracking-[0.04em] text-[var(--color-text-bright)]">
+            {roomCode}
+          </div>
+          <p className="m-0 mt-3 italic text-[15px] text-[var(--color-text-muted)]">
+            {isHost
+              ? "Configure the race, then start when racers are ready."
+              : "Waiting for host to start the race…"}
+          </p>
+        </div>
+        <span className="label"><strong>{players.length}</strong> of 8 seats</span>
+      </div>
+
       {/* Empty State when solo in room */}
       {players.length <= 1 && (
-        <div className="lobby-empty-state text-center p-6 my-4 border border-dashed border-[var(--color-border-subtle)] rounded-lg bg-[var(--color-bg-base)]/50">
-          <h3 className="text-lg font-bold text-[var(--color-text-bright)] mb-1">Waiting for Competitors</h3>
-          <p className="text-sm text-[var(--color-text-muted)] mb-4">
+        <div className="lobby-empty-state my-6 py-6 border-y border-[var(--color-border-muted)]">
+          <h3 className="text-base font-bold text-[var(--color-text-bright)] m-0 mb-1">
+            Waiting for Competitors
+          </h3>
+          <p className="text-sm text-[var(--color-text-muted)] m-0 mb-4">
             Share the invite link or room code with friends to start racing.
           </p>
           <button
             type="button"
             aria-label="Copy room invite link"
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-[var(--color-accent-clay)] text-white hover:bg-[var(--color-accent-hover)] transition-opacity"
+            className="inline-block py-2.5 px-4 bg-[var(--color-accent-green)] hover:bg-[var(--color-accent-green-hover)] text-[var(--color-bg-base)] font-mono font-bold text-sm cursor-pointer border border-[var(--color-accent-green)] rounded-none"
             onClick={handleCopyLink}
           >
-            {copySuccess ? "✓ Copied Room Link" : "📋 Copy Room Link"}
+            {copySuccess ? "Copied" : "Copy room link"}
           </button>
         </div>
       )}
 
       {/* Competitors List */}
-      <div className="players-list mb-6">
-        <h4 className="text-xs uppercase tracking-wider text-[var(--color-text-muted)] font-bold mb-2">
+      <div className="players-list mb-7">
+        <div className="label py-2.5 border-t border-[var(--color-text-bright)]">
           Competitors ({players.length})
-        </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {players.map((p) => {
+        </div>
+        <div className="flex flex-col text-base">
+          {players.map((p, idx) => {
             const isMe = p.playerId === myPlayerId;
             return (
               <div
                 key={p.playerId}
-                className={`flex items-center justify-between p-2.5 rounded-lg border ${
-                  isMe ? "border-[var(--color-accent-clay)]/50 bg-[var(--color-bg-base)]" : "border-[var(--color-border-subtle)] bg-[var(--color-bg-base)]/40"
-                }`}
+                className="flex items-baseline gap-4 py-2.5 border-b border-[var(--color-border-subtle)]"
               >
-                <div className="flex items-center gap-2 overflow-hidden">
-                  <span className="font-medium text-sm truncate">{p.nickname}</span>
-                  {p.isHost && (
-                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-[var(--color-bg-surface-hover)] text-[var(--color-text-muted)]">
-                      Host
-                    </span>
-                  )}
-                  {isMe && <span className="text-[10px] text-[var(--color-accent-clay)] font-semibold">(You)</span>}
-                </div>
-                <div>
-                  {p.isReady ? (
-                    <span className="text-xs font-bold text-[var(--color-status-success)] bg-[var(--color-status-success)]/10 px-2 py-0.5 rounded">
-                      ✓ Ready
-                    </span>
-                  ) : (
-                    <span className="text-xs text-[var(--color-text-faint)] bg-[var(--color-text-faint)]/10 px-2 py-0.5 rounded">
-                      Waiting…
-                    </span>
-                  )}
-                </div>
+                <span className="text-[var(--color-text-muted)]">
+                  {String(idx + 1).padStart(2, "0")}
+                </span>
+                <span className={isMe ? "font-bold text-[var(--color-text-bright)]" : "text-[var(--color-text-bright)]"}>
+                  {p.nickname}
+                </span>
+                {isMe && (
+                  <span className="italic text-[var(--color-text-muted)] text-sm">
+                    (you)
+                  </span>
+                )}
+                <span className="flex-grow border-b border-dotted border-[var(--color-border-muted)] -translate-y-1" />
+                {p.isHost ? (
+                  <span className="italic text-[var(--color-text-muted)]">host</span>
+                ) : p.isReady ? (
+                  <span className="text-[var(--color-accent-green)]">Ready</span>
+                ) : (
+                  <span className="italic text-[var(--color-text-muted)]">Waiting…</span>
+                )}
               </div>
             );
           })}
@@ -205,122 +215,102 @@ export function LobbyView({
 
       {/* Guest Ready Up Action */}
       {!isHost && (
-        <div className="guest-controls mb-6">
+        <div className="guest-controls mb-7">
           <button
             type="button"
-            className={`w-full py-3 rounded-lg text-base font-bold transition-colors ${
+            className={`w-full py-3.5 px-4 font-mono font-bold tracking-[0.04em] text-base cursor-pointer rounded-none transition-colors ${
               me?.isReady
-                ? "bg-[var(--color-bg-surface-hover)] hover:bg-[var(--color-border-subtle)] text-[var(--color-text-bright)] border border-[var(--color-border-subtle)]"
-                : "bg-[var(--color-accent-clay)] hover:bg-[var(--color-accent-hover)] text-white"
+                ? "bg-transparent text-[var(--color-text-bright)] border border-[var(--color-text-bright)] hover:bg-[var(--color-bg-surface-hover)]"
+                : "bg-[var(--color-accent-green)] hover:bg-[var(--color-accent-green-hover)] text-[var(--color-bg-base)] border border-[var(--color-accent-green)]"
             }`}
             onClick={handleToggleReady}
           >
             {me?.isReady ? "Cancel Ready" : "Ready Up"}
           </button>
 
-          <div className="mt-4 p-4 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-border-subtle)]">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs uppercase font-bold text-[var(--color-text-muted)]">
-                Selected Corpus
-              </span>
-              <span className="text-xs font-bold text-[var(--color-accent-clay)] uppercase">
+          <div className="mt-7 border-t border-[var(--color-text-bright)]">
+            <div className="flex items-center justify-between py-3 border-b border-[var(--color-border-subtle)]">
+              <span className="label">Selected Corpus</span>
+              <span className="font-mono text-base font-bold text-[var(--color-text-bright)]">
                 {storeCorpusType === "random_words" ? "Random Words" : "Passage"} • {storeCorpusCategory}
               </span>
             </div>
-            <p className="text-xs text-[var(--color-text-muted)] m-0">
+            <p className="m-0 mt-3 italic text-sm text-[var(--color-text-muted)]">
               {getCategoryDescription(storeCorpusType ?? "passage", storeCorpusCategory ?? "mid")}
             </p>
-            <p className="text-[11px] text-[var(--color-text-faint)] mt-2 mb-0 italic">
-              🎲 A random {storeCorpusType === "random_words" ? "word sequence" : "passage"} will be dealt when the host starts the race.
+            <p className="m-0 mt-1 italic text-xs text-[var(--color-text-faint)]">
+              A random {storeCorpusType === "random_words" ? "word sequence" : "passage"} will be dealt when the host starts the race.
             </p>
           </div>
 
           {preview && (
             <div className="host-choice mt-3 text-sm text-[var(--color-text-muted)]">
-              <span className="font-semibold text-[var(--color-text-bright)]">Host preview:</span>{" "}
+              <span className="font-bold text-[var(--color-text-bright)]">Host preview:</span>{" "}
               <span className="preview italic">{preview}</span>
             </div>
           )}
-          {passageText && <p className="passage-preview text-xs text-[var(--color-text-muted)] mt-2 italic">{passageText}</p>}
+          {passageText && (
+            <p className="passage-preview text-xs text-[var(--color-text-muted)] mt-2 italic">
+              {passageText}
+            </p>
+          )}
         </div>
       )}
 
       {/* Host Controls */}
       {isHost && (
-        <div className="host-controls space-y-4">
+        <div className="host-controls flex flex-col mt-7 border-t border-[var(--color-text-bright)]">
           {/* Corpus Type Selector */}
-          <div className="corpus-type-controls bg-[var(--color-bg-base)] p-3 rounded-lg border border-[var(--color-border-subtle)]">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-              <span className="text-xs uppercase font-bold text-[var(--color-text-muted)]">Corpus Type:</span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors ${
-                    corpusType === "passage"
-                      ? "bg-[var(--color-accent-clay)] text-white"
-                      : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] border border-[var(--color-border-subtle)]"
-                  }`}
-                  onClick={() => handleCorpusTypeChange("passage")}
-                >
-                  📖 Passage
-                </button>
-                <button
-                  type="button"
-                  className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors ${
-                    corpusType === "random_words"
-                      ? "bg-[var(--color-accent-clay)] text-white"
-                      : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] border border-[var(--color-border-subtle)]"
-                  }`}
-                  onClick={() => handleCorpusTypeChange("random_words")}
-                >
-                  🔤 Random Words
-                </button>
-              </div>
-            </div>
-
-            {/* Category / Length Buttons */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--color-border-subtle)]/50 pt-3">
-              <span className="text-xs uppercase font-bold text-[var(--color-text-muted)]">Length:</span>
-              <div className="flex gap-2">
-                {(["short", "mid", "long"] as const).map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    className={`px-3 py-1 text-xs rounded-lg font-bold transition-colors capitalize ${
-                      corpusCategory === cat
-                        ? "bg-[var(--color-accent-clay)] text-white"
-                        : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text-bright)] border border-[var(--color-border-subtle)]"
-                    }`}
-                    onClick={() => handleCorpusCategoryChange(cat)}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Live Description */}
-            <div className="mt-3 pt-2 border-t border-[var(--color-border-subtle)]/30 text-xs text-[var(--color-text-muted)]">
-              {getCategoryDescription(corpusType, corpusCategory)}
-              <span className="block text-[11px] text-[var(--color-text-faint)] mt-0.5">
-                🎲 Automatically dealt at race start.
-              </span>
+          <div className="flex items-center justify-between py-3 border-b border-[var(--color-border-subtle)]">
+            <span className="label">Corpus</span>
+            <div className="flex gap-5 text-base">
+              <button
+                type="button"
+                className="choice"
+                aria-pressed={corpusType === "passage"}
+                onClick={() => handleCorpusTypeChange("passage")}
+              >
+                Passage
+              </button>
+              <button
+                type="button"
+                className="choice"
+                aria-pressed={corpusType === "random_words"}
+                onClick={() => handleCorpusTypeChange("random_words")}
+              >
+                Random words
+              </button>
             </div>
           </div>
 
-          {/* Grace Picker */}
-          <div className="flex items-center justify-between bg-[var(--color-bg-base)] p-3 rounded-lg border border-[var(--color-border-subtle)]">
-            <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase">Countdown Grace:</span>
-            <div className="flex gap-2">
+          {/* Category / Length Buttons */}
+          <div className="flex items-center justify-between py-3 border-b border-[var(--color-border-subtle)]">
+            <span className="label">Length</span>
+            <div className="flex gap-5 text-base">
+              {(["short", "mid", "long"] as const).map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  className="choice"
+                  aria-pressed={corpusCategory === cat}
+                  onClick={() => handleCorpusCategoryChange(cat)}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Countdown Grace */}
+          <div className="flex items-center justify-between py-3 border-b border-[var(--color-border-subtle)]">
+            <span className="label">Countdown grace</span>
+            <div className="flex gap-5 text-base">
               {[3, 5, 10].map((g) => (
                 <button
                   key={g}
                   type="button"
-                  className={`px-3 py-1 text-xs rounded font-bold transition-colors ${
-                    grace === g
-                      ? "bg-[var(--color-accent-clay)] text-white"
-                      : "bg-[var(--color-bg-surface)] text-[var(--color-text-muted)] border border-[var(--color-border-subtle)]"
-                  }`}
+                  className="choice"
+                  aria-pressed={grace === g}
                   onClick={() => setGrace(g)}
                 >
                   {g}s
@@ -329,13 +319,18 @@ export function LobbyView({
             </div>
           </div>
 
+          {/* Category Description */}
+          <p className="m-0 mt-3 italic text-sm text-[var(--color-text-muted)]">
+            {getCategoryDescription(corpusType, corpusCategory)} Dealt at random when the race starts.
+          </p>
+
           {/* Start Race Button */}
           <button
             type="button"
-            className={`w-full py-3.5 rounded-lg text-base font-bold transition-all shadow-md ${
+            className={`w-full mt-7 font-mono text-base font-bold tracking-[0.04em] py-3.5 px-4 cursor-pointer rounded-none transition-colors ${
               guests.length === 0 || allGuestsReady
-                ? "bg-[var(--color-accent-clay)] hover:bg-[var(--color-accent-hover)] text-white cursor-pointer"
-                : "bg-[var(--color-bg-surface-hover)] hover:bg-[var(--color-border-subtle)] text-[var(--color-text-bright)] border border-[var(--color-border-subtle)] cursor-pointer"
+                ? "bg-[var(--color-accent-green)] hover:bg-[var(--color-accent-green-hover)] text-[var(--color-bg-base)] border border-[var(--color-accent-green)]"
+                : "bg-transparent text-[var(--color-text-bright)] border border-[var(--color-text-bright)] hover:bg-[var(--color-bg-surface-hover)]"
             }`}
             onClick={handleStartRace}
           >

@@ -375,7 +375,7 @@ export function App(): React.ReactElement {
               key={t.playerId}
               className="toast-disconnect"
             >
-              ⚠️ <strong>{t.nickname}</strong> disconnected — waiting up to 60s for reconnect...
+              — <strong>{t.nickname}</strong> disconnected — waiting up to 60s for reconnect...
             </div>
           ))}
         </div>
@@ -383,87 +383,94 @@ export function App(): React.ReactElement {
 
       {reconnectedNotice && (
         <div className="toast-reconnected">
-          ✓ {reconnectedNotice}
+          — {reconnectedNotice}
         </div>
       )}
 
       {!roomCode && !raceStart && !inCountdown && !inResults && (
-        <div className="landing-view max-w-sm mx-auto w-full py-12 flex flex-col items-center">
-          <h1 className="text-4xl font-extrabold tracking-tight text-[var(--color-text-bright)] mb-8 font-mono">
-            Typing Race
-          </h1>
+        <div className="landing-view w-full flex flex-col items-center">
+          <span aria-hidden="true" className="fixed top-6 left-6 text-sm text-[var(--color-text-faint)] pointer-events-none select-none">+</span>
+          <span aria-hidden="true" className="fixed top-6 right-6 text-sm text-[var(--color-text-faint)] pointer-events-none select-none">+</span>
+          <span aria-hidden="true" className="fixed bottom-6 left-6 text-sm text-[var(--color-text-faint)] pointer-events-none select-none">+</span>
+          <span aria-hidden="true" className="fixed bottom-6 right-6 text-sm text-[var(--color-text-faint)] pointer-events-none select-none">+</span>
 
-          <div className="w-full flex flex-col gap-4">
-            <div className="flex flex-col text-left gap-1.5">
-              <label
-                htmlFor="nickname-input"
-                className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider font-mono"
+          <div className="flex flex-col items-center pt-14 w-full">
+            <h1 className="m-0 font-serif-display font-normal text-[clamp(2.75rem,13vw,96px)] leading-none tracking-[-0.01em] text-[var(--color-text-bright)]">
+              Typing <em className="italic text-[var(--color-accent-green)]">Race.</em>
+            </h1>
+
+            <div className="w-full max-w-[420px] flex flex-col gap-[22px] mt-14">
+              <div className="flex flex-col text-left gap-1.5">
+                <label
+                  htmlFor="nickname-input"
+                  className="label"
+                >
+                  Nickname
+                </label>
+                <input
+                  id="nickname-input"
+                  type="text"
+                  placeholder="your name"
+                  className="font-mono text-[18px] text-[var(--color-text-bright)] placeholder:text-[var(--color-text-muted)] bg-transparent border-0 border-b border-[var(--color-text-bright)] py-2 px-0 outline-none"
+                  maxLength={20}
+                  value={nickname}
+                  onChange={(e) => handleNicknameChange(e.target.value)}
+                />
+              </div>
+
+              <button
+                type="button"
+                className="w-full font-mono text-base font-bold tracking-[0.04em] bg-[var(--color-accent-green)] hover:bg-[var(--color-accent-green-hover)] text-[var(--color-bg-base)] border border-[var(--color-accent-green)] rounded-none py-3.5 px-4 cursor-pointer transition-colors"
+                onClick={() => {
+                  const nick = nickname.trim() || "Racer";
+                  ws.send({ type: "create_room", nickname: nick });
+                }}
               >
-                Nickname
-              </label>
-              <input
-                id="nickname-input"
-                type="text"
-                className="w-full px-4 py-3 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-xl text-[var(--color-text-bright)] placeholder-[var(--color-text-muted)]/50 focus:outline-none focus:border-[var(--color-accent-clay)] font-mono text-base transition-colors"
-                placeholder="Enter your nickname"
-                maxLength={20}
-                value={nickname}
-                onChange={(e) => handleNicknameChange(e.target.value)}
-              />
-            </div>
+                Create Room
+              </button>
 
-            <button
-              type="button"
-              className="w-full py-3.5 px-4 bg-[var(--color-accent-clay)] hover:bg-[var(--color-accent-hover)] text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-base font-mono mt-1"
-              onClick={() => {
-                const nick = nickname.trim() || "Racer";
-                ws.send({ type: "create_room", nickname: nick });
-              }}
-            >
-              Create Room
-            </button>
+              <div className="flex items-center gap-3.5">
+                <span className="flex-grow h-px bg-[var(--color-border-muted)]" />
+                <span className="label text-[11px]">
+                  or join a room
+                </span>
+                <span className="flex-grow h-px bg-[var(--color-border-muted)]" />
+              </div>
 
-            <div className="flex items-center gap-3 my-2">
-              <div className="flex-1 h-px bg-[var(--color-border-subtle)]/60" />
-              <span className="text-xs text-[var(--color-text-muted)]/80 uppercase tracking-widest font-mono">
-                or join room
-              </span>
-              <div className="flex-1 h-px bg-[var(--color-border-subtle)]/60" />
-            </div>
+              <div className="flex flex-col text-left gap-1.5">
+                <label
+                  htmlFor="room-code-input"
+                  className="label"
+                >
+                  Room code
+                </label>
+                <input
+                  id="room-code-input"
+                  type="text"
+                  placeholder="..."
+                  className="font-mono text-[22px] tracking-[0.4em] text-center uppercase text-[var(--color-text-bright)] placeholder:text-[var(--color-text-muted)] bg-transparent border-0 border-b border-[var(--color-text-bright)] py-2 px-0 outline-none"
+                  maxLength={6}
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                />
+              </div>
 
-            <div className="flex flex-col text-left gap-1.5">
-              <label
-                htmlFor="room-code-input"
-                className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider font-mono"
+              <button
+                type="button"
+                className="w-full font-mono text-base font-bold tracking-[0.04em] bg-transparent text-[var(--color-text-bright)] border border-[var(--color-text-bright)] hover:bg-[var(--color-bg-surface-hover)] rounded-none py-3.5 px-4 cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled={joinCode.trim().length !== 6}
+                onClick={() => {
+                  const nick = nickname.trim() || "Racer";
+                  ws.send({
+                    type: "join_room",
+                    code: joinCode.trim(),
+                    nickname: nick,
+                  });
+                }}
               >
-                Room Code
-              </label>
-              <input
-                id="room-code-input"
-                type="text"
-                className="w-full px-4 py-3 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-xl text-[var(--color-text-bright)] placeholder-[var(--color-text-muted)]/50 uppercase tracking-widest text-center font-mono text-base focus:outline-none focus:border-[var(--color-accent-clay)] transition-colors"
-                placeholder="ABCDEF"
-                maxLength={6}
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              />
+                Join Room
+              </button>
             </div>
-
-            <button
-              type="button"
-              className="w-full py-3.5 px-4 bg-[var(--color-bg-surface)] hover:bg-[var(--color-bg-surface-hover)] border border-[var(--color-border-subtle)] text-[var(--color-text-bright)] font-bold rounded-xl transition-colors cursor-pointer text-base font-mono disabled:opacity-40 disabled:cursor-not-allowed"
-              disabled={joinCode.trim().length !== 6}
-              onClick={() => {
-                const nick = nickname.trim() || "Racer";
-                ws.send({
-                  type: "join_room",
-                  code: joinCode.trim(),
-                  nickname: nick,
-                });
-              }}
-            >
-              Join Room
-            </button>
           </div>
         </div>
       )}

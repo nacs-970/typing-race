@@ -408,3 +408,22 @@ button:active:not(:disabled) {
   .local-cursor { animation: none; }
   .countdown-num { animation: none !important; }
 }
+
+.choice {
+  font-family: var(--font-mono);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+.choice[aria-pressed="true"] {
+  color: var(--color-text-bright);
+  font-weight: 700;
+}
+.choice[aria-pressed="true"]::before {
+  content: "[ ";
+}
+.choice[aria-pressed="true"]::after {
+  content: " ]";
+}

@@ -49,6 +49,9 @@ export function App(): React.ReactElement {
     return "";
   });
 
+  // Join errors shown under the room-code field (WCAG 3.3.1). Cleared on edit.
+  const [joinError, setJoinError] = useState<string | null>(null);
+
   const handleNicknameChange = (val: string) => {
     setNickname(val);
     if (typeof window !== "undefined") {
@@ -111,6 +114,7 @@ export function App(): React.ReactElement {
   useEffect(() => {
     const unsub = ws.subscribe((msg: ServerToClient) => {
       if (msg.type === "joined_room") {
+        setJoinError(null);
         setRoomCode(msg.roomCode);
         setIsHost(msg.you.isHost);
         setSessionTakenOver(false);
@@ -119,6 +123,7 @@ export function App(): React.ReactElement {
         }
       }
       if (msg.type === "rejoined_room") {
+        setJoinError(null);
         setRoomCode(msg.roomCode);
         setIsHost(msg.you.isHost);
         setSessionTakenOver(false);
@@ -216,6 +221,13 @@ export function App(): React.ReactElement {
             title = "Slow down";
             body = "Typing too fast to register. Slow down a little.";
           }
+        }
+        if (
+          msg.code === "ROOM_DOES_NOT_EXIST" ||
+          msg.code === "ROOM_NOT_FOUND" ||
+          msg.code === "ROOM_FULL"
+        ) {
+          setJoinError(body);
         }
         if (
           typeof window !== "undefined" &&
@@ -439,8 +451,21 @@ export function App(): React.ReactElement {
                     className="font-mono text-[22px] tracking-[0.4em] text-center uppercase text-[var(--color-text-bright)] placeholder:text-[var(--color-text-muted)] bg-transparent border-0 border-b border-[var(--color-text-bright)] py-2 px-0 outline-none"
                     maxLength={6}
                     value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                    aria-describedby="room-code-help"
+                    aria-invalid={joinError !== null}
+                    onChange={(e) => {
+                      setJoinCode(e.target.value.toUpperCase());
+                      setJoinError(null);
+                    }}
                   />
+                  <p
+                    id="room-code-help"
+                    className={`m-0 text-sm italic ${
+                      joinError ? "text-[var(--color-status-danger)]" : "text-[var(--color-text-muted)]"
+                    }`}
+                  >
+                    {joinError ? `— ${joinError}` : "6 characters"}
+                  </p>
                 </div>
 
                 <button

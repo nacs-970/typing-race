@@ -207,14 +207,26 @@ export function RaceView({
   // Keyed on localCoords (not on the keystroke/correction events) so it
   // runs after the caret's real new position has committed — otherwise a
   // line wrap would scroll to where the caret used to be.
+  // On desktop, focus the typing input when the race mounts, so screen
+  // readers switch to focus mode and pass keys through instead of using them
+  // for browse-mode navigation. Touch devices wait for a tap: iOS only opens
+  // the keyboard from a user gesture. The keydown-handled flag above keeps
+  // each keystroke from counting twice.
   useEffect(() => {
-    if (document.activeElement !== srInputRef.current) return;
+    if (isTouch) return;
+    srInputRef.current?.focus({ preventScroll: true });
+  }, [isTouch]);
+
+  useEffect(() => {
+    // Touch only: on desktop the caret is already in view, and scrolling on
+    // every keystroke would make the page jump.
+    if (!isTouch || document.activeElement !== srInputRef.current) return;
     try {
       localCursorElRef.current?.scrollIntoView?.({ block: "center" });
     } catch {
       // scrollIntoView may be unimplemented (happy-dom) or unsupported.
     }
-  }, [localCoords]);
+  }, [localCoords, isTouch]);
 
   const handleTrackActivate = () => {
     // iOS only allows focusing an input from inside a user gesture, so this

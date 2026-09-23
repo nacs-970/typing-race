@@ -176,14 +176,36 @@ describe("RaceView — char-state accents & zero-commit overlay", () => {
   });
 
   test("8. tapping the passage track focuses the hidden mobile input", () => {
-    const { container, getByTestId } = render(
+    // Touch device: the input is not focused until the tap.
+    const originalMatchMedia = window.matchMedia;
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: (q: string) => ({ matches: true, media: q }) as unknown as MediaQueryList,
+    });
+    try {
+      const { container, getByTestId } = render(
+        <RaceView passageText={PASSAGE} playerId="me" onKeystroke={() => {}} onCorrection={() => {}} />,
+      );
+      const track = container.querySelector(".passage-track") as HTMLElement;
+      const input = getByTestId("mobile-input") as HTMLInputElement;
+      expect(document.activeElement).not.toBe(input);
+      fireEvent.click(track);
+      expect(document.activeElement).toBe(input);
+    } finally {
+      Object.defineProperty(window, "matchMedia", {
+        configurable: true,
+        writable: true,
+        value: originalMatchMedia,
+      });
+    }
+  });
+
+  test("8b. on desktop the typing input is focused when the race mounts", () => {
+    const { getByTestId } = render(
       <RaceView passageText={PASSAGE} playerId="me" onKeystroke={() => {}} onCorrection={() => {}} />,
     );
-    const track = container.querySelector(".passage-track") as HTMLElement;
-    const input = getByTestId("mobile-input") as HTMLInputElement;
-    expect(document.activeElement).not.toBe(input);
-    fireEvent.click(track);
-    expect(document.activeElement).toBe(input);
+    expect(document.activeElement).toBe(getByTestId("mobile-input"));
   });
 
   test("9. an input event with one new character advances the engine by one", () => {

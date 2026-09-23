@@ -36,21 +36,40 @@ describe("LobbyView", () => {
     expect(chip("p3")).toBe("var(--color-cursor-slot-3)");
   });
 
-  it("copies just the room code when the code is clicked", () => {
+  it("copies just the room code when the code is clicked", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {
       value: { writeText },
       configurable: true,
     });
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText, findByText } = render(
       <LobbyView roomCode="K7QX2M" isHost={true} onStartRace={() => {}} />,
     );
 
     fireEvent.click(getByLabelText("Copy room code K7QX2M"));
 
     expect(writeText).toHaveBeenCalledWith("K7QX2M");
-    expect(getByText("Code copied")).toBeDefined();
+    expect(await findByText("Code copied")).toBeDefined();
     expect(getByLabelText("Copy room code K7QX2M").className).toContain("color-mix");
+  });
+
+  it("copies the room code without the Clipboard API (phone on plain http)", async () => {
+    Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+    const execCommand = vi.fn(() => true);
+    Object.defineProperty(document, "execCommand", {
+      value: execCommand,
+      configurable: true,
+      writable: true,
+    });
+    const { getByLabelText, findByText } = render(
+      <LobbyView roomCode="K7QX2M" isHost={true} onStartRace={() => {}} />,
+    );
+
+    fireEvent.click(getByLabelText("Copy room code K7QX2M"));
+
+    expect(execCommand).toHaveBeenCalledWith("copy");
+    expect(await findByText("Code copied")).toBeDefined();
+    Object.defineProperty(document, "execCommand", { value: undefined, configurable: true, writable: true });
   });
 
   it("renders empty state when solo in lobby", () => {

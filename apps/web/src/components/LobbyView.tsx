@@ -5,6 +5,7 @@ import { useConnectionStore } from "../store/connection.ts";
 import { ws } from "../net/ws.ts";
 import { cursorSlotColor } from "../core/cursor-manager.ts";
 import { useConfirmClick } from "./useConfirmClick.ts";
+import { copyText } from "../core/clipboard.ts";
 
 export interface LobbyViewProps {
   roomCode: string;
@@ -76,18 +77,16 @@ export function LobbyView({
     }
   };
 
-  const handleCopyLink = () => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      const url = typeof window !== "undefined" ? window.location.href : roomCode;
-      navigator.clipboard.writeText(url);
+  const handleCopyLink = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : roomCode;
+    if (await copyText(url)) {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     }
   };
 
-  const handleCopyCode = () => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(roomCode);
+  const handleCopyCode = async () => {
+    if (await copyText(roomCode)) {
       setCodeCopied(true);
       setTimeout(() => setCodeCopied(false), 900);
     }

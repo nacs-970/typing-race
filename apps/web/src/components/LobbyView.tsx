@@ -39,7 +39,7 @@ export function LobbyView({
 
   const [corpusType, setCorpusType] = useState<CorpusType>(storeCorpusType ?? "passage");
   const [corpusCategory, setCorpusCategory] = useState<CorpusCategory>(storeCorpusCategory ?? "mid");
-  const [grace, setGrace] = useState<number>(5);
+  const [grace, setGrace] = useState<number>(() => useRaceStore.getState().graceSeconds);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
   const [codeCopied, setCodeCopied] = useState<boolean>(false);
 

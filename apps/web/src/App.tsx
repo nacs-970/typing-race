@@ -337,7 +337,7 @@ export function App(): React.ReactElement {
       <SettingsPanel />
 
       {sessionTakenOver && (
-        <div className="session-taken-over-banner">
+        <div className="session-taken-over-banner" role="alert">
           <div>
             <strong>Session active in another tab</strong>
             <p className="m-0 mt-1 text-sm">

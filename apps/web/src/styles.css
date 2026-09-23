@@ -125,6 +125,9 @@
   --color-cursor-slot-6: #22d3ee;
   --color-cursor-slot-7: #60a5fa;
   --color-cursor-slot-8: #c084fc;
+  /* Text on cursor-colored chips/tags. The slots stay light in every theme,
+   * so this stays dark ink even when a preset makes --color-text-bright light. */
+  --color-on-cursor: #1d2114;
 }
 
 /* In the components layer so Tailwind utilities on the same element win

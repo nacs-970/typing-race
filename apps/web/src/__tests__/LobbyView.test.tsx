@@ -16,6 +16,27 @@ beforeEach(() => {
 });
 
 describe("LobbyView", () => {
+  it("colors each player's number with their race cursor color", () => {
+    const { container } = render(
+      <LobbyView
+        roomCode="ABCDEF"
+        isHost={true}
+        players={[
+          { playerId: "host-1", nickname: "Host", isHost: true, progress: 0 },
+          { playerId: "p2", nickname: "Mira", isHost: false, progress: 0 },
+          { playerId: "p3", nickname: "Tomas", isHost: false, progress: 0 },
+        ]}
+        onStartRace={() => {}}
+      />,
+    );
+    const chip = (id: string) =>
+      container.querySelector<HTMLElement>(`[data-player-color="${id}"]`)?.style.backgroundColor;
+
+    expect(chip("host-1")).toBe("var(--color-cursor-own)"); // you: your own caret color
+    expect(chip("p2")).toBe("var(--color-cursor-slot-2)");
+    expect(chip("p3")).toBe("var(--color-cursor-slot-3)");
+  });
+
   it("copies just the room code when the code is clicked", () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {

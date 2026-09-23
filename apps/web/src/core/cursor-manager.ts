@@ -19,6 +19,14 @@ export const PASTEL_RAINBOW_COLORS = [
   "var(--color-cursor-slot-8)",
 ] as const;
 
+/**
+ * A player's cursor color, keyed by their join-order index in the lobby so
+ * every viewer (and the lobby list) shows the same color for the same player.
+ */
+export function cursorSlotColor(slot: number): string {
+  return PASTEL_RAINBOW_COLORS[slot % PASTEL_RAINBOW_COLORS.length] ?? "var(--color-cursor-slot-6)";
+}
+
 export interface CursorSnapshot {
   index: number;
   receivedAt: number;
@@ -56,7 +64,7 @@ export class CursorManager {
 
     let color: string;
     if (typeof colorOrSlot === "number") {
-      color = PASTEL_RAINBOW_COLORS[colorOrSlot % PASTEL_RAINBOW_COLORS.length] ?? "var(--color-cursor-slot-6)";
+      color = cursorSlotColor(colorOrSlot);
     } else {
       color = colorOrSlot;
     }
@@ -69,7 +77,7 @@ export class CursorManager {
       if (existing) {
         existing.tag.textContent = nickname.slice(0, 16);
         existing.tag.style.backgroundColor = color;
-        existing.tag.style.color = "var(--color-text-bright)";
+        existing.tag.style.color = "var(--color-on-cursor)";
         existing.caret.style.backgroundColor = color;
       }
     }
@@ -313,7 +321,7 @@ export class CursorManager {
       "cursor-micro-tag absolute bottom-full left-0 mb-1 px-1.5 py-0.5 rounded-none uppercase tracking-[0.08em] font-mono text-[10px] whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]";
     tag.textContent = nickname.slice(0, 16);
     tag.style.backgroundColor = color;
-    tag.style.color = "var(--color-text-bright)";
+    tag.style.color = "var(--color-on-cursor)";
 
     const caret = document.createElement("div");
     caret.className = "cursor-caret w-[2px]";

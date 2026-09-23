@@ -4,6 +4,7 @@ import { afterEach } from "vitest";
 import { RaceView } from "../components/RaceView.tsx";
 import { ResultsBoard } from "../components/ResultsBoard.tsx";
 import { useRaceStore, resetRaceUi } from "../store/race.ts";
+import { useCursorStore } from "../store/cursor.ts";
 import { TypingEngine } from "../core/typing-engine.ts";
 import { CursorManager } from "../core/cursor-manager.ts";
 import { PassageLayout } from "../core/layout.ts";
@@ -132,6 +133,45 @@ describe("RaceView — char-state accents & zero-commit overlay", () => {
 
     act(() => {
       setSettings({ fontSize: DEFAULT_SETTINGS.fontSize });
+    });
+  });
+
+  test("7. opponent caret colors follow lobby join order and don't change with cursor order", () => {
+    useRaceStore.setState({
+      lobbyPlayers: [
+        { playerId: "me", nickname: "Me", isHost: true, isReady: true },
+        { playerId: "a", nickname: "A", isHost: false, isReady: true },
+        { playerId: "b", nickname: "B", isHost: false, isReady: true },
+      ] as never,
+    });
+    const manager = new CursorManager();
+    render(
+      <RaceView
+        passageText="hello world"
+        playerId="me"
+        cursorManager={manager}
+        onKeystroke={() => {}}
+        onCorrection={() => {}}
+      />,
+    );
+    expect(manager.getPlayerColor("a")).toBe("var(--color-cursor-slot-2)");
+    expect(manager.getPlayerColor("b")).toBe("var(--color-cursor-slot-3)");
+
+    // Cursor frames arriving in a different order must not reshuffle colors.
+    act(() => {
+      useCursorStore.setState({
+        cursors: new Map([
+          ["b", { playerId: "b", index: 3, serverTs: 1 }],
+          ["a", { playerId: "a", index: 1, serverTs: 1 }],
+        ]),
+      });
+    });
+    expect(manager.getPlayerColor("a")).toBe("var(--color-cursor-slot-2)");
+    expect(manager.getPlayerColor("b")).toBe("var(--color-cursor-slot-3)");
+
+    act(() => {
+      useCursorStore.setState({ cursors: new Map() });
+      useRaceStore.setState({ lobbyPlayers: [] });
     });
   });
 });

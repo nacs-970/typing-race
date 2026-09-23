@@ -73,13 +73,12 @@ export function RaceView({
   useEffect(() => {
     const syncOpponents = () => {
       const lobbyPlayers = useRaceStore.getState().lobbyPlayers;
-      let slot = 0;
-      for (const p of lobbyPlayers) {
+      // Slot = lobby join index, so colors match the lobby list and every viewer.
+      lobbyPlayers.forEach((p, slot) => {
         if (p.playerId !== playerId) {
           localManager.registerPlayer(p.playerId, p.nickname, slot);
-          slot++;
         }
-      }
+      });
     };
     syncOpponents();
     const unsub = useRaceStore.subscribe(syncOpponents);
@@ -90,14 +89,16 @@ export function RaceView({
   useEffect(() => {
     const unsub = useCursorStore.subscribe((s) => {
       const lobbyPlayers = useRaceStore.getState().lobbyPlayers;
-      let slot = 0;
+      let unknown = 0;
       for (const [pid, cursor] of s.cursors.entries()) {
         if (pid !== playerId) {
-          const found = lobbyPlayers.find((p) => p.playerId === pid);
-          const nickname = found?.nickname || localManager.getPlayerNickname(pid) || `Player ${slot + 1}`;
+          const lobbyIndex = lobbyPlayers.findIndex((p) => p.playerId === pid);
+          // Players missing from the lobby list get slots after everyone in it.
+          const slot = lobbyIndex >= 0 ? lobbyIndex : lobbyPlayers.length + unknown++;
+          const nickname =
+            lobbyPlayers[lobbyIndex]?.nickname || localManager.getPlayerNickname(pid) || `Player ${slot + 1}`;
           localManager.registerPlayer(pid, nickname, slot);
           localManager.onCursorUpdate(pid, cursor.index);
-          slot++;
         }
       }
     });

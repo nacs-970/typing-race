@@ -3,6 +3,7 @@ import type { CorpusType, CorpusCategory } from "@typing-race/shared";
 import { useRaceStore, type LobbyPlayer } from "../store/race.ts";
 import { useConnectionStore } from "../store/connection.ts";
 import { ws } from "../net/ws.ts";
+import { cursorSlotColor } from "../core/cursor-manager.ts";
 
 export interface LobbyViewProps {
   roomCode: string;
@@ -210,7 +211,12 @@ export function LobbyView({
                 key={p.playerId}
                 className="flex items-baseline gap-4 py-2.5 border-b border-[var(--color-border-subtle)]"
               >
-                <span className="text-[var(--color-text-muted)]">
+                <span
+                  className="px-1.5 font-mono tabular-nums text-[var(--color-on-cursor)]"
+                  style={{ backgroundColor: isMe ? "var(--color-cursor-own)" : cursorSlotColor(idx) }}
+                  data-player-color={p.playerId}
+                  title={isMe ? "Your cursor color" : `${p.nickname}'s cursor color`}
+                >
                   {String(idx + 1).padStart(2, "0")}
                 </span>
                 <span className={isMe ? "font-bold text-[var(--color-text-bright)]" : "text-[var(--color-text-bright)]"}>

@@ -6,6 +6,7 @@ import { ws } from "../net/ws.ts";
 import { cursorSlotColor } from "../core/cursor-manager.ts";
 import { useConfirmClick } from "./useConfirmClick.ts";
 import { copyText } from "../core/clipboard.ts";
+import { SailingShip } from "./SailingShip.tsx";
 
 export interface LobbyViewProps {
   roomCode: string;
@@ -207,7 +208,7 @@ export function LobbyView({
           >
             {copySuccess ? "copied" : "room link"}
           </button> */}
-         <p aria-hidden="true">⊹ ࣪ ﹏𓊝﹏𓂁﹏⊹ ࣪ ˖</p>
+         <p aria-hidden="true" className="m-0"><SailingShip /></p>
         </div>
       )}
 

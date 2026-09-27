@@ -191,7 +191,7 @@ export function RaceHud({
             onClick={onLeaveClick}
             title="Leave Race Room"
           >
-            <span aria-live="polite">{leaveArmed ? "Leave?" : "Leave."}</span>
+            <span aria-live="polite">{leaveArmed ? "Are you sure leaving?" : "Leave."}</span>
           </button>
         )}
       </div>

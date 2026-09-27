@@ -227,9 +227,9 @@ describe("LobbyView", () => {
     expect(leaveBtn).toBeDefined();
     fireEvent.click(leaveBtn);
     expect(onLeaveRoom).not.toHaveBeenCalled();
-    expect(getByText("leave?")).toBeDefined();
+    expect(getByText("Are you sure leaving?")).toBeDefined();
 
-    fireEvent.click(getByText("leave?"));
+    fireEvent.click(getByText("Are you sure leaving?"));
     expect(onLeaveRoom).toHaveBeenCalledTimes(1);
   });
 

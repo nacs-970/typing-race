@@ -154,7 +154,7 @@ export function LobbyView({
               }`}
               onClick={onLeaveClick}
             >
-              <span aria-live="polite">{leaveArmed ? "leave?" : "leave."}</span>
+              <span aria-live="polite">{leaveArmed ? "Are you sure leaving?" : "leave."}</span>
             </button>
           )}
         </div>

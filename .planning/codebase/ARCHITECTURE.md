@@ -178,7 +178,7 @@ Every typed character submitted via `keystroke` frame must pass 4 consecutive ch
 
 ## 7. Graceful Drain and Shutdown Coordination
 
-To guarantee that ongoing races finish before container restart (e.g. rolling deployments on Fly.io or Docker Compose restarts):
+To guarantee that ongoing races finish before container restart (e.g. Render redeploys or Docker Compose restarts):
 
 1. **Engine Drain Loop:** `EngineWorker.drain(timeoutMs = 90_000)` publishes `"draining"`, marks worker state, and polls active rooms every 500ms. It resolves when all active races reach `"finished"` or when the 90s hard timeout triggers. Once finished, it publishes `"drained"`.
 2. **Gateway Latch Coordination:**

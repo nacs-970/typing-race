@@ -9,7 +9,7 @@ import tailwindcss from "@tailwindcss/vite";
 /**
  * Dev proxy: browser hits Vite on :5173; WS upgrades are forwarded to
  * Bun on :8080. Same for /api/* HTTP. This keeps the SPA single-origin
- * during development and matches what Phase 5/6 will do in prod behind Fly.
+ * during development and matches prod, where one Bun process serves both.
  *
  * Production build: vite-plugin-compression emits .gz siblings. The plugin's
  * built-in brotli pass shares a module-level mtimeCache between instances,

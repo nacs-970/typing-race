@@ -105,7 +105,7 @@ error highlighting.)
 - **Rooms — storage**: in-memory Map keyed by 6-char code. Honest tradeoff —
   rooms vanish on restart. Acceptable for demo + FDE resume scope; Redis/KV
   only if scaling story becomes relevant
-- **Deploy — runtime**: Fly.io free tier, single shared VM serves frontend
+- **Deploy — runtime**: Render.com free tier, single instance serves frontend
   static bundle + WS endpoint from one Bun process. One URL, one process.
 - **Code quality — shared types**: TypeScript types for all WS messages live
   in a shared package or monorepo folder; both client and server import from
@@ -118,7 +118,7 @@ error highlighting.)
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | Local-first dev, deploy later | Tight loop, no deploy-debug rabbit holes during build. Resume demo works offline. | ✓ Good |
-| Fly.io single-process deploy | Native Bun/Hono fit, one URL, simplest free path | — Superseded: deployed to Render.com instead (free tier, no card requirement); `fly deploy` itself never run, infra kept as an unused alternative path |
+| Fly.io single-process deploy | Native Bun/Hono fit, one URL, simplest free path | — Superseded: deployed to Render.com instead (free tier, no card requirement); `Fly infra (fly.toml, scripts/deploy.sh) removed 2026-09-27 |
 | Vite + React over Preact | Ecosystem + familiarity outweigh bundle-size win at this scale | ✓ Good |
 | Bun + Hono over Node + Express/Fastify | Native WS, single runtime, fastest path to v1 | ✓ Good — native `Bun.serve` WS (not Hono's `upgradeWebSocket`) for typed `ws.data` |
 | In-memory room Map, no Redis (room storage) | Demo scope, honest tradeoff. State-loss on restart is acceptable. | ✓ Good for room storage — unchanged. Separately, Redis was later added as an *optional inter-tier event bus* for split-mode (gateway↔engine pub/sub), not room storage; proven working end-to-end this session (real containers, real `PUBLISH` traffic captured via `redis-cli monitor`) |

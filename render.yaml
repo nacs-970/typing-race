@@ -36,7 +36,6 @@ services:
         - ".claude/**"
         - ".hermes/**"
         - "**/*.md"
-        - "fly.toml"
         - "docker-compose.yml"
     envVars:
       - key: MODE

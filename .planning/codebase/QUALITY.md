@@ -125,7 +125,3 @@ Automates full integration verification:
 4. Opens WebSocket connection to `ws://localhost:8080/ws` and confirms receipt of authoritative `hello` frame.
 5. Cleans up server background process on exit trap.
 
-### Deployment Pre-flight (`scripts/deploy.sh`)
-Verifies deployment prerequisites before initiating container or cloud deployments:
-- Validates Docker and Bun CLI availability.
-- Confirms presence of `Dockerfile`, `fly.toml`, and built client bundle (`apps/web/dist/index.html`).

@@ -13,7 +13,7 @@
 | **Shared & Backend** | TypeScript 5.6.3 | Bun 1.3.2 (pinned; `>=1.3.2 <1.5.0`) | Universal schemas, Gateway server, Engine worker |
 | **Frontend Web** | TypeScript 5.6.3 / TSX | Modern Browser (ES2022) | React 19 SPA, zero-commit cursor rendering |
 | **Styling** | CSS3 / Tailwind CSS 4.3.3 | Browser / PostCSS / Vite | Design token palette, responsive utility layout |
-| **Scripts & Ops** | Bash / Docker / Caddyfile | Linux / Container / Fly.io | Pre-flight check, local smoke test, proxying |
+| **Scripts & Ops** | Bash / Docker / Caddyfile | Linux / Container / Render | Local smoke test, proxying |
 
 ---
 
@@ -84,7 +84,6 @@ Configured via root [package.json](file:///home/nacs/Documents/git/typing-race/p
 
 ### Utility & Operational Scripts
 - **`scripts/smoke-test.sh`:** 4-step local smoke test. Builds web bundle, launches unified server (`PORT=8080 MODE=unified`), polls `GET /health`, tests WebSocket handshake and awaits `hello` frame.
-- **`scripts/deploy.sh`:** Pre-flight deployment verification checking Docker, Bun, Dockerfile, `fly.toml`, and built web distribution bundle.
 
 ---
 
@@ -96,5 +95,4 @@ Configured via root [package.json](file:///home/nacs/Documents/git/typing-race/p
   - `engine`: Headless Engine connected to Redis.
   - `gateway`: Public WebSocket/HTTP gateway exposed on `8080:8080`.
   - `web`: Standalone static web container running on `5173:80`.
-- **`fly.toml`:** Fly.io deployment manifest targeting the `ord` region with HTTP service configuration on internal port 8080 and TCP health checks.
 - **`apps/web/Caddyfile`:** Production reverse-proxy and static asset server configuration with gzip/zstd compression and client-side history route fallback.

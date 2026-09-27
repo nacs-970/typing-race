@@ -100,9 +100,9 @@ None yet.
 - Room-code collision math: ADDRESSED in Plan 01 (3 retries, 887M keyspace, birthday paradox ~0.006% at 10k rooms)
 - React Compiler config: MEDIUM confidence, still deferred — no evidence it was revisited in Phase 5. Phase 6 D-08 formally decided: skip (no measured bottleneck).
 - `.planning/debug/*.md` (host-promotion/solo-disconnect, lobby-rejoin-race-view, reconnect-cursor-reset) are marked "Diagnosed" but verified FIXED in current code (landed in Phase 4 Plan 05, commit `04-05`). Notes are stale history, not open work — safe to leave as record or archive.
-- Phase 6 COMPLETE: `.bun-version` pinned + Dockerfile drift guard (06-02), App.tsx SERVER_SHUTTING_DOWN toast (06-04), anti-cheat bypass regression tests + deploy docs + local smoke test (06-03). `.github/` CI workflow and `fly deploy` execution remain explicitly out of scope (deferred to a future deploy-focused pass, per 06-CONTEXT.md) — the only genuinely open follow-up work.
+- Phase 6 COMPLETE: `.bun-version` pinned + Dockerfile drift guard (06-02), App.tsx SERVER_SHUTTING_DOWN toast (06-04), anti-cheat bypass regression tests + deploy docs + local smoke test (06-03). `.github/` CI workflow remains explicitly out of scope (deferred to a future deploy-focused pass, per 06-CONTEXT.md) — the only genuinely open follow-up work.
 - ROADMAP-vs-implementation mismatch surfaced (not silently resolved): ROADMAP's "WPM cap 250 enforced" criterion has no matching clamp in code — the real structural ceiling from the 20ms min-interval floor is ~600 WPM. Documented in README, not changed (no D-NN decision authorized adding a clamp).
-- fly.toml's `kill_timeout = "10s"` is below the 90s drain window (D-02) — must be bumped to ≥90s before any real Fly.io deploy, or SIGKILL will cut drain short mid-shutdown. Flagged in README; fly.toml itself intentionally untouched this phase.
+- 2026-09-27: Fly.io path removed (fly.toml, scripts/deploy.sh). Deploy target is Render only; render.yaml `maxShutdownDelaySeconds: 95` covers the 90s drain window.
 - agy-delegate reliability note (confirmed twice, 06-01 and 06-03): a single delegation covering multiple plans/tasks reliably times out ("timeout waiting for response") on the final response after already writing files to disk — never on the writes themselves. Always delegate one plan per call, and always verify + commit directly rather than trusting the run to finish its own report. See `.planning/phases/06-deploy-hardening/06-01-SUMMARY.md` and `06-03-SUMMARY.md`.
 
 ## Deferred Items
@@ -122,8 +122,8 @@ Items acknowledged and deferred, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-09-16T07:58:36.254Z
-Stopped at: Completed 07.1-01-PLAN.md
+Last session: 2026-09-27
+Stopped at: Session resumed; removed stale HANDOFF.json/.continue-here.md and the Fly.io deploy path
 Resume file: None
 
 ## Operator Next Steps

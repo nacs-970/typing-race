@@ -29,7 +29,7 @@ typing-race/
 ├── packages/
 │   └── shared/     # (@typing-race/shared) Zod schemas, types, corpus, and event bridge
 ├── docker-compose.yml
-├── Dockerfile      # Unified root Dockerfile (production fallback for Fly.io)
+├── Dockerfile      # Unified root Dockerfile (production image, deployed on Render)
 └── package.json    # Root workspace orchestration
 ```
 
@@ -117,7 +117,7 @@ bun run build
   ```bash
   docker compose up --build
   ```
-- **Unified Production Container (Fly.io)**:
+- **Unified Production Container (Render)**:
   ```bash
   docker build -t typing-race -f Dockerfile .
   docker run -p 8080:8080 typing-race

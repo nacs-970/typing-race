@@ -11,6 +11,5 @@ coverage
 .DS_Store
 README.md
 .dockerignore
-fly.toml
 spec.md
 .hermes

@@ -34,6 +34,37 @@ describe("ResultsBoard", () => {
     expect(rows.length).toBe(4);
   });
 
+  it("shows your own result above the ranking, in the solo result layout", () => {
+    useConnectionStore.setState({ playerId: "player-2" });
+    const { getByTestId } = render(
+      <ResultsBoard results={sampleResults} isHost={false} />,
+    );
+
+    const mine = getByTestId("my-result");
+    expect(mine.textContent).toContain("No. 2 of 4");
+    expect(mine.textContent).toContain("75");
+    expect(mine.textContent).toContain("96.0%");
+    // Sits before the ranking table.
+    const table = getByTestId("results-board").querySelector("table")!;
+    expect(mine.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // No raw/chars when the engine doesn't send them.
+    expect(mine.textContent).not.toContain("raw");
+    expect(mine.textContent).not.toContain("chars");
+  });
+
+  it("shows raw wpm and correct/error chars when race_end carries them", () => {
+    const withDetail: PlayerFinalStats[] = [
+      { playerId: "player-1", finishTimeMs: 20000, wpm: 80, accuracy: 0.98, rawWpm: 84.4, correctChars: 266, errors: 3 },
+      { playerId: "player-2", finishTimeMs: 21200, wpm: 75, accuracy: 0.96 },
+    ];
+    const { getByTestId } = render(<ResultsBoard results={withDetail} isHost={false} />);
+
+    const mine = getByTestId("my-result");
+    expect(mine.textContent).toContain("raw84");
+    expect(mine.textContent).toContain("266/3");
+    expect(mine.textContent).toContain("266 correct, 3 errors");
+  });
+
   it("uses WPM as tiebreaker when finishTimeMs is identical", () => {
     const tiedResults: PlayerFinalStats[] = [
       { playerId: "p-slow-wpm", finishTimeMs: 20000, wpm: 60, accuracy: 0.9 },

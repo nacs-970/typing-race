@@ -268,6 +268,9 @@ export const raceEndSchema = z.object({
         finishTimeMs: z.number().int().nonnegative(),
         wpm: z.number().nonnegative(),
         accuracy: z.number().min(0).max(1),
+        rawWpm: z.number().nonnegative().optional(),
+        correctChars: z.number().int().nonnegative().optional(),
+        errors: z.number().int().nonnegative().optional(),
       }),
     )
     .optional(),
@@ -287,6 +290,12 @@ export const playerFinalStatsSchema = z.object({
   finishTimeMs: z.number().int().nonnegative(),
   wpm: z.number().nonnegative(),
   accuracy: z.number().min(0).max(1),
+  /** All accepted keystrokes / 5 per minute. Optional: older engines omit it. */
+  rawWpm: z.number().nonnegative().optional(),
+  /** Final correct characters. */
+  correctChars: z.number().int().nonnegative().optional(),
+  /** Final uncorrected errors. */
+  errors: z.number().int().nonnegative().optional(),
 });
 
 /** Sent to an existing connection when a new tab/session takes over the player slot. */

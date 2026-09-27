@@ -13,7 +13,7 @@ import type {
   Countdown,
 } from "@typing-race/shared";
 import type { Room, Player, CharState } from "./types.ts";
-import { computeAccuracy, countCorrectChars } from "./scoring.ts";
+import { computeAccuracy, computeRawWpm, countCorrectChars, countUncorrectedErrors } from "./scoring.ts";
 
 export function buildLobbyStateFrame(room: Room): LobbyState {
   const players = [...room.players.values()].map((p) => ({
@@ -97,6 +97,9 @@ export function buildRaceEndFrame(room: Room, now: number = Date.now()): RaceEnd
         correctChars,
         totalKeystrokes: p.totalKeystrokes,
       }),
+      rawWpm: computeRawWpm(p.totalKeystrokes, finishTimeMs),
+      correctChars,
+      errors: countUncorrectedErrors(p.charStates),
     };
   });
   const finishedPlayerIds = results

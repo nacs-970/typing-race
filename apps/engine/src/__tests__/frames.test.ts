@@ -122,6 +122,10 @@ describe("frames builders", () => {
     expect(r1.finishTimeMs).toBe(2000);
     expect(r1.wpm).toBe(60);
     expect(r1.accuracy).toBe(1);
+    // 3 keystrokes / 5 over 2s = 18 wpm
+    expect(r1.rawWpm).toBeCloseTo(18);
+    expect(r1.correctChars).toBe(3);
+    expect(r1.errors).toBe(0);
   });
 
   test("buildGraceCountdownFrame returns frame or null", () => {

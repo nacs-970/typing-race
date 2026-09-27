@@ -4,6 +4,7 @@ import { ws } from "../net/ws.ts";
 import { useConnectionStore } from "../store/connection.ts";
 import { useRaceStore } from "../store/race.ts";
 import { useConfirmClick } from "./useConfirmClick.ts";
+import { ResultSummary } from "./ResultSummary.tsx";
 
 /**
  * Score dominates any wpm*accuracy product for a player who didn't finish
@@ -158,6 +159,12 @@ export function ResultsBoard({
     return `${mins}:${secs}`;
   };
 
+  const myRank = ranked.findIndex((r) => r.playerId === myId);
+  const myResult = myRank >= 0 ? ranked[myRank] : undefined;
+  const myFinished =
+    myResult !== undefined &&
+    (finishedPlayerIds === undefined || finishedPlayerIds.includes(myResult.playerId));
+
   const typeLabel = corpusType === "random_words" ? "Random Words" : "Passage";
   const catLabel = corpusCategory.charAt(0).toUpperCase() + corpusCategory.slice(1);
 
@@ -185,13 +192,51 @@ export function ResultsBoard({
         <span>{typeLabel} · {catLabel}</span>
       </div>
 
-      <h1 className="mt-9 m-0 font-serif-display font-normal text-[88px] leading-none text-[var(--color-text-bright)]">
-        Results
-      </h1>
-      <p className="mt-3 mb-7 italic text-[15px] text-[var(--color-text-muted)]">
-        Final standings, speed and precision.
-      </p>
-      {sessionBestLine && <p className="label mb-7">{sessionBestLine}</p>}
+      {myResult ? (
+        // Your own result, in the solo test's layout, above the ranking.
+        <section aria-label="Your result" className="mt-9 mb-9" data-testid="my-result">
+          <h1 className="sr-only">Results</h1>
+          <ResultSummary
+            label={`No. ${myRank + 1} of ${ranked.length}${myFinished ? "" : " · did not finish"}`}
+            wpm={myResult.wpm}
+            stats={[
+              { label: "acc", value: `${(myResult.accuracy * 100).toFixed(1)}%` },
+              // Optional in race_end: an older engine doesn't send them.
+              ...(myResult.rawWpm !== undefined
+                ? [{ label: "raw", value: Math.round(myResult.rawWpm) }]
+                : []),
+              ...(myResult.correctChars !== undefined && myResult.errors !== undefined
+                ? [
+                    {
+                      label: "chars",
+                      value: (
+                        <>
+                          <span aria-hidden="true">
+                            {myResult.correctChars}/{myResult.errors}
+                          </span>
+                          <span className="sr-only">
+                            {myResult.correctChars} correct, {myResult.errors} errors
+                          </span>
+                        </>
+                      ),
+                    },
+                  ]
+                : []),
+              { label: "time", value: formatTime(myResult.finishTimeMs) },
+            ]}
+          />
+          {sessionBestLine && <p className="label m-0 mt-6">{sessionBestLine}</p>}
+        </section>
+      ) : (
+        <>
+          <h1 className="mt-9 m-0 font-serif-display font-normal text-[88px] leading-none text-[var(--color-text-bright)]">
+            Results
+          </h1>
+          <p className="mt-3 mb-7 italic text-[15px] text-[var(--color-text-muted)]">
+            Final standings, speed and precision.
+          </p>
+        </>
+      )}
 
       <div className="overflow-x-auto">
         <table className="w-full border-collapse font-mono text-base tabular-nums">

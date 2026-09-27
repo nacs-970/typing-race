@@ -89,6 +89,16 @@ export function computeNetWpm(args: ComputeNetWpmArgs): number {
   return Math.max(0, raw);
 }
 
+/**
+ * Raw WPM: every accepted keystroke, errors included, / 5 per minute
+ * (same definition as the client's TypingEngine rawWpm).
+ */
+export function computeRawWpm(totalKeystrokes: number, elapsedMs: number): number {
+  const minutes = elapsedMs / 60_000;
+  if (minutes <= 0) return 0;
+  return totalKeystrokes / 5 / minutes;
+}
+
 export type ComputeAccuracyArgs = {
   correctChars: number;
   totalKeystrokes: number;

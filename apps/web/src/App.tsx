@@ -13,6 +13,8 @@ import { ReconnectBanner } from "./components/ReconnectBanner.tsx";
 import { ResultsBoard } from "./components/ResultsBoard.tsx";
 import { ToastQueue } from "./components/ToastQueue.tsx";
 import { SettingsPanel } from "./components/SettingsPanel.tsx";
+import { SoloView } from "./components/SoloView.tsx";
+import { CropMarks } from "./components/CropMarks.tsx";
 import { hydrateSettings } from "./store/settings.ts";
 import { addToast } from "./store/toast.ts";
 import type { ServerToClient } from "@typing-race/shared";
@@ -47,6 +49,14 @@ export function App(): React.ReactElement {
       return hash;
     }
     return "";
+  });
+
+  // Landing view: the solo test by default; the multiplayer create/join
+  // screen when the URL hash is a room code (invite link or rejoin).
+  const [view, setView] = useState<"solo" | "race">(() => {
+    if (typeof window === "undefined") return "solo";
+    const hash = window.location.hash.replace("#", "").trim().toUpperCase();
+    return hash.length === 6 ? "race" : "solo";
   });
 
   // Join errors shown under the room-code field (WCAG 3.3.1). Cleared on edit.
@@ -115,6 +125,7 @@ export function App(): React.ReactElement {
     const unsub = ws.subscribe((msg: ServerToClient) => {
       if (msg.type === "joined_room") {
         setJoinError(null);
+        setView("race");
         setRoomCode(msg.roomCode);
         setIsHost(msg.you.isHost);
         setSessionTakenOver(false);
@@ -124,6 +135,7 @@ export function App(): React.ReactElement {
       }
       if (msg.type === "rejoined_room") {
         setJoinError(null);
+        setView("race");
         setRoomCode(msg.roomCode);
         setIsHost(msg.you.isHost);
         setSessionTakenOver(false);
@@ -228,6 +240,8 @@ export function App(): React.ReactElement {
           msg.code === "ROOM_FULL"
         ) {
           setJoinError(body);
+          // The inline error lives on the multiplayer landing.
+          setView("race");
         }
         if (
           typeof window !== "undefined" &&
@@ -371,6 +385,42 @@ export function App(): React.ReactElement {
       <GraceBanner />
 
       {!roomCode && !raceStart && !inCountdown && !inResults && (
+        // One nav for both landings; the toggle keeps its position (and
+        // focus) when the view flips.
+        <nav aria-label="Main" className="focus-fade w-full flex items-center justify-between gap-4 text-left">
+          {view === "solo" ? (
+            <span className="font-serif-display text-[28px] leading-none tracking-[-0.01em] text-[var(--color-text-bright)]">
+              Typing <em className="italic text-[var(--color-accent-green)]">Race.</em>
+            </span>
+          ) : (
+            <span />
+          )}
+          <button
+            type="button"
+            onClick={() => setView((v) => (v === "solo" ? "race" : "solo"))}
+            className="font-mono text-sm text-[var(--color-text-bright)] bg-transparent border-0 p-0 min-h-11 cursor-pointer underline-offset-4 hover:underline"
+          >
+            {view === "solo" ? (
+              <>
+                find a match <span aria-hidden="true">→</span>
+              </>
+            ) : (
+              <>
+                <span aria-hidden="true">←</span> solo
+              </>
+            )}
+          </button>
+        </nav>
+      )}
+
+      {!roomCode && !raceStart && !inCountdown && !inResults && view === "solo" && (
+        <>
+          <CropMarks />
+          <SoloView />
+        </>
+      )}
+
+      {!roomCode && !raceStart && !inCountdown && !inResults && view === "race" && (
         <div className="landing-view w-full flex flex-col items-center">
           <span aria-hidden="true" className="fixed top-6 left-6 text-sm text-[var(--color-text-faint)] pointer-events-none select-none">+</span>
           <span aria-hidden="true" className="fixed top-6 right-6 text-sm text-[var(--color-text-faint)] pointer-events-none select-none">+</span>

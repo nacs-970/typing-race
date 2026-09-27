@@ -328,3 +328,46 @@ describe("TypingEngine", () => {
     expect(testEngine.getOwnIndex()).toBe(2);
   });
 });
+
+describe("TypingEngine.append (solo time-mode buffer)", () => {
+  const key = (k: string) => new KeyboardEvent("keydown", { key: k });
+
+  it("extends the passage with pending chars and keeps progress", () => {
+    const e = new TypingEngine();
+    e.init("ab");
+    e.handleKeyDown(key("a"));
+    const start = e.getStartTimeMs();
+
+    e.append(" cd");
+
+    expect(e.getPassageText()).toBe("ab cd");
+    expect(e.getCharStates()).toEqual(["correct", "pending", "pending", "pending", "pending"]);
+    expect(e.getOwnIndex()).toBe(1);
+    expect(e.getTotalKeystrokes()).toBe(1);
+    expect(e.getStartTimeMs()).toBe(start);
+  });
+
+  it("moves the finish line: reaching the old end no longer finishes", () => {
+    const e = new TypingEngine();
+    const onFinished = vi.fn();
+    e.subscribe("finished", onFinished);
+    e.init("ab");
+    e.handleKeyDown(key("a"));
+    e.append(" c");
+    e.handleKeyDown(key("b"));
+    expect(onFinished).not.toHaveBeenCalled();
+    expect(e.getIsFinished()).toBe(false);
+
+    e.handleKeyDown(key(" "));
+    e.handleKeyDown(key("c"));
+    expect(onFinished).toHaveBeenCalledTimes(1);
+  });
+
+  it("is a no-op for an empty string", () => {
+    const e = new TypingEngine();
+    e.init("ab");
+    e.append("");
+    expect(e.getPassageText()).toBe("ab");
+    expect(e.getCharStates().length).toBe(2);
+  });
+});

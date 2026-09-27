@@ -137,6 +137,28 @@
   .label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text-bright) 70%, var(--color-bg-surface) 30%); }
   .rule { border-top: 1px solid var(--color-border-muted); }
   .font-serif-display { font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.01em; }
+
+  /* Solo test focus mode: SoloView sets data-focus-mode on <html> after the
+   * first keystroke. Chrome wrapped in .focus-fade fades out but stays in the
+   * DOM and focusable; a focused control inside it shows again (WCAG 2.4.7). */
+  .focus-fade { transition: opacity 250ms ease-out; }
+  :root[data-focus-mode] .focus-fade { opacity: 0; }
+  :root[data-focus-mode] .focus-fade:focus-within { opacity: 1; }
+
+  /* Solo test passage: a clipped 3-line window. .solo-track is shifted with
+   * transform only; lines are placed at PassageLayout's y coordinates. */
+  .solo-window {
+    position: relative;
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: var(--app-font-size);
+    line-height: calc(var(--app-font-size) * 2);
+    text-align: left;
+    user-select: none;
+  }
+  .solo-track { position: absolute; top: 0; left: 0; right: 0; }
+  .solo-line { position: absolute; left: 0; white-space: pre; }
+  .solo-flow { white-space: pre-wrap; }
 }
 
 :root {
@@ -383,6 +405,7 @@ button:active:not(:disabled) {
 @media (prefers-reduced-motion: reduce) {
   .local-cursor { animation: none; }
   .countdown-num { animation: none !important; }
+  .focus-fade { transition: none; }
 }
 
 .choice {

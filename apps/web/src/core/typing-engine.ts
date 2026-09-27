@@ -43,6 +43,20 @@ export class TypingEngine {
     this.consecutiveErrors = 0;
   }
 
+  /**
+   * Extends the passage with more text (solo time mode keeps a growing word
+   * buffer). The new characters start as "pending"; progress, keystroke
+   * counts, the start time, error streak and finished flag are untouched.
+   * The caller supplies any separating space (e.g. `" " + words`).
+   */
+  public append(text: string): void {
+    if (text.length === 0) return;
+    this.passageText += text;
+    for (let i = 0; i < text.length; i++) {
+      this.charStates.push("pending");
+    }
+  }
+
   private isCharDeletable(index: number): boolean {
     if (this.passageText[index] === " ") return true;
     let start = index;

@@ -22,7 +22,7 @@ export function SettingsPanel(): React.ReactElement {
 
   return (
     <div
-      className="fixed bottom-14 right-6 z-50 flex flex-col-reverse items-end"
+      className="focus-fade fixed bottom-14 right-6 z-50 flex flex-col-reverse items-end"
       data-testid="settings-panel"
     >
       <button

@@ -165,13 +165,31 @@ describe("App — landing: invite-link prefill", () => {
   });
 });
 
+describe("App — landing: default solo view", () => {
+  it("opens on the solo typing test, with the multiplayer landing one click away", async () => {
+    window.location.hash = "";
+    const { App } = await import("../App.tsx");
+    const { container, getByRole } = render(<App />);
+
+    expect(container.querySelector('[data-testid="solo-view"]')).not.toBeNull();
+    expect(getByRole("heading", { level: 1, name: "Typing test" })).toBeDefined();
+    expect(container.querySelector("#nickname-input")).toBeNull();
+
+    fireEvent.click(getByRole("button", { name: /find a match/i }));
+
+    expect(container.querySelector('[data-testid="solo-view"]')).toBeNull();
+    expect(container.querySelector("#nickname-input")).not.toBeNull();
+  });
+});
+
 describe("App — landing: Enter submits", () => {
   it("pressing Enter in the room-code field sends join_room", async () => {
     const { App } = await import("../App.tsx");
     const { ws } = await import("../net/ws.ts");
     const sendSpy = vi.spyOn(ws, "send");
 
-    const { container } = render(<App />);
+    const { container, getByRole } = render(<App />);
+    fireEvent.click(getByRole("button", { name: /find a match/i }));
     const input = container.querySelector("#room-code-input") as HTMLInputElement;
 
     fireEvent.change(input, { target: { value: "K7QX2M" } });
@@ -191,7 +209,8 @@ describe("App — landing: Enter submits", () => {
     const { ws } = await import("../net/ws.ts");
     const sendSpy = vi.spyOn(ws, "send");
 
-    const { container } = render(<App />);
+    const { container, getByRole } = render(<App />);
+    fireEvent.click(getByRole("button", { name: /find a match/i }));
     const input = container.querySelector("#nickname-input") as HTMLInputElement;
 
     fireEvent.change(input, { target: { value: "Ann" } });

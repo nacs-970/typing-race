@@ -244,3 +244,103 @@ export function filterPassages(
     return true;
   });
 }
+
+export interface GenerateWordsOptions {
+  punctuation?: boolean;
+  numbers?: boolean;
+  rng?: () => number;
+}
+
+const CONTRACTIONS: Record<string, string> = {
+  dont: "don't",
+  cant: "can't",
+  wont: "won't",
+  didnt: "didn't",
+  its: "it's",
+};
+
+export function generateWords(
+  count: number,
+  opts?: GenerateWordsOptions,
+): string {
+  const n = Math.floor(count);
+  if (n <= 0) return "";
+
+  const rng = opts?.rng ?? Math.random;
+  const punctuation = opts?.punctuation ?? false;
+  const numbers = opts?.numbers ?? false;
+
+  const tokens: string[] = [];
+  let prevWord = "";
+  let prevToken = "";
+  let capitalizeNext = punctuation;
+
+  for (let i = 0; i < n; i++) {
+    let token = "";
+    let isNumber = false;
+
+    if (numbers && (i > 0 || !punctuation) && rng() < 0.1) {
+      isNumber = true;
+      let num = Math.floor(rng() * 9999) + 1;
+      token = String(num);
+      while (token === prevToken) {
+        num = Math.floor(rng() * 9999) + 1;
+        token = String(num);
+      }
+    } else {
+      let word = COMMON_WORDS[Math.floor(rng() * COMMON_WORDS.length)]!;
+      while (word === prevWord) {
+        word = COMMON_WORDS[Math.floor(rng() * COMMON_WORDS.length)]!;
+      }
+      prevWord = word;
+      token = word;
+    }
+
+    if (punctuation) {
+      if (!isNumber && CONTRACTIONS[token] && rng() < 0.2) {
+        token = CONTRACTIONS[token]!;
+      }
+
+      if (capitalizeNext && !isNumber) {
+        token = token.charAt(0).toUpperCase() + token.slice(1);
+        capitalizeNext = false;
+      } else if (capitalizeNext && isNumber) {
+        capitalizeNext = false;
+      }
+
+      if (i === n - 1) {
+        token = token + ".";
+      } else {
+        const p = rng();
+        if (p < 0.07) {
+          token += ",";
+          capitalizeNext = false;
+        } else if (p < 0.13) {
+          token += ".";
+          capitalizeNext = true;
+        } else if (p < 0.14) {
+          token += "?";
+          capitalizeNext = true;
+        } else if (p < 0.15) {
+          token += "!";
+          capitalizeNext = true;
+        } else if (p < 0.16) {
+          token += ";";
+          capitalizeNext = false;
+        } else if (p < 0.17) {
+          token += ":";
+          capitalizeNext = false;
+        } else if (p < 0.185 && i > 0) {
+          token = `"${token}"`;
+        } else if (p < 0.2 && i > 0) {
+          token = `(${token})`;
+        }
+      }
+    }
+
+    tokens.push(token);
+    prevToken = token;
+  }
+
+  return tokens.join(" ");
+}

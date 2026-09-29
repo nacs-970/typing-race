@@ -24,3 +24,5 @@ packages/*/dist/
 
 # Agent/Tool cache
 .hermes/
+# Project Gutenberg download cache (scripts/fetch-gutenberg.ts)
+scripts/.cache/

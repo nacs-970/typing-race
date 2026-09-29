@@ -12,13 +12,15 @@
  * Zod 4 enforces).
  */
 
+import { GUTENBERG_PASSAGES } from "./passages.generated.ts";
+
 export interface Passage {
   id: string;
   text: string;
   source: string;
 }
 
-export const PASSAGES: ReadonlyArray<Passage> = [
+const CURATED_PASSAGES: ReadonlyArray<Passage> = [
   { id: "11111111-1111-4111-8111-000000000001", text: "The sun was just rising as Tom Sawyer crept stealthily out of the back door and along the wooden fence. He had eaten a generous breakfast, and his heart was light, for the long summer day stretched before him like a promised land of adventure and treasure waiting to be discovered.", source: "Mark Twain — Tom Sawyer, Ch. 6" },
   { id: "11111111-1111-4111-8111-000000000002", text: "Alice was beginning to get very tired of sitting by her sister on the bank and of having nothing to do. Once or twice she had peeped into the book her sister was reading, but it had no pictures or conversations in it, and what is the use of a book without pictures or conversations, thought Alice.", source: "Lewis Carroll — Alice's Adventures in Wonderland, Ch. 1" },
   { id: "11111111-1111-4111-8111-000000000003", text: "The Camel and the Leopard met in the marketplace. The Leopard, proud of his spotted coat, mocked the Camel for his plain appearance. The Camel quietly replied that though his garments might be plain, they would serve to carry him through the desert when the Leopard's beauty would fail.", source: "Aesop — Fables" },
@@ -86,6 +88,11 @@ export const PASSAGES: ReadonlyArray<Passage> = [
   { id: "11111111-1111-4111-8111-000000000065", text: "When you have eliminated the impossible, whatever remains, however improbable, must be the truth. It has long been an axiom of mine that the little things are infinitely the most important in every investigation.", source: "Arthur Conan Doyle — The Sign of the Four" },
   { id: "11111111-1111-4111-8111-000000000066", text: "There is nothing like staying at home for real comfort. I cannot fix on the hour, or the spot, or the look, or the words, which laid the foundation. It was too long ago to remember clearly.", source: "Jane Austen — Emma" },
   { id: "11111111-1111-4111-8111-000000000067", text: "Two roads diverged in a yellow wood, and sorry I could not travel both and be one traveler, long I stood and looked down one as far as I could to where it bent in the undergrowth.", source: "Robert Frost — The Road Not Taken" },
+];
+
+export const PASSAGES: ReadonlyArray<Passage> = [
+  ...CURATED_PASSAGES,
+  ...GUTENBERG_PASSAGES,
 ];
 
 export type CorpusType = "passage" | "random_words";
@@ -175,7 +182,7 @@ export function generateRandomWords(category: CorpusCategory = "mid"): Passage {
 const SHORT_MAX_CHARS = 240;
 const LONG_MIN_CHARS = 281;
 
-function classifyPassageLength(text: string): "short" | "mid" | "long" {
+export function classifyPassageLength(text: string): "short" | "mid" | "long" {
   const chars = text.trim().length;
   if (chars <= SHORT_MAX_CHARS) return "short";
   if (chars >= LONG_MIN_CHARS) return "long";
